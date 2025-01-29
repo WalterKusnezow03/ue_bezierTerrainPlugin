@@ -35,7 +35,7 @@ public:
 	TArray<FProcMeshTangent> &getTangentsRef();
 	TArray<FColor> &getVertexColorsRef();
 
-	bool processHit(FVector &localHitpoint, FVector &direction);
+	
 
 private:
 	//mesh data i understand
@@ -53,8 +53,4 @@ private:
 	void join(TArray<FVector> &vertecies, TArray<int32> &triangles);
 	void rebuildMeshDataFromQuads();
 
-	void findClosestQuadsTo(
-		FVector &localHitpoint,
-		std::vector<int> &outputindices 
-	);
 };

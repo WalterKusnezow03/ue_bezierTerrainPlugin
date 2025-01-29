@@ -76,6 +76,35 @@ void MeshData::clearNormals(){
 
 /// @brief calculates the normals and applies it to the vertecies
 void MeshData::calculateNormals(){
+    // Stelle sicher, dass die Normalen-Array-Größe stimmt
+    normals.SetNum(vertecies.Num());
+
+    // Iteriere über die Dreiecke und berechne Normalen
+    if(vertecies.Num() == triangles.Num()){
+        for (int i = 0; i < triangles.Num() - 2; i += 3) {
+            int32 Index0 = triangles[i];
+            int32 Index1 = triangles[i + 1];
+            int32 Index2 = triangles[i + 2];
+
+            FVector Edge1 = vertecies[Index1] - vertecies[Index0];
+            FVector Edge2 = vertecies[Index2] - vertecies[Index0];
+
+            FVector Normal = FVector::CrossProduct(Edge1, Edge2).GetSafeNormal();
+
+            //summieren der alten normale, normalisieren
+            /*normals[Index0] = (normals[Index0] + Normal).GetSafeNormal();
+            normals[Index1] = (normals[Index1] + Normal).GetSafeNormal();
+            normals[Index2] = (normals[Index2] + Normal).GetSafeNormal();*/
+            normals[Index0] = Normal;
+            normals[Index1] = Normal;
+            normals[Index2] = Normal;
+        }
+    }
+    
+
+
+
+
     UKismetProceduralMeshLibrary::CalculateTangentsForMesh(vertecies, triangles, UV0, normals, Tangents);
 }
 
@@ -180,67 +209,6 @@ void MeshData::rebuildMeshDataFromQuads(){
     }
 }
 
-
-/// @brief will process the hit if needed, and return if the mesh needs to be reloaded
-/// @param localHitpoint 
-/// @param direction 
-/// @return 
-bool MeshData::processHit(FVector &localHitpoint, FVector &direction){
-    std::vector<int> closestQuadsIndices;
-    findClosestQuadsTo(localHitpoint, closestQuadsIndices);
-
-    if(closestQuadsIndices.size() > 0){
-
-        for (int i = 0; i < closestQuadsIndices.size(); i++){
-
-            int index = closestQuadsIndices[i];
-            if(index >= 0 && index < quads.size()){
-                Quad &currentQuad = quads[index];
-                bool withinQuad = currentQuad.isWithinQuad(localHitpoint);
-                if(withinQuad){
-                    //todo:
-                    //erase from quads
-
-                    //create new split up mesh
-
-                    //return true
-                    return true;
-                }
-            }
-
-        }
-    }
-    return false;
-}
-
-/// @brief finds closest Quads to a local hitpoint, really important that it is a local one!
-/// WARNING: DO NOT USE THE POINTERS OTHER FOR TEMPORAL USAGE! MIGHT GET INVALID!
-/// @param localHitpoint 
-void MeshData::findClosestQuadsTo(
-    FVector &localHitpoint,
-    std::vector<int> &outputindices 
-){
-    if(quads.size() <= 0){
-        return;
-    }
-
-    
-    Quad *firstQuad = &quads[0];
-    float prevDistance = FVector::Dist(localHitpoint, firstQuad->center());
-    outputindices.push_back(0);
-
-
-    for (int i = 1; i < quads.size(); i++)
-    {
-        Quad &currentQuad = quads[i];
-        float distance = FVector::Dist(currentQuad.center(), localHitpoint);
-        if(distance < prevDistance){
-            distance = prevDistance;
-            outputindices.push_back(i);
-        }
-    }
-
-}
 
 
 
