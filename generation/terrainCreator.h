@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "terrainHillSetup.h"
 #include "p2/util/TVector.h"
 
 /**
@@ -23,7 +24,7 @@ public:
 	static const int ONEMETER = 100; //one meter constant
 	static const int fractureHeightStep = 3;
 
-	static const int MAXHEIGHT = 7000; //3000 is a good value, dont change
+	static const int MAXHEIGHT = 15000; //3000 is a good value, dont change
 
 	int chunkNum();
 	void createTerrain(UWorld *world, int meters);
@@ -132,6 +133,8 @@ private:
 	void scaleHeightForAll(float scale);
 
 	//new chunk bezier curve
-	void createRandomHeightMapChunkWide();
-	
+	void createRandomHeightMapChunkWide(int layers);
+
+	terrainHillSetup createRandomHillData();
+	void applyHillData(terrainHillSetup &hillData);
 };

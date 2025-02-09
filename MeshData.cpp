@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "p2/meshgen/meshDataContainer/Quad.h"
+
 #include "p2/meshgen/MeshData.h"
 
 MeshData::MeshData()
@@ -10,7 +10,17 @@ MeshData::MeshData()
 MeshData::MeshData(TArray<FVector> &&verteciesIn, TArray<int> &&trianglesIn){
     setVertecies(MoveTemp(verteciesIn));
     setTriangles(MoveTemp(trianglesIn));
+    calculateNormals();
 }
+
+void MeshData::rebuild(TArray<FVector> &&verteciesIn, TArray<int> &&trianglesIn){
+    clearMesh();
+    setVertecies(MoveTemp(verteciesIn));
+    setTriangles(MoveTemp(trianglesIn));
+    calculateNormals();
+}
+
+
 
 MeshData::~MeshData()
 {
@@ -76,11 +86,12 @@ void MeshData::clearNormals(){
 
 /// @brief calculates the normals and applies it to the vertecies
 void MeshData::calculateNormals(){
-    // Stelle sicher, dass die Normalen-Array-Größe stimmt
-    normals.SetNum(vertecies.Num());
-
+    
     // Iteriere über die Dreiecke und berechne Normalen
     if(vertecies.Num() == triangles.Num()){
+
+        clearNormals();
+        normals.SetNum(vertecies.Num());
         for (int i = 0; i < triangles.Num() - 2; i += 3) {
             int32 Index0 = triangles[i];
             int32 Index1 = triangles[i + 1];
@@ -99,13 +110,15 @@ void MeshData::calculateNormals(){
             normals[Index1] = Normal;
             normals[Index2] = Normal;
         }
+
+        UKismetProceduralMeshLibrary::CalculateTangentsForMesh(vertecies, triangles, UV0, normals, Tangents);
     }
     
 
 
 
 
-    UKismetProceduralMeshLibrary::CalculateTangentsForMesh(vertecies, triangles, UV0, normals, Tangents);
+    
 }
 
 /// @brief sets the data for all vertecies, pass by r value reference
@@ -125,23 +138,12 @@ void MeshData::setTriangles(TArray<int32> &&trianglesIn){
 void MeshData::append(MeshData &other){
     TArray<FVector> &verteciesRef = other.getVerteciesRef();
     TArray<int32> &trianglesRef = other.getTrianglesRef();
-    join(verteciesRef, trianglesRef);
-}
-
-/// join another quad to mesh, vertecies add, triangles added with offset added to index
-void MeshData::append(Quad &&other){
-    quads.push_back(MoveTemp(other));
-
-    Quad &otherRef = quads[quads.size() - 1];
-
-    TArray<FVector> &verteciesRef = otherRef.readVertecies();
-    TArray<int32> &trianglesRef = otherRef.readTriangles();
-    join(verteciesRef, trianglesRef);
+    TArray<FVector> &normalsRef = other.getNormalsRef();
+    join(verteciesRef, trianglesRef, normalsRef);
 }
 
 
-
-void MeshData::join(TArray<FVector> &verteciesRef, TArray<int32> &trianglesRef){
+void MeshData::join(TArray<FVector> &verteciesRef, TArray<int32> &trianglesRef, TArray<FVector> &normalsin){
     int triangleOffset = triangles.Num();
 
     //copy triangles, apply offset
@@ -155,6 +157,12 @@ void MeshData::join(TArray<FVector> &verteciesRef, TArray<int32> &trianglesRef){
     for(int i = 0; i < verteciesRef.Num(); i++){
         FVector &ref = verteciesRef[i];
         vertecies.Add(ref);
+    }
+
+    //copy normals
+    for(int i = 0; i < normalsin.Num(); i++){
+        FVector &ref = normalsin[i];
+        normals.Add(ref);
     }
 }
 
@@ -197,17 +205,6 @@ TArray<FColor> &MeshData::getVertexColorsRef(){
 
 
 
-
-
-void MeshData::rebuildMeshDataFromQuads(){
-    clearMesh();
-    for (int i = 0; i < quads.size(); i++){
-        Quad &currentQuad = quads[i];
-        TArray<FVector> &verteciesRef = currentQuad.readVertecies();
-        TArray<int32> &trianglesRef = currentQuad.readTriangles();
-        join(verteciesRef, trianglesRef);
-    }
-}
 
 
 

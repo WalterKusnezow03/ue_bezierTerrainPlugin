@@ -234,11 +234,12 @@ void AcustomMeshActorBase::updateMesh(MeshData otherMesh, bool createNormals, in
     }
 
     if(data != nullptr && Mesh != nullptr){
-        data->clearNormals();
+        
+        
         if(createNormals){
             data->calculateNormals();
         }
-        
+
         /**
          * example: 
          * 
@@ -268,6 +269,7 @@ void AcustomMeshActorBase::updateMesh(MeshData otherMesh, bool createNormals, in
         Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
         Mesh->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
         Mesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+
     }
     //enable if was disabled!
     AActorUtil::showActor(*this, true);
