@@ -127,8 +127,6 @@ private:
 	int meterToInnerChunkIndex(int a);
 	int cmToInnerChunkIndex(int a);
 
-	void upScalePoints(std::vector<FVector2D> &points, float factor);
-	void offsetPoints(std::vector<FVector2D> &vec, FVector2D offset);
 
 	void scaleHeightForAll(float scale);
 

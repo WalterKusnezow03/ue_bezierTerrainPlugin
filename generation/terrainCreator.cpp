@@ -1038,36 +1038,6 @@ void terrainCreator::applyHillData(terrainHillSetup &hillData){
 
 
 
-/**
- * 
- * ----- DEPRECATED / NOT IN USE -> do NOT remove, might be fixed. -----
- * 
- */
-
-
-/// @brief scales the list with a constant factor
-/// @param points points to scale
-/// @param factor factor to apply
-void terrainCreator::upScalePoints(std::vector<FVector2D> &points, float factor){
-    if(factor > 0){
-        for (int i = 0; i < points.size(); i++){
-            FVector2D &referenced = points.at(i);
-            referenced *= factor;
-        }
-    }
-}
-
-/// @brief apply an offset to every point of the vector
-/// @param vec vector
-/// @param offset offset to apply
-void terrainCreator::offsetPoints(std::vector<FVector2D> &vec, FVector2D offset){
-    for (int i = 0; i < vec.size(); i++){
-        vec.at(i) += offset;
-    }
-}
-
-
-
 
 
 
