@@ -25,11 +25,20 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	
+	virtual void createTerrainFrom2DMap(
+		std::vector<std::vector<FVector>> &map
+	);
 	//to be overriden by subclass
 	virtual void createTerrainFrom2DMap(
 		std::vector<std::vector<FVector>> &map,
 		bool createTrees
 	);
+	void createTerrainFrom2DMap(
+		std::vector<std::vector<FVector>> &map,
+		TArray<FVectorTouple> &touples
+	);
+
 
 	static void createQuad(
 		FVector &a,
@@ -72,14 +81,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class UProceduralMeshComponent *Mesh;
 
-	
-	void createTerrainFrom2DMap(
-		std::vector<std::vector<FVector>> &map,
-		bool createTrees,
-		TArray<FVectorTouple> &touples
-	);
 
-	void updateMesh(MeshData otherMesh, bool createNormals, int layer);
+
+	void updateMesh(MeshData &otherMesh, bool createNormals, int layer);
 	static void buildTriangle(
 		FVector &a,
 		FVector &b,

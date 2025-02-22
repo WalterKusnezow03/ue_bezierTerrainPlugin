@@ -20,6 +20,17 @@ public:
 	MeshData &operator=(const MeshData &other);
 
 	void append(MeshData &other);
+	void append(
+		FVector &a,
+		FVector &b,
+		FVector &c
+	);
+	void append(
+		FVector &a,
+		FVector &b,
+		FVector &c,
+		FVector &d
+	);
 
 	void rebuild(TArray<FVector> &&verteciesIn, TArray<int> &&trianglesIn);
 
@@ -41,6 +52,14 @@ public:
 
 private:
 	void clearNormals();
+
+	void buildTriangle(
+		FVector &a,
+		FVector &b,
+		FVector &c,
+		TArray<FVector> &output,
+		TArray<int32> &trianglesOutput
+	);
 
 	//mesh data i understand
 	TArray<FVector> vertecies;

@@ -7,6 +7,10 @@ MeshData::MeshData()
 {
 }
 
+
+/// @brief creates the mesh from triangles and vertecies AND calculates the normals!
+/// @param verteciesIn 
+/// @param trianglesIn 
 MeshData::MeshData(TArray<FVector> &&verteciesIn, TArray<int> &&trianglesIn){
     setVertecies(MoveTemp(verteciesIn));
     setTriangles(MoveTemp(trianglesIn));
@@ -165,6 +169,63 @@ void MeshData::join(TArray<FVector> &verteciesRef, TArray<int32> &trianglesRef, 
         normals.Add(ref);
     }
 }
+
+
+
+/*
+
+---- manual adding section ----
+
+*/
+void MeshData::append(
+    FVector &a, 
+    FVector &b, 
+    FVector &c
+){
+    TArray<FVector> _vertecies;
+    TArray<int32> _triangles;
+    buildTriangle(a, b, c, _vertecies, _triangles);
+    MeshData appendMesh(
+        MoveTemp(_vertecies),
+        MoveTemp(_triangles)
+    );
+    append(appendMesh);
+}
+
+
+void MeshData::append(
+    FVector &a, 
+    FVector &b, 
+    FVector &c,
+    FVector &d
+){
+    append(a, b, c);
+    append(a, c, d);
+}
+
+
+void MeshData::buildTriangle(
+    FVector &a, 
+    FVector &b, 
+    FVector &c,
+    TArray<FVector> &output,
+    TArray<int32> &trianglesOutput
+){
+    //add vertecies
+    output.Add(a);
+    output.Add(b);
+    output.Add(c);
+
+    //add triangles
+    int32 offset = trianglesOutput.Num();
+    trianglesOutput.Add(0 + offset); // 0th vertex in the first triangle
+    trianglesOutput.Add(1 + offset); // 1st vertex in the first triangle
+    trianglesOutput.Add(2 + offset); // 2nd vertex in the first triangle
+}
+
+
+
+
 
 
 
