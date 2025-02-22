@@ -25,7 +25,11 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	
+	void ApplyMaterial(
+		materialEnum type,
+		int layer
+	);
+
 	virtual void createTerrainFrom2DMap(
 		std::vector<std::vector<FVector>> &map
 	);
@@ -72,6 +76,9 @@ public:
 		UMaterial *material,
 		bool calculateNormals
 	);
+	
+	
+	void updateMesh(MeshData &otherMesh, bool createNormals, int layer);
 
 protected:
 
@@ -83,7 +90,7 @@ protected:
 
 
 
-	void updateMesh(MeshData &otherMesh, bool createNormals, int layer);
+	
 	static void buildTriangle(
 		FVector &a,
 		FVector &b,

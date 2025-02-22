@@ -156,23 +156,9 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
     updateMesh(grassLayer, true, 0);
     updateMesh(stoneLayer, true, 1);
 
-
-
-
-    if(assetManager *e = assetManager::instance()){
-		
-		//SET MATERIALS HERE!
-
-        //grass
-        ApplyMaterial(Mesh, e->findMaterial(materialEnum::grassMaterial), 0); //layer 0
-        //stone
-        ApplyMaterial(Mesh, e->findMaterial(materialEnum::stoneMaterial), 1); //layer 1
-
-        //tree
-        ApplyMaterial(Mesh, e->findMaterial(materialEnum::treeMaterial), 2); //layer 2
-    
-    
-    }
+    ApplyMaterial(materialEnum::grassMaterial, 0);
+    ApplyMaterial(materialEnum::stoneMaterial, 1);
+    ApplyMaterial(materialEnum::treeMaterial, 2);
 
     
 	
@@ -200,9 +186,9 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
 
 
 /// @brief updates a mesh layer given on a mesh data object (which will be deep copied)
-/// @param otherMesh 
-/// @param createNormals 
-/// @param layer 
+/// @param otherMesh some mesh, will be COPIED
+/// @param createNormals recreate normals
+/// @param layer layer to save in
 void AcustomMeshActorBase::updateMesh(MeshData &otherMesh, bool createNormals, int layer){
 
     meshLayersMap[layer] = otherMesh; //assign operator is overriden
@@ -424,6 +410,19 @@ void AcustomMeshActorBase::createTwoSidedQuad(
     }
 }
 
+
+
+
+
+
+void AcustomMeshActorBase::ApplyMaterial(
+    materialEnum type,
+    int layer
+){
+    if(assetManager *e = assetManager::instance()){
+        ApplyMaterial(Mesh, e->findMaterial(type), layer);
+    }
+}
 
 
 

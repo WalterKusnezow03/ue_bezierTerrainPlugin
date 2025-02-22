@@ -533,8 +533,8 @@ void terrainCreator::smooth3dMap(){
     FVector b(max, max, 0);
 
     int iterations = 3;
-    //smooth3dMap(a, b, iterations);
-    smooth3dMap(a, b, 1);
+    smooth3dMap(a, b, iterations);
+    //smooth3dMap(a, b, 1);
 }
 
 /// @brief will smooth out all chunks rows and columns and merge them together to the map
@@ -999,13 +999,13 @@ void terrainCreator::createRandomHeightMapChunkWide(int layers){
 
 
 terrainHillSetup terrainCreator::createRandomHillData(){
-    int scaleX = FVectorUtil::randomNumber(4, map.size()); //random hardcoded for now.
-    int scaleY = FVectorUtil::randomNumber(4, map.size());
+    int scaleX = FVectorUtil::randomNumber(MINCHUNK_HILL, map.size()); //random hardcoded for now.
+    int scaleY = FVectorUtil::randomNumber(MINCHUNK_HILL, map.size());
     int startX = clampIndex(FVectorUtil::randomNumber(1, map.size() / 2));
     int startY = clampIndex(FVectorUtil::randomNumber(1, map.size() / 2));
 
     int heightMin = terrainCreator::ONEMETER;
-    int heightMax = heightMin * 3;
+    int heightMax = heightMin * 2;
 
     return terrainHillSetup(
         startX,

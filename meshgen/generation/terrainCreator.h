@@ -39,6 +39,8 @@ public:
 
 	void plotAllChunks(UWorld *world);
 
+	const int MINCHUNK_HILL = 5; //5x5 min hill size
+
 private:
 	class chunk{
 		public:
