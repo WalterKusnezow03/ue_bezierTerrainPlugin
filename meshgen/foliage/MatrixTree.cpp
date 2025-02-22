@@ -14,14 +14,27 @@ MatrixTree::~MatrixTree()
 {
 }
 
-MeshData &MatrixTree::meshDataByReference(){
+void MatrixTree::clean(){
+    leafMeshData.clearMesh();
+    ownMeshData.clearMesh();
+
+    matrices.clear();
+    indexChains.clear();
+    leafTops.clear();
+}
+
+MeshData &MatrixTree::meshDataStemByReference(){
     return ownMeshData;
+}
+
+MeshData &MatrixTree::meshDataLeafByReference(){
+    return leafMeshData;
 }
 
 void MatrixTree::generate(int height, int cmPerStep, ETreeType type){
     treeType = type;
-    
-    
+    clean();
+
     //erstmal matrizen generieren
     int count = 40;
     for (int i = 0; i < count; i++)
@@ -48,6 +61,7 @@ void MatrixTree::generate(int height, int cmPerStep, ETreeType type){
     createSubTrees(stemStart, partsPerSubtree, subTrees);
 
     generateMesh();
+    generateLeafs();
 }
 
 bool MatrixTree::indexIsValid(int index){
@@ -80,12 +94,17 @@ std::vector<FVectorShape> MatrixTree::shapeByEnum(ETreeType type){
     if(type == ETreeType::EPalmTree){
         size = 20;
         int sizeInner = 10;
+        
 
         FVectorShape shapeOuter;
         shapeOuter.push_back(FVector(0,0,0));
         shapeOuter.push_back(FVector(0,size,0));
         shapeOuter.push_back(FVector(size,size,0));
         shapeOuter.push_back(FVector(size,0,0));
+
+        MMatrix offset;
+        offset.setTranslation(- size / 2.0f, - size / 2.0f, 0);
+        shapeOuter.moveVerteciesWith(offset);
         output.push_back(shapeOuter);
 
         FVectorShape shapeInner;
@@ -93,8 +112,11 @@ std::vector<FVectorShape> MatrixTree::shapeByEnum(ETreeType type){
         shapeInner.push_back(FVector(0,sizeInner,0));
         shapeInner.push_back(FVector(sizeInner,sizeInner,0));
         shapeInner.push_back(FVector(sizeInner,0,0));
-        output.push_back(shapeInner);
 
+
+        offset.setTranslation(- sizeInner / 2.0f, - sizeInner / 2.0f, 0);
+        shapeInner.moveVerteciesWith(offset);
+        output.push_back(shapeInner);
     }
 
 
@@ -107,11 +129,15 @@ void MatrixTree::generateMesh(){
     achtung denkfehler: meshes überlappen sich ggf, die ketten müssen sinnvoll getrennt werden!
     man könnte für jeden starting index eine matrix speichern
     */
-    ownMeshData.clearMesh();
     for (int i = 0; i < indexChains.size(); i++){
         IndexChain &indexChain = indexChains[i];
         std::vector<MMatrix> buildedChain = buildChain(indexChain);
         wrapWithMesh(buildedChain, ownMeshData);
+
+        //add to leaf locations
+        if(buildedChain.size() > 0){
+            leafTops.push_back(buildedChain.back());
+        }
     }
 }
 
@@ -136,7 +162,7 @@ std::vector<MMatrix> MatrixTree::buildChain(IndexChain &indexChain){
 /// @return offsetMatrix top of stem
 MMatrix MatrixTree::stemTop(){
     MMatrix mat;
-    for (int i = 0; i < stemCountTop; i++){
+    for (int i = 0; i < stemCountTop - 1; i++){
         if(indexIsValid(i)){
             mat *= matrixByIndex(i);
         }
@@ -150,7 +176,9 @@ void MatrixTree::wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &mesh){
 
         //einfach alle shapes moven und dann connecten
         std::vector<FVectorShape> allShapes;
-        for (int i = 0; i < matricesIn.size(); i++){
+        
+        for (int i = 0; i < matricesIn.size(); i++)
+        {
             MMatrix &currentMatrix = matricesIn[i];
             std::vector<FVectorShape> current = shapeByEnum(treeType);
             for (int j = 0; j < current.size(); j++){
@@ -172,12 +200,6 @@ void MatrixTree::wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &mesh){
         }
     }
 }
-
-
-
-
-
-
 
 void MatrixTree::createSubTrees(MMatrix &offset, int partsPerTree, int count){
     for (int i = 0; i < count; i++){
@@ -235,4 +257,69 @@ void MatrixTree::randomRotationForAllMatrices(){
         prevPitch = pitch;
         prevYaw = yaw;
     }
+}
+
+
+
+MMatrix MatrixTree::randomRotator(){
+    MMatrix rotator;
+    rotator.rollRadAdd(MMatrix::degToRadian(FVectorUtil::randomNumber(-90,90)));
+    rotator.pitchRadAdd(MMatrix::degToRadian(FVectorUtil::randomNumber(-90,90)));
+    rotator.yawRadAdd(MMatrix::degToRadian(FVectorUtil::randomNumber(-90,90)));
+    return rotator;
+}
+
+/**
+ * 
+ * --- leaf generation section ---
+ * 
+ */
+void MatrixTree::generateLeafs(){
+    for (int i = 0; i < leafTops.size(); i++)
+    {
+        MMatrix &ref = leafTops[i];
+        for (int j = 0; j < leafCountPerJoint; j++){
+            generateLeaf(ref);
+        }
+    }
+}
+
+void MatrixTree::generateLeaf(MMatrix &offset){
+    //M = T * R <-- lese richtung --
+    MMatrix rotation = randomRotator();
+    MMatrix offsetFinal = offset * rotation;
+
+    FVectorShape shape = leafShapeByEnum(treeType);
+    shape.moveVerteciesWith(offsetFinal);
+
+    MeshData closedLeaf = shape.createDoubleSidedMesh();
+    leafMeshData.append(closedLeaf);
+}
+
+FVectorShape MatrixTree::leafShapeByEnum(ETreeType type){
+    FVectorShape output;
+
+    if(type == ETreeType::Edefault){
+
+    }
+    if(type == ETreeType::EPalmTree){
+        FVectorShape outputA;
+        outputA.push_back(FVector(0, 0, 0));
+        outputA.push_back(FVector(-10, 20, 0));
+        outputA.push_back(FVector(-10, 40, 0));
+        outputA.push_back(FVector(-5, 60, 0));
+        output = outputA;
+
+        MMatrix flip;
+        flip.scale(-1.0f, 1.0f, 1.0f);
+        outputA.moveVerteciesWith(flip);
+        output.push_back(outputA);
+
+
+        MMatrix scaleUp;
+        scaleUp.scaleUniform(3.0f);
+        output.moveVerteciesWith(scaleUp);
+    }
+
+    return output;
 }

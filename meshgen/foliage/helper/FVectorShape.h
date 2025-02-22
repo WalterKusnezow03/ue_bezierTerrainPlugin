@@ -12,15 +12,20 @@ class P2_API FVectorShape
 {
 public:
 	FVectorShape();
+	FVectorShape(const FVectorShape &other);
 	~FVectorShape();
 
+	FVectorShape &operator=(const FVectorShape &other);
+
 	void push_back(FVector other);
+	void push_back(FVectorShape &other);
 
 	void moveVerteciesWith(MMatrix &mat);
 
+
 	MeshData join(FVectorShape &other);
 
-
+	MeshData createDoubleSidedMesh();
 
 private:
 	std::vector<FVector> vec;

@@ -12,9 +12,39 @@ FVectorShape::~FVectorShape()
 {
 }
 
+FVectorShape::FVectorShape(const FVectorShape &other){
+    if(&other != this){
+        *this = other;
+    }
+}
+
+FVectorShape &FVectorShape::operator=(const FVectorShape &other){
+    if(&other == this){
+        return *this;
+    }
+    vec = other.vec;
+    return *this;
+}
+
+/// @brief moves the vertecies with a desired matrix
+/// @param mat 
+void FVectorShape::moveVerteciesWith(MMatrix &mat){
+    for (int i = 0; i < vec.size(); i++){
+        FVector &current = vec[i];
+        vec[i] = mat * current;
+    }
+}
+
+
 
 void FVectorShape::push_back(FVector other){
     vec.push_back(other);
+}
+
+void FVectorShape::push_back(FVectorShape &other){
+    for (int i = 0; i < other.vec.size(); i++){
+        vec.push_back(other.vec[i]);
+    }
 }
 
 /// @brief will joint this and the other shape together AND create the needed normals!
@@ -32,7 +62,7 @@ MeshData FVectorShape::join(FVectorShape &other){
             int iOther = i % other.vec.size();
             int nextThis = (i + 1) % vec.size();
             int nextOther = (i + 1) % other.vec.size();
-            
+
             FVector &a = vec[i];
             FVector &b = other.vec[iOther];
             FVector &c = other.vec[nextOther];
@@ -45,11 +75,28 @@ MeshData FVectorShape::join(FVectorShape &other){
     return mesh;
 }
 
-/// @brief moves the vertecies with a desired matrix
-/// @param mat 
-void FVectorShape::moveVerteciesWith(MMatrix &mat){
+
+
+/// @brief creates a double sided mesh from own shape and center of mass
+/// @return shape Mesh data, double sided
+MeshData FVectorShape::createDoubleSidedMesh(){
+    MeshData mesh;
+    
+    //center of mass
+    FVector center;
     for (int i = 0; i < vec.size(); i++){
-        FVector &current = vec[i];
-        vec[i] = mat * current;
+        center += vec[i];
     }
+    center /= vec.size();
+
+    // connect triangles to center
+    for (int i = 1; i < vec.size(); i++){
+        //create double sided triangle
+        FVector &prev = vec[i - 1];
+        FVector &current = vec[i];
+        mesh.appendDoublesided(center, prev, current);
+    }
+
+    mesh.calculateNormals();
+    return mesh;
 }

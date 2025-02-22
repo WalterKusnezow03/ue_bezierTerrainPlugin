@@ -20,18 +20,27 @@ public:
 
 	void generate(int height, int perCmMatrix, ETreeType tyep);
 
-	void generateMesh();
+	
 
-	MeshData &meshDataByReference();
+	MeshData &meshDataStemByReference();
+	MeshData &meshDataLeafByReference();
 
 private:
-	void randomRotationForAllMatrices();
+	void clean();
+
+	int leafCountPerJoint = 20;
+
+	void generateMesh();
+	void generateLeafs();
+	void generateLeaf(MMatrix &offset);
+
+	MeshData ownMeshData;
+	MeshData leafMeshData;
 
 	ETreeType treeType;
 	int stemCountTop;
 	MMatrix stemTop();
 
-	bool wasModified = false; //save for rebuild
 
 	/** 
 	 * Alle matrizen sollten in einem vektor festgehalten werden
@@ -39,19 +48,19 @@ private:
 	 */
 	std::vector<MMatrix> matrices;
 	std::vector<IndexChain> indexChains;
+	MMatrix identityMatrix;
+
+	std::vector<MMatrix> leafTops;
 
 	std::vector<FVectorShape> shapeByEnum(ETreeType type);
 	std::vector<MMatrix> buildChain(IndexChain &indexChain);
 
+	FVectorShape leafShapeByEnum(ETreeType type);
+
 	bool indexIsValid(int index);
 	MMatrix &matrixByIndex(int index);
-	MMatrix identityMatrix;
+	void randomRotationForAllMatrices();
 
-	MeshData ownMeshData;
-
-	/**
-	 * sollte hier auch das mesh selber drin gespeichert werden?
-	 */
 	void wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &meshToAddTo);
 
 	void createSubTrees(MMatrix &offset, int partsPerTree, int count);
@@ -59,4 +68,7 @@ private:
 
 	int subTreeCountByEnum(ETreeType type);
 	int rotationRangeByEnum(ETreeType type);
+
+
+	MMatrix randomRotator();
 };

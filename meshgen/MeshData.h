@@ -32,6 +32,12 @@ public:
 		FVector &d
 	);
 
+	void appendDoublesided(
+		FVector &a,
+		FVector &b,
+		FVector &c
+	);
+
 	void rebuild(TArray<FVector> &&verteciesIn, TArray<int> &&trianglesIn);
 
 	void clearMesh();

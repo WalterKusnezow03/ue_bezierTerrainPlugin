@@ -203,6 +203,19 @@ void MeshData::append(
     append(a, c, d);
 }
 
+void MeshData::appendDoublesided(
+    FVector &a, 
+    FVector &b, 
+    FVector &c
+){
+    /*
+    1 2
+    0 
+    */
+    append(a, b, c); 
+    append(a, c, b); 
+}
+
 
 void MeshData::buildTriangle(
     FVector &a, 
