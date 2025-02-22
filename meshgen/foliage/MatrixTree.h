@@ -6,6 +6,8 @@
 #include "p2/entities/customIk/MMatrix.h"
 #include "p2/meshgen/MeshData.h"
 #include "IndexChain.h"
+#include "p2/meshgen/foliage/helper/FVectorShape.h"
+#include "ETreeType.h"
 
 /**
  * 
@@ -16,14 +18,17 @@ public:
 	MatrixTree();
 	~MatrixTree();
 
-	void generate(int height, int perCmMatrix);
+	void generate(int height, int perCmMatrix, ETreeType tyep);
 
 	void generateMesh();
 
 	MeshData &meshDataByReference();
 
 private:
-	int stemCount;
+	void randomRotationForAllMatrices();
+
+	ETreeType treeType;
+	int stemCountTop;
 	MMatrix stemTop();
 
 	bool wasModified = false; //save for rebuild
@@ -35,7 +40,7 @@ private:
 	std::vector<MMatrix> matrices;
 	std::vector<IndexChain> indexChains;
 
-	std::vector<FVector> shapeByEnum();
+	std::vector<FVectorShape> shapeByEnum(ETreeType type);
 	std::vector<MMatrix> buildChain(IndexChain &indexChain);
 
 	bool indexIsValid(int index);
@@ -47,8 +52,11 @@ private:
 	/**
 	 * sollte hier auch das mesh selber drin gespeichert werden?
 	 */
-
-	void moveVerteciesFromLocalToWorld(MMatrix &mat, std::vector<FVector> &vector);
 	void wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &meshToAddTo);
-	void join(std::vector<FVector> &lower, std::vector<FVector> &upper, MeshData &mesh);
+
+	void createSubTrees(MMatrix &offset, int partsPerTree, int count);
+	IndexChain createSubTree(MMatrix &offset, int parts);
+
+	int subTreeCountByEnum(ETreeType type);
+	int rotationRangeByEnum(ETreeType type);
 };
