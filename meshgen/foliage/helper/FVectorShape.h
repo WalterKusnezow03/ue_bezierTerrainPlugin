@@ -13,6 +13,8 @@ class P2_API FVectorShape
 public:
 	FVectorShape();
 	FVectorShape(const FVectorShape &other);
+	FVectorShape(const FVectorShape &other, MMatrix &applyOffset);
+
 	~FVectorShape();
 
 	FVectorShape &operator=(const FVectorShape &other);
@@ -24,6 +26,7 @@ public:
 
 
 	MeshData join(FVectorShape &other);
+	void joinMeshData(MeshData &other);
 
 	MeshData createDoubleSidedMesh();
 

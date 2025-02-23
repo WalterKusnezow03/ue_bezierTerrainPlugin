@@ -461,7 +461,7 @@ void AcustomMeshActor::createTreeAndSaveMeshTo(
     MeshData &meshDataLeaf
 ){
     MatrixTree tree;
-    tree.generate(1000, 100, ETreeType::EPalmTree); //1000 height, 100 step per matrix
+    tree.generate(ETerrainType::ETropical); //1000 height, 100 step per matrix
     
     MeshData &currentTreeStemMesh = tree.meshDataStemByReference();
     MeshData &currentLeafMesh = tree.meshDataLeafByReference();

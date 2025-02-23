@@ -3,17 +3,63 @@
 
 #include "MatrixTree.h"
 #include "ETreeType.h"
+#include "p2/meshgen/foliage/ETerrainType.h"
+#include "p2/meshgen/foliage/helper/TreeProperties.h"
 #include "p2/meshgen/foliage/helper/FVectorShape.h"
 
 MatrixTree::MatrixTree()
 {
-    stemCountTop = 5; //at least for dbeug
+    loadProperties();
 }
 
 MatrixTree::~MatrixTree()
 {
 }
 
+void MatrixTree::loadProperties(){
+    TreeProperties palmProperty(1000, 100, ETreeType::EPalmTree, ETerrainType::ETropical, 8, 8, 2);
+    addPropertyToMap(palmProperty);
+
+    TreeProperties oakProperty(1000, 100, ETreeType::Edefault, ETerrainType::ETropical, 30, 10, 3);
+    defaultProperty = oakProperty;
+    addPropertyToMap(oakProperty);
+
+    TreeProperties oakProperty1(1000, 100, ETreeType::Edefault, ETerrainType::EForest, 30, 10, 3);
+    addPropertyToMap(oakProperty1);
+
+}
+
+void MatrixTree::addPropertyToMap(TreeProperties &property){
+    ETerrainType typeOfTerrain = property.getTerrainType();
+    if(terrainPropertyMap.find(typeOfTerrain) == terrainPropertyMap.end()){
+        std::vector<TreeProperties> newVec;
+        newVec.push_back(property);
+        terrainPropertyMap[typeOfTerrain] = newVec;
+        return;
+    }
+
+    std::vector<TreeProperties> &vec = terrainPropertyMap[typeOfTerrain];
+    vec.push_back(property);
+}
+
+
+TreeProperties MatrixTree::findProperty(ETerrainType typeOfTerrain){
+    //default
+    if(terrainPropertyMap.find(typeOfTerrain) == terrainPropertyMap.end()){
+        return defaultProperty;
+    }
+
+    std::vector<TreeProperties> &vec = terrainPropertyMap[typeOfTerrain];
+    if(vec.size() > 0){
+        int index = FVectorUtil::randomNumber(0, vec.size());
+        if(index >= 0 && index < vec.size()){
+            return vec[index];
+        }
+    }
+    return defaultProperty;
+}
+
+/// @brief cleans all leaf and mesh data
 void MatrixTree::clean(){
     leafMeshData.clearMesh();
     ownMeshData.clearMesh();
@@ -23,16 +69,30 @@ void MatrixTree::clean(){
     leafTops.clear();
 }
 
+/// @brief returns the mesh data for the "wood"
+/// @return mesh data by reference
 MeshData &MatrixTree::meshDataStemByReference(){
     return ownMeshData;
 }
 
+/// @brief returns the mesh data for the "leaf"
+/// @return mesh data by reference
 MeshData &MatrixTree::meshDataLeafByReference(){
     return leafMeshData;
 }
 
-void MatrixTree::generate(int height, int cmPerStep, ETreeType type){
-    treeType = type;
+
+/// @brief generates a tree by the terrain type
+/// @param height 
+/// @param cmPerStep 
+/// @param terrainType 
+void MatrixTree::generate(ETerrainType terrainType){
+    TreeProperties properties = findProperty(terrainType);
+
+    int height = properties.getHeight();
+    int cmPerStep = properties.getDetailStep();
+    treeType = properties.getTreeType();
+
     clean();
 
     //erstmal matrizen generieren
@@ -44,23 +104,27 @@ void MatrixTree::generate(int height, int cmPerStep, ETreeType type){
         matrices.push_back(mat);
     }
 
-
-
-    //create stem
-    stemCountTop = 5; //parts of the stem
-    MMatrix identity;
-    IndexChain stem = createSubTree(identity, stemCountTop);
-    indexChains.push_back(stem);
-
     //create randomRotations
     randomRotationForAllMatrices();
 
+    //create stem
+    MMatrix identity;
+    IndexChain stem = createSubTree(identity, properties);
+    indexChains.push_back(stem);
+
+
     stemTop = stem.endMatrixRef();
-    createSubTrees(stemTop);
+    createSubTrees(stemTop, properties);
 
     generateMesh();
-    generateLeafs();
+    generateLeafs(properties);
+
 }
+
+
+
+
+
 
 bool MatrixTree::indexIsValid(int index){
     return index >= 0 && index < matrices.size();
@@ -153,10 +217,15 @@ void MatrixTree::wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &mesh){
         for (int i = 1; i < allShapes.size(); i++){
             FVectorShape &currentShape = allShapes[i];
 
+            // ---- OLD ----
             //join together
-            MeshData joinedMesh = currentShape.join(prevShape);
-            mesh.append(joinedMesh);
+            //MeshData joinedMesh = currentShape.join(prevShape);
+            //mesh.append(joinedMesh);
 
+            // --- NEw ----
+            currentShape.joinMeshData(mesh);
+
+            //keep
             prevShape = currentShape;
         }
 
@@ -172,23 +241,19 @@ void MatrixTree::wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &mesh){
 
 
 
-void MatrixTree::createSubTrees(MMatrix &offset){
-    int partsPerSubtree = partsPerSubTreeByEnum(treeType);
-    int subTrees = subTreeCountByEnum(treeType);
-    createSubTrees(offset, partsPerSubtree, subTrees);
-}
 
-void MatrixTree::createSubTrees(MMatrix &offset, int partsPerTree, int count){
-    for (int i = 0; i < count; i++){
-        IndexChain subtree = createSubTree(offset, partsPerTree);
+void MatrixTree::createSubTrees(MMatrix &offset, TreeProperties &prop){
+    for (int i = 0; i < prop.subTreeCount(); i++){
+        IndexChain subtree = createSubTree(offset, prop);
         indexChains.push_back(subtree);
     }
 }
 
-IndexChain MatrixTree::createSubTree(MMatrix &offset, int parts){
+IndexChain MatrixTree::createSubTree(MMatrix &offset, TreeProperties &prop){
     IndexChain subtree;
     subtree.setOffsetMatrix(offset);
-    for (int i = 0; i < parts; i++){
+
+    for (int i = 0; i < prop.partsPerSubtree(); i++){
         int random = FVectorUtil::randomNumber(1, matrices.size() - 1); //only stem can have index 0 as start!
         if(indexIsValid(random)){
             subtree.addIndex(random);
@@ -222,35 +287,12 @@ void MatrixTree::buildChain(IndexChain &indexChain){
 
 int MatrixTree::rotationRangeByEnum(ETreeType type){
     if(type == ETreeType::Edefault){
-        return 30;
+        return 7;
     }
     if(type == ETreeType::EPalmTree){
-        return 40;
+        return 15;
     }
     return 10;
-}
-
-int MatrixTree::subTreeCountByEnum(ETreeType type){
-    if(type == ETreeType::Edefault){
-        return FVectorUtil::randomNumber(3,5);
-    }
-    if(type == ETreeType::EPalmTree){
-        int count = FVectorUtil::randomNumber(0,2);
-        if(count == 1){
-            return 0;
-        }
-    }
-    return 0;
-}
-
-int MatrixTree::partsPerSubTreeByEnum(ETreeType type){
-    if(type == ETreeType::Edefault){
-        return FVectorUtil::randomNumber(3,5);
-    }
-    if(type == ETreeType::EPalmTree){
-        return FVectorUtil::randomNumber(8,10);
-    }
-    return 5;
 }
 
 
@@ -296,11 +338,11 @@ MMatrix MatrixTree::randomRotator(int lower, int heigher){
  * --- leaf generation section ---
  * 
  */
-void MatrixTree::generateLeafs(){
+void MatrixTree::generateLeafs(TreeProperties &properties){
     for (int i = 0; i < leafTops.size(); i++)
     {
         MMatrix &ref = leafTops[i];
-        for (int j = 0; j < leafCountPerJoint; j++){
+        for (int j = 0; j < properties.leafCountPerJoint(); j++){
             generateLeaf(ref);
         }
     }
@@ -320,6 +362,10 @@ void MatrixTree::generateLeaf(MMatrix &offset){
 
 
 
+
+
+
+
 /// @brief generates a leaf shape by enum type
 /// @param type 
 /// @return 
@@ -327,6 +373,27 @@ FVectorShape MatrixTree::leafShapeByEnum(ETreeType type){
     FVectorShape output;
 
     if(type == ETreeType::Edefault){
+        FVectorShape oneSide;
+        oneSide.push_back(FVector(0, 0, 0));
+        oneSide.push_back(FVector(-10, 0, 10));
+        oneSide.push_back(FVector(-10, 0, 20));
+        oneSide.push_back(FVector(-5, 0, 30));
+        oneSide.push_back(FVector(0, 0, 35));
+        output = oneSide; //copy
+        
+        //flip shape for copy
+        MMatrix flip;
+        flip.scale(-1.0f, 1.0f, 1.0f);
+        oneSide.moveVerteciesWith(flip);
+
+        output.push_back(oneSide); 
+        MMatrix scaleUp;
+
+        int scaleUpRand = FVectorUtil::randomNumber(3, 10);
+        scaleUp.scaleUniform(scaleUpRand);
+        output.moveVerteciesWith(scaleUp);
+
+
 
     }
     if(type == ETreeType::EPalmTree){

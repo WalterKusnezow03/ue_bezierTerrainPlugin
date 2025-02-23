@@ -18,6 +18,13 @@ FVectorShape::FVectorShape(const FVectorShape &other){
     }
 }
 
+FVectorShape::FVectorShape(const FVectorShape &other, MMatrix &applyOffset){
+    if(&other != this){
+        *this = other;
+    }
+    moveVerteciesWith(applyOffset);
+}
+
 FVectorShape &FVectorShape::operator=(const FVectorShape &other){
     if(&other == this){
         return *this;
@@ -76,6 +83,11 @@ MeshData FVectorShape::join(FVectorShape &other){
 }
 
 
+
+// new method to join smoothley
+void FVectorShape::joinMeshData(MeshData &other){
+    other.appendVertecies(vec);
+}
 
 /// @brief creates a double sided mesh from own shape and center of mass
 /// @return shape Mesh data, double sided

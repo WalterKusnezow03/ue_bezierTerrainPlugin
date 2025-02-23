@@ -6,6 +6,7 @@
 #include "p2/entities/customIk/MMatrix.h"
 #include "p2/meshgen/MeshData.h"
 #include "IndexChain.h"
+#include "p2/meshgen/foliage/helper/TreeProperties.h"
 #include "p2/meshgen/foliage/helper/FVectorShape.h"
 #include "ETreeType.h"
 
@@ -18,9 +19,7 @@ public:
 	MatrixTree();
 	~MatrixTree();
 
-	void generate(int height, int perCmMatrix, ETreeType tyep);
-
-	
+	void generate(ETerrainType type);
 
 	MeshData &meshDataStemByReference();
 	MeshData &meshDataLeafByReference();
@@ -31,14 +30,14 @@ private:
 	int leafCountPerJoint = 10;
 
 	void generateMesh();
-	void generateLeafs();
+	void generateLeafs(TreeProperties &properties);
 	void generateLeaf(MMatrix &offset);
 
 	MeshData ownMeshData;
 	MeshData leafMeshData;
 
 	ETreeType treeType;
-	int stemCountTop;
+
 
 	MMatrix stemTop;
 
@@ -61,15 +60,22 @@ private:
 
 	void wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &meshToAddTo);
 
+	void createSubTrees(MMatrix &offset, TreeProperties &propeties);
+	IndexChain createSubTree(MMatrix &offset, TreeProperties &propeties);
 
-	void createSubTrees(MMatrix &offset);
-	void createSubTrees(MMatrix &offset, int partsPerTree, int count);
-	IndexChain createSubTree(MMatrix &offset, int parts);
-
-	int subTreeCountByEnum(ETreeType type);
+	
 	int rotationRangeByEnum(ETreeType type);
-	int partsPerSubTreeByEnum(ETreeType type);
+	
 
 	MMatrix randomRotator();
 	MMatrix randomRotator(int lower, int heigher);
+
+
+
+
+	void loadProperties();
+	void addPropertyToMap(TreeProperties &property);
+	std::map<ETerrainType, std::vector<TreeProperties>> terrainPropertyMap;
+	TreeProperties defaultProperty;
+	TreeProperties findProperty(ETerrainType type);
 };

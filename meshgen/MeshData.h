@@ -56,6 +56,8 @@ public:
 
 	void offsetAllvertecies(FVector &offset);
 
+	void appendVertecies(std::vector<FVector> &vec);
+
 private:
 	void clearNormals();
 
