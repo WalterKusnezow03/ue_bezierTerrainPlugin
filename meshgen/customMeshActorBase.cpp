@@ -18,6 +18,13 @@ AcustomMeshActorBase::AcustomMeshActorBase()
 	// Create the ProceduralMeshComponent
     Mesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("GeneratedMesh"));
     RootComponent = Mesh;
+
+
+    MeshNoRaycast = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("noRaycastMesh"));
+    MeshNoRaycast->SetCollisionEnabled(ECollisionEnabled::NoCollision);  // Kein Raycast für diesen Layer
+
+    // Attach it to the RootComponent (Mesh) so it has the same transform
+    MeshNoRaycast->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
@@ -158,7 +165,7 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
 
     ApplyMaterial(materialEnum::grassMaterial);
     ApplyMaterial(materialEnum::stoneMaterial);
-    ApplyMaterial(materialEnum::treeMaterial);
+
 
     
 	
@@ -190,7 +197,17 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
 /// @param createNormals recreate normals
 /// @param layer layer to save in
 void AcustomMeshActorBase::updateMesh(MeshData &otherMesh, bool createNormals, int layer){
-
+    if(Mesh){
+        updateMesh(
+            *Mesh,
+            otherMesh,
+            createNormals,
+            layer,
+            meshLayersMap,
+            true // enableCollision
+        );
+    }
+    /*
     meshLayersMap[layer] = otherMesh; //assign operator is overriden
 
     MeshData *data = nullptr;
@@ -206,7 +223,7 @@ void AcustomMeshActorBase::updateMesh(MeshData &otherMesh, bool createNormals, i
             data->calculateNormals();
         }
 
-        /**
+        / *
          * example: 
          * 
         Mesh->CreateMeshSection(
@@ -218,7 +235,7 @@ void AcustomMeshActorBase::updateMesh(MeshData &otherMesh, bool createNormals, i
             VertexColors, 
             Tangents, 
             true
-        );*/
+        );* / 
         Mesh->ClearMeshSection(layer);
         Mesh->CreateMeshSection(
             layer, 
@@ -240,9 +257,99 @@ void AcustomMeshActorBase::updateMesh(MeshData &otherMesh, bool createNormals, i
     //enable if was disabled!
     AActorUtil::showActor(*this, true);
     AActorUtil::enableColliderOnActor(*this, true);
-
+    */
 
 }
+
+
+
+void AcustomMeshActorBase::updateMeshNoRaycastLayer(MeshData &otherMesh, bool createNormals, int layer){
+    if(MeshNoRaycast){
+        updateMesh(
+            *MeshNoRaycast,
+            otherMesh,
+            createNormals,
+            layer,
+            meshLayersMapNoRaycast,
+            false // enableCollision
+        );
+    }
+}
+
+
+void AcustomMeshActorBase::updateMesh(
+    UProceduralMeshComponent &meshcomponent,
+    MeshData &otherMesh, 
+    bool createNormals, 
+    int layer, 
+    std::map<int, MeshData> &map,
+    bool enableCollision
+){
+    map[layer] = otherMesh; //assign operator is overriden
+
+    MeshData *data = nullptr;
+    if (map.find(layer) != map.end()){
+        //find meshData from map by reference
+        data = &map[layer]; //hier mit eckigen klammern weil .find ein iterator ist
+    }
+
+    if(data != nullptr){
+        
+        
+        if(createNormals){
+            data->calculateNormals();
+        }
+
+        /**
+         * example: 
+         * 
+        Mesh->CreateMeshSection(
+            layer, 
+            newvertecies, 
+            this->triangles, 
+            normals, 
+            UV0, 
+            VertexColors, 
+            Tangents, 
+            true
+        );*/
+        meshcomponent.ClearMeshSection(layer);
+        meshcomponent.CreateMeshSection(
+            layer, 
+            data->getVerteciesRef(),//newvertecies, 
+            data->getTrianglesRef(),//this->triangles, 
+            data->getNormalsRef(),//normals, 
+            data->getUV0Ref(),//UV0, 
+            data->getVertexColorsRef(),//VertexColors, 
+            data->getTangentsRef(),//Tangents, 
+            true
+        );
+
+        //set for spehere overlap
+        meshcomponent.SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        meshcomponent.SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+        meshcomponent.SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+
+    }
+    //enable if was disabled!
+    AActorUtil::showActor(*this, true);
+    AActorUtil::enableColliderOnActor(*this, true);
+
+
+    if(!enableCollision){
+        MeshNoRaycast->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    }else{
+        MeshNoRaycast->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    }
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -415,8 +522,17 @@ void AcustomMeshActorBase::createTwoSidedQuad(
 
 
 
-
-
+/// @brief applies the material to the no raycast layer as expected
+/// @param type 
+void AcustomMeshActorBase::ApplyMaterialNoRaycastLayer(
+    materialEnum type
+){
+    int layer = AcustomMeshActorBase::layerByMaterialEnum(type);
+    if (assetManager *e = assetManager::instance())
+    {
+        ApplyMaterial(MeshNoRaycast, e->findMaterial(type), layer);
+    }
+}
 
 
 
@@ -433,12 +549,9 @@ void AcustomMeshActorBase::ApplyMaterial(
 }
 
 
-
-
-
-
-
-
+/// @brief returns the layer by material enum type
+/// @param type type of material
+/// @return int layer index
 int AcustomMeshActorBase::layerByMaterialEnum(materialEnum type){
     std::vector<materialEnum> types = {
         materialEnum::grassMaterial,
@@ -456,3 +569,5 @@ int AcustomMeshActorBase::layerByMaterialEnum(materialEnum type){
     }
     return 0;
 }
+
+

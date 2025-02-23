@@ -325,37 +325,6 @@ void AcustomMeshActor::createCube(
     }
 
 
-
-    /*
-    TArray<FVector> output;
-    TArray<int32> newtriangles;
-    TArray<FVector> newNormals;
-    // bottom
-    // flipped 180 degree?
-    buildQuad(a, d, c, b, output, newtriangles);
-
-    //top
-    //a b c und d sollten richtig herum gedreht sein wenn man abc und d bildet
-    buildQuad(a1, b1, c1, d1, output, newtriangles);
-
-    //sides
-    //must be reverse winding order (ccl)
-    //instead of 0123 -> 3210 to be flipped correctly!
-    buildQuad(b, b1, a1, a, output, newtriangles); //correct, must be reverse winding order (ccl)
-    buildQuad(c, c1, b1, b, output, newtriangles); 
-    buildQuad(d, d1, c1, c, output, newtriangles);
-    buildQuad(a, a1, d1, d, output, newtriangles);
-    
-
-    updateMesh(output, newtriangles, false);
-    if(material != nullptr){
-        ApplyMaterial(Mesh, material);
-    }else{
-        //find wall material if none was provided / nullptr
-        if(assetManager *e = assetManager::instance()){
-            ApplyMaterial(Mesh, e->findMaterial(materialEnum::wallMaterial));
-        }
-    }*/
 }
 
 
@@ -473,10 +442,14 @@ void AcustomMeshActor::createFoliage(TArray<FVectorTouple> &touples){
     }
 
 
+    //updateMeshNoRaycastLayer(meshDataStem, false, layerByMaterialEnum(materialEnum::treeMaterial));
+
     updateMesh(meshDataStem, false, layerByMaterialEnum(materialEnum::treeMaterial));
-    updateMesh(meshDataLeaf, false, layerByMaterialEnum(materialEnum::palmLeafMaterial));
     ApplyMaterial(materialEnum::treeMaterial);
-    ApplyMaterial(materialEnum::palmLeafMaterial);
+
+    //different layer for meshes, no raycast / physics
+    updateMeshNoRaycastLayer(meshDataLeaf, false, layerByMaterialEnum(materialEnum::palmLeafMaterial));
+    ApplyMaterialNoRaycastLayer(materialEnum::palmLeafMaterial);
 
 }
 

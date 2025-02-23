@@ -21,11 +21,18 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
+	void enableCollisionOnLayer(materialEnum type, bool enable);
+	void enableCollisionOnLayer(int layer, bool enable);
+	void enableCollisionByPreset();
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	void ApplyMaterial(
+		materialEnum type
+	);
+	void ApplyMaterialNoRaycastLayer(
 		materialEnum type
 	);
 
@@ -78,14 +85,29 @@ public:
 	
 	
 	void updateMesh(MeshData &otherMesh, bool createNormals, int layer);
+	void updateMeshNoRaycastLayer(MeshData &otherMesh, bool createNormals, int layer);
 
 protected:
 
+	void updateMesh(
+		UProceduralMeshComponent &meshcomponent,
+		MeshData &otherMesh, 
+		bool createNormals, 
+		int layer, 
+		std::map<int, MeshData> &map,
+		bool enableCollision
+	);
+
+
 	/// @brief saves the mesh data in a map for each layer, keeps things organized
 	std::map<int, MeshData> meshLayersMap;
+	std::map<int, MeshData> meshLayersMapNoRaycast;
 
 	UPROPERTY(VisibleAnywhere)
 	class UProceduralMeshComponent *Mesh;
+
+	UPROPERTY(VisibleAnywhere)
+	class UProceduralMeshComponent *MeshNoRaycast;
 
 
 
