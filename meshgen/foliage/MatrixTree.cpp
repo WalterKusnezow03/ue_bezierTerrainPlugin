@@ -197,7 +197,9 @@ void MatrixTree::generateMesh(){
 
 void MatrixTree::wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &mesh){
 
-    if(matricesIn.size() > 1){
+    MeshData subMesh;
+    if (matricesIn.size() > 1)
+    {
 
         //einfach alle shapes moven und dann connecten
         std::vector<FVectorShape> allShapes;
@@ -214,7 +216,7 @@ void MatrixTree::wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &mesh){
         }
 
         FVectorShape &prevShape = allShapes[0];
-        for (int i = 1; i < allShapes.size(); i++){
+        for (int i = 1; i < allShapes.size(); i++){ //was 1
             FVectorShape &currentShape = allShapes[i];
 
             // ---- OLD ----
@@ -223,7 +225,7 @@ void MatrixTree::wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &mesh){
             //mesh.append(joinedMesh);
 
             // --- NEw ----
-            currentShape.joinMeshData(mesh);
+            currentShape.joinMeshData(subMesh);
 
             //keep
             prevShape = currentShape;
@@ -236,11 +238,13 @@ void MatrixTree::wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &mesh){
         for (int i = 0; i < leaftopLocations.size(); i++){
             leafTops.push_back(leaftopLocations[i]);
         }
+        
+        subMesh.calculateNormals();
     }
+
+    
+    mesh.append(subMesh);
 }
-
-
-
 
 void MatrixTree::createSubTrees(MMatrix &offset, TreeProperties &prop){
     for (int i = 0; i < prop.subTreeCount(); i++){
