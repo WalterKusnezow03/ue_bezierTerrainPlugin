@@ -7,6 +7,8 @@
 #include "Components/BoxComponent.h"
 #include "KismetProceduralMeshLibrary.h"
 #include "p2/meshgen/generation/bezierCurve.h"
+#include "p2/meshgen/foliage/MatrixTree.h"
+#include "p2/meshgen/foliage/ETreeType.h"
 #include "customMeshActor.h"
 
 
@@ -175,12 +177,10 @@ void AcustomMeshActor::createTerrainFrom2DMap(
     //must be called here.
     setMaterialBehaiviour(materialEnum::grassMaterial, false); //no split
     
-
-
-    //iterate over touples and add foliage based on height and if the pane is flat or vertical
+    DebugHelper::logMessage("debugCreateFoliage_terrain!");
     if(createTrees){
-        MeshData mFoliage = createFoliage(touples);
-        updateMesh(mFoliage, false, 2); //try no normals for trees, layer 2 trees, ist getrennt.
+        DebugHelper::logMessage("debugCreateFoliage");
+        createFoliage(touples);
     }
 
 
@@ -432,333 +432,73 @@ void AcustomMeshActor::createCube(
 
 
 
-
-
-
-
-/*
-
-
-/// @brief creates a two sided quad from 4 vertecies and a material
-/// expecting the vertecies to be already ordered correctly in clockwise order from a to d!
-/// Will apply the mesh layer 0 and material immidiatly for this actor
-/// @param a a0
-/// @param b b1
-/// @param c c2
-/// @param d d3
-/// @param material material to be applied, must not be nullptr
-void AcustomMeshActor::createTwoSidedQuad(
-    FVector &a, 
-    FVector &b,
-    FVector &c,
-    FVector &d,
-    UMaterial *material
-){
-    createTwoSidedQuad(a, b, c, d, material, false);
-}
-
-void AcustomMeshActor::createTwoSidedQuad(
-    FVector &a, 
-    FVector &b,
-    FVector &c,
-    FVector &d,
-    UMaterial *material,
-    bool calculateNormals
-){
-    if(material != nullptr){
-        MeshData meshDataOut;
-        createTwoSidedQuad(a, b, c, d, meshDataOut);
-
-        updateMesh(meshDataOut, calculateNormals, 0);
-        ApplyMaterial(Mesh, material, 0);
-
-        DebugHelper::logMessage("material was not null!");
-    }
-}
-
-
-
-
-
-
-
-
-/// @brief build a quad out of two triangles! Important otherwise unfixable issues are in the mesh
-/// @param a 
-/// @param b 
-/// @param c 
-/// @param d 
-/// @param output 
-/// @param trianglesOutput 
-void AcustomMeshActor::buildQuad(
-    FVector &a, 
-    FVector &b, 
-    FVector &c, 
-    FVector &d, 
-    TArray<FVector> &output,
-    TArray<int32> &trianglesOutput
-){
-
-    //must be individual triangles:
-    //quads: buggy + the engine is converting it to triangles back again anyway
-    buildTriangle(a, b, c, output, trianglesOutput);
-    buildTriangle(a, c, d, output, trianglesOutput);
-    return;
-
-    
-    //            1--2
-    //            |  |
-    //            0<-3
-
-    //            b--c
-    //            |  |
-    //            a<-d
-    
-
-}
-
-
-
-/// @brief all quads MUST BE BUILD out of TRIANGLES, OTHERWISE MANY BUGS OCCUR!
-/// @param a corner 0
-/// @param b corner 1
-/// @param c corner 2
-/// @param output output to append in
-/// @param trianglesOutput triangle int32 as nums saved in here, also appended
-void AcustomMeshActor::buildTriangle(
-    FVector &a, 
-    FVector &b, 
-    FVector &c,
-    TArray<FVector> &output,
-    TArray<int32> &trianglesOutput
-){
-    //add vertecies
-    output.Add(a);
-    output.Add(b);
-    output.Add(c);
-
-    //add triangles
-    int32 offset = trianglesOutput.Num();
-
-    trianglesOutput.Add(0 + offset); // 0th vertex in the first triangle
-    trianglesOutput.Add(1 + offset); // 1st vertex in the first triangle
-    trianglesOutput.Add(2 + offset); // 2nd vertex in the first triangle
-    
-}
-
-
-
-void AcustomMeshActor::createQuad(
-		FVector &a,
-		FVector &b,
-		FVector &c,
-		FVector &d,
-		MeshData &output
-){
-    TArray<FVector> vertecies;
-    TArray<int32> triangles;
-    buildTriangle(a, b, c, vertecies, triangles);
-    buildTriangle(a, c, d, vertecies, triangles);
-
-    MeshData append(
-        MoveTemp(vertecies),
-        MoveTemp(triangles)
-    );
-    output.append(append);
-}
-
-
-void AcustomMeshActor::createTwoSidedQuad(
-    FVector &a,
-	FVector &b,
-	FVector &c,
-	FVector &d,
-	MeshData &output
-){
-    createQuad(a, b, c, d, output);
-    createQuad(a, d, c, b, output);
-}
-
-
-/// @brief applys a material to the whole component (slot 0 by default)
-/// @param ProceduralMeshComponent 
-/// @param Material 
-void AcustomMeshActor::ApplyMaterial(UProceduralMeshComponent* ProceduralMeshComponent, UMaterial* Material) {
-    ApplyMaterial(ProceduralMeshComponent, Material, 0);
-}
-
-/// @brief applys a material to the whole component at passed index slot
-/// @param ProceduralMeshComponent mesh to apply for
-/// @param Material material to set
-/// @param layer layer to apply for / index
-void AcustomMeshActor::ApplyMaterial(
-    UProceduralMeshComponent* ProceduralMeshComponent, 
-    UMaterial* Material,
-    int layer
-) {
-	if (ProceduralMeshComponent != nullptr && Material != nullptr) {
-		// Apply the material to the first material slot (index 0) of the procedural mesh
-		ProceduralMeshComponent->SetMaterial(layer, Material);
-
-    }
-}*/
-
-
-
-
-
-
 /// @brief create foliage and append it to the output mesh data, the output mesh data will
 /// get its position from the actor. The touples expected to be in local coordinate system
 /// @param touples lcoation and normal in a touple
 /// @param outputAppend for example a terrain mesh to create trees on
-MeshData AcustomMeshActor::createFoliage(TArray<FVectorTouple> &touples){
-    MeshData outputAppend;
+void AcustomMeshActor::createFoliage(TArray<FVectorTouple> &touples){
+    MeshData meshDataStem;
+    MeshData meshDataLeaf;
+
     // iterate over touples
     // determine normal angle and apply foliage, rocks, trees accordingly
-    if(touples.Num() < 1){
-        return outputAppend;
+    if (touples.Num() < 1){
+        return;
     }
 
-    int created = 0;
 
     //saves the vertical locations to later choose random once and remove from list
     std::vector<FVector> potentialLocations;
 
     //if normal faces towards up: flat area, create something
     for(FVectorTouple &t : touples){
-
         FVector &location = t.first();
         FVector &normal = t.second();
-
         bool facingUpwards = FVectorUtil::directionIsVertical(normal);
         if(facingUpwards){
-            potentialLocations.push_back(location);
-
-            
+            potentialLocations.push_back(location); 
         }
     }
 
     //create trees at random valid locations
     int limit = 3; //tree count
-    int count = 0;
-    int random = 0;
-    int size = potentialLocations.size();
-    while (size > 0){
+    for (int i = 0; i < limit; i++){
 
-        random = FVectorUtil::randomNumber(0, size);
-        if(random < size){
-            FVector vec = potentialLocations[random]; //copy, not ref.
-            potentialLocations.erase(potentialLocations.begin() + random);
-            
-            // create tree
-            MeshData mData = createTree(10, 1); //need to apply offset!
-            //apply offset
-            TArray<FVector> &vertecies = mData.getVerteciesRef();
-            for (int i = 0; i < vertecies.Num(); i++){
-                vertecies[i] += vec; //apply offset to object (normal location)
-            }
-
-            outputAppend.append(mData);
-
-            size--;
-        }
-
-        count++;
-        if(count > limit){
-            return outputAppend;
-        }
-    }
-
-    return outputAppend;
-}
-
-
-
-
-
-
-/// @brief creates a random curve and an extruded bezier from there, will be symetrical
-/// @param sizeMeters 
-/// @param thicknessMeters 
-/// @return 
-MeshData AcustomMeshActor::createTree(int sizeMeters, float thicknessMeters){
-    MeshData outmeshData;
-    bezierCurve s;
-
-    //create anchors and curve
-    int nodesToMake = 3;
-    int einheitsValue = (sizeMeters / nodesToMake);
-    std::vector<FVector2D> nodes;
-    for (int i = 0; i < nodesToMake; i++)
-    {
-        FVector2D b(
-            einheitsValue * i,//step along x axis 
-            FVectorUtil::randomNumber(0, sizeMeters / 3) //some random number
-        );
-        b *= 100;
-        nodes.push_back(b);
-        if(i == 0){
-            b.Y += 10;
-            nodes.push_back(b);
-        }
-    }
-
-    TVector<FVector2D> out;
-    s.calculatecurve(nodes, out, einheitsValue);
-
-    
-
-    //extrude from points
-    int t = (thicknessMeters * 100) / 4; //thickness
-    std::vector<FVector> extrudeDirs = {
-        FVector(-t, -t, 0),
-        FVector(-t, t, 0),
-        FVector(t, t, 0),
-        FVector(t, -t, 0),
-        FVector(-t, -t, 0) //create circle, reconnect to first! (?)
-    };
-
-    //create 2d mesh instead which can be wrapped like a 2d mesh but vertically
-    
-    std::vector<std::vector<FVector>> meshWrap;
-    for (int i = 0; i < out.size(); i++)
-    {
-        FVector2D &upper = out[i];
-        FVector UpperTo3D(
-            upper.Y,
-            0,
-            upper.X
-        );
-        
-
-        //extrude needed and order to create a 2d mesh properly, lower, upper, around the mesh
-        std::vector<FVector> higherRing;
-        for (int j = 0; j < extrudeDirs.size(); j++)
+        int index = FVectorUtil::randomNumber(0, potentialLocations.size() - 1);
+        if (index < potentialLocations.size() && index >= 0)
         {
-            //upper, lower is prev upper, already added
-            FVector newUpper = UpperTo3D + extrudeDirs[j];
-            higherRing.push_back(newUpper);
+            createTreeAndSaveMeshTo(potentialLocations[index], meshDataStem, meshDataLeaf);
+            potentialLocations.erase(potentialLocations.begin() + index);
         }
-
-        meshWrap.push_back(higherRing);
     }
 
-    process2DMapSimple(meshWrap, outmeshData);
-    return outmeshData;
+
+    updateMesh(meshDataStem, false, layerByMaterialEnum(materialEnum::treeMaterial));
+    updateMesh(meshDataLeaf, false, layerByMaterialEnum(materialEnum::palmLeafMaterial));
+    ApplyMaterial(materialEnum::treeMaterial);
+    ApplyMaterial(materialEnum::palmLeafMaterial);
+
 }
 
 
 
+void AcustomMeshActor::createTreeAndSaveMeshTo(
+    FVector &location, 
+    MeshData &meshDataStem, 
+    MeshData &meshDataLeaf
+){
+    MatrixTree tree;
+    tree.generate(1000, 100, ETreeType::EPalmTree); //1000 height, 100 step per matrix
+    
+    MeshData &currentTreeStemMesh = tree.meshDataStemByReference();
+    MeshData &currentLeafMesh = tree.meshDataLeafByReference();
 
+    currentTreeStemMesh.offsetAllvertecies(location);
+    currentLeafMesh.offsetAllvertecies(location);
 
-
-
-
-
-
-
-
+    meshDataStem.append(currentTreeStemMesh);
+    meshDataLeaf.append(currentLeafMesh);
+}
 
 /// @brief will replace the actor and split it (int terms of bounds) and apply an material
 /// will not use original mesh, just the bounds

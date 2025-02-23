@@ -26,8 +26,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	void ApplyMaterial(
-		materialEnum type,
-		int layer
+		materialEnum type
 	);
 
 	virtual void createTerrainFrom2DMap(
@@ -114,10 +113,16 @@ protected:
 
 	//ok
 
+
 	void ApplyMaterial(UProceduralMeshComponent *ProceduralMeshComponent, UMaterial *Material);
 	void ApplyMaterial(
 		UProceduralMeshComponent *ProceduralMeshComponent,
 		UMaterial *Material,
 		int layer
 	);
+
+
+
+public:
+	static int layerByMaterialEnum(materialEnum type);
 };

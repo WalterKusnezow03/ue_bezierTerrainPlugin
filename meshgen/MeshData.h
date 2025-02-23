@@ -54,7 +54,7 @@ public:
 	TArray<FProcMeshTangent> &getTangentsRef();
 	TArray<FColor> &getVertexColorsRef();
 
-	
+	void offsetAllvertecies(FVector &offset);
 
 private:
 	void clearNormals();

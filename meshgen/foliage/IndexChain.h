@@ -16,11 +16,22 @@ public:
 	void addIndex(int i);
 	std::vector<int> &indexChain();
 
+	void addMatrix(MMatrix &other);
+	std::vector<MMatrix> &matrixChain();
+
 	void setOffsetMatrix(MMatrix &mat);
 
 	MMatrix &offsetMatrixRef();
 
+	MMatrix &endMatrixRef();
+	void updateEndMatrix(MMatrix &other);
+
+	void resetMatrices();
+
 private:
 	std::vector<int> indexChainVector;
+
 	MMatrix offsetMatrix;
+	MMatrix endMatrix;
+	std::vector<MMatrix> matrixChainVector;
 };

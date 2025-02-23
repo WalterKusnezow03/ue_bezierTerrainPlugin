@@ -55,10 +55,8 @@ void MatrixTree::generate(int height, int cmPerStep, ETreeType type){
     //create randomRotations
     randomRotationForAllMatrices();
 
-    MMatrix stemStart = stemTop();
-    int partsPerSubtree = 10;
-    int subTrees = subTreeCountByEnum(treeType);
-    createSubTrees(stemStart, partsPerSubtree, subTrees);
+    stemTop = stem.endMatrixRef();
+    createSubTrees(stemTop);
 
     generateMesh();
     generateLeafs();
@@ -124,51 +122,14 @@ std::vector<FVectorShape> MatrixTree::shapeByEnum(ETreeType type){
 }
 
 
+
 void MatrixTree::generateMesh(){
-    /*
-    achtung denkfehler: meshes überlappen sich ggf, die ketten müssen sinnvoll getrennt werden!
-    man könnte für jeden starting index eine matrix speichern
-    */
     for (int i = 0; i < indexChains.size(); i++){
         IndexChain &indexChain = indexChains[i];
-        std::vector<MMatrix> buildedChain = buildChain(indexChain);
-        wrapWithMesh(buildedChain, ownMeshData);
-
-        //add to leaf locations
-        if(buildedChain.size() > 0){
-            leafTops.push_back(buildedChain.back());
-        }
+        wrapWithMesh(indexChain.matrixChain(), ownMeshData);
     }
 }
 
-std::vector<MMatrix> MatrixTree::buildChain(IndexChain &indexChain){
-    std::vector<MMatrix> outputChain;
-    MMatrix current = indexChain.offsetMatrixRef();
-    outputChain.push_back(current);
-    std::vector<int> &chainRef = indexChain.indexChain();
-
-    // build chain
-    for (int i = 0; i < chainRef.size(); i++)
-    {
-        int index = chainRef[i];
-        current *= matrixByIndex(index);
-        outputChain.push_back(current);
-    }
-    return outputChain;
-}
-
-
-/// @brief calculates the stem top location based on matricies 0 to stemCountTop
-/// @return offsetMatrix top of stem
-MMatrix MatrixTree::stemTop(){
-    MMatrix mat;
-    for (int i = 0; i < stemCountTop - 1; i++){
-        if(indexIsValid(i)){
-            mat *= matrixByIndex(i);
-        }
-    }
-    return mat;
-}
 
 void MatrixTree::wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &mesh){
 
@@ -198,7 +159,23 @@ void MatrixTree::wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &mesh){
 
             prevShape = currentShape;
         }
+
+        //add to leaf locations
+        leafTops.push_back(matricesIn.back());
+        std::vector<MMatrix> leaftopLocations;
+        prevShape.copyVertecies(leaftopLocations);
+        for (int i = 0; i < leaftopLocations.size(); i++){
+            leafTops.push_back(leaftopLocations[i]);
+        }
     }
+}
+
+
+
+void MatrixTree::createSubTrees(MMatrix &offset){
+    int partsPerSubtree = partsPerSubTreeByEnum(treeType);
+    int subTrees = subTreeCountByEnum(treeType);
+    createSubTrees(offset, partsPerSubtree, subTrees);
 }
 
 void MatrixTree::createSubTrees(MMatrix &offset, int partsPerTree, int count){
@@ -217,17 +194,38 @@ IndexChain MatrixTree::createSubTree(MMatrix &offset, int parts){
             subtree.addIndex(random);
         }
     }
+    buildChain(subtree);
     return subtree;
 }
+
+/// @brief builds the chain from the index list and updates the inner matrix chain aswell as the end index
+/// @param indexChain 
+void MatrixTree::buildChain(IndexChain &indexChain){
+    indexChain.resetMatrices();
+
+    MMatrix current = indexChain.offsetMatrixRef();
+    indexChain.addMatrix(current);
+    std::vector<int> &chainRef = indexChain.indexChain();
+
+    // build chain
+    for (int i = 0; i < chainRef.size(); i++)
+    {
+        int index = chainRef[i];
+        current *= matrixByIndex(index);
+        indexChain.addMatrix(current);
+    }
+    indexChain.updateEndMatrix(current);
+}
+
 
 
 
 int MatrixTree::rotationRangeByEnum(ETreeType type){
     if(type == ETreeType::Edefault){
-        return 40;
+        return 30;
     }
     if(type == ETreeType::EPalmTree){
-        return 15;
+        return 40;
     }
     return 10;
 }
@@ -237,10 +235,24 @@ int MatrixTree::subTreeCountByEnum(ETreeType type){
         return FVectorUtil::randomNumber(3,5);
     }
     if(type == ETreeType::EPalmTree){
-        return FVectorUtil::randomNumber(0,2);
+        int count = FVectorUtil::randomNumber(0,2);
+        if(count == 1){
+            return 0;
+        }
     }
     return 0;
 }
+
+int MatrixTree::partsPerSubTreeByEnum(ETreeType type){
+    if(type == ETreeType::Edefault){
+        return FVectorUtil::randomNumber(3,5);
+    }
+    if(type == ETreeType::EPalmTree){
+        return FVectorUtil::randomNumber(8,10);
+    }
+    return 5;
+}
+
 
 void MatrixTree::randomRotationForAllMatrices(){
     int prevPitch = 0;
@@ -269,6 +281,16 @@ MMatrix MatrixTree::randomRotator(){
     return rotator;
 }
 
+MMatrix MatrixTree::randomRotator(int lower, int heigher){
+    MMatrix rotator;
+    rotator.rollRadAdd(MMatrix::degToRadian(FVectorUtil::randomNumber(lower,heigher)));
+    rotator.pitchRadAdd(MMatrix::degToRadian(FVectorUtil::randomNumber(lower,heigher)));
+    rotator.yawRadAdd(MMatrix::degToRadian(FVectorUtil::randomNumber(lower,heigher)));
+    return rotator;
+}
+
+
+
 /**
  * 
  * --- leaf generation section ---
@@ -286,7 +308,7 @@ void MatrixTree::generateLeafs(){
 
 void MatrixTree::generateLeaf(MMatrix &offset){
     //M = T * R <-- lese richtung --
-    MMatrix rotation = randomRotator();
+    MMatrix rotation = randomRotator(-90, 90);
     MMatrix offsetFinal = offset * rotation;
 
     FVectorShape shape = leafShapeByEnum(treeType);
@@ -296,6 +318,11 @@ void MatrixTree::generateLeaf(MMatrix &offset){
     leafMeshData.append(closedLeaf);
 }
 
+
+
+/// @brief generates a leaf shape by enum type
+/// @param type 
+/// @return 
 FVectorShape MatrixTree::leafShapeByEnum(ETreeType type){
     FVectorShape output;
 
@@ -303,21 +330,33 @@ FVectorShape MatrixTree::leafShapeByEnum(ETreeType type){
 
     }
     if(type == ETreeType::EPalmTree){
-        FVectorShape outputA;
-        outputA.push_back(FVector(0, 0, 0));
-        outputA.push_back(FVector(-10, 20, 0));
-        outputA.push_back(FVector(-10, 40, 0));
-        outputA.push_back(FVector(-5, 60, 0));
-        output = outputA;
-
+        FVectorShape oneSide;
+        oneSide.push_back(FVector(0, 0, 0));
+        oneSide.push_back(FVector(-10, 0, 20));
+        oneSide.push_back(FVector(-10, 0, 40));
+        oneSide.push_back(FVector(-5, 0, 60));
+        oneSide.push_back(FVector(0, 0, 70));
+        output = oneSide;
+        
+        //flip shape for copy
         MMatrix flip;
         flip.scale(-1.0f, 1.0f, 1.0f);
-        outputA.moveVerteciesWith(flip);
-        output.push_back(outputA);
+        oneSide.moveVerteciesWith(flip);
+
+        //rotate vertecies to create folding leaf
+        MMatrix rotateLeft;
+        rotateLeft.yawRadAdd(MMatrix::degToRadian(40));
+        MMatrix rotateRight;
+        rotateRight.yawRadAdd(MMatrix::degToRadian(-40));
+        output.moveVerteciesWith(rotateLeft);
+        oneSide.moveVerteciesWith(rotateRight);
+
+        //merge both leafs
+        output.push_back(oneSide); 
 
 
         MMatrix scaleUp;
-        scaleUp.scaleUniform(3.0f);
+        scaleUp.scaleUniform(4.0f);
         output.moveVerteciesWith(scaleUp);
     }
 

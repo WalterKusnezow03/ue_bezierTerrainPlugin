@@ -100,3 +100,14 @@ MeshData FVectorShape::createDoubleSidedMesh(){
     mesh.calculateNormals();
     return mesh;
 }
+
+
+
+
+void FVectorShape::copyVertecies(std::vector<MMatrix> &output){
+    for (int i = 0; i < vec.size(); i++){
+        MMatrix mat;
+        mat.setTranslation(vec[i]);
+        output.push_back(mat);
+    }
+}

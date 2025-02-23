@@ -153,12 +153,12 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
 
 
     //process created data and apply meshes and materials
-    updateMesh(grassLayer, true, 0);
-    updateMesh(stoneLayer, true, 1);
+    updateMesh(grassLayer, true, layerByMaterialEnum(materialEnum::grassMaterial));
+    updateMesh(stoneLayer, true, layerByMaterialEnum(materialEnum::stoneMaterial));
 
-    ApplyMaterial(materialEnum::grassMaterial, 0);
-    ApplyMaterial(materialEnum::stoneMaterial, 1);
-    ApplyMaterial(materialEnum::treeMaterial, 2);
+    ApplyMaterial(materialEnum::grassMaterial);
+    ApplyMaterial(materialEnum::stoneMaterial);
+    ApplyMaterial(materialEnum::treeMaterial);
 
     
 	
@@ -415,11 +415,19 @@ void AcustomMeshActorBase::createTwoSidedQuad(
 
 
 
+
+
+
+
+
+/// @brief will automatically apply the layer!
+/// @param type material enum type to refresh
 void AcustomMeshActorBase::ApplyMaterial(
-    materialEnum type,
-    int layer
+    materialEnum type
 ){
-    if(assetManager *e = assetManager::instance()){
+    int layer = AcustomMeshActorBase::layerByMaterialEnum(type);
+    if (assetManager *e = assetManager::instance())
+    {
         ApplyMaterial(Mesh, e->findMaterial(type), layer);
     }
 }
@@ -427,3 +435,24 @@ void AcustomMeshActorBase::ApplyMaterial(
 
 
 
+
+
+
+
+int AcustomMeshActorBase::layerByMaterialEnum(materialEnum type){
+    std::vector<materialEnum> types = {
+        materialEnum::grassMaterial,
+        materialEnum::wallMaterial,
+        materialEnum::glassMaterial,
+        materialEnum::stoneMaterial,
+        materialEnum::sandMaterial,
+        materialEnum::treeMaterial,
+        materialEnum::palmLeafMaterial
+    };
+    for (int i = 0; i < types.size(); i++){
+        if(type == types[i]){
+            return i;
+        }
+    }
+    return 0;
+}

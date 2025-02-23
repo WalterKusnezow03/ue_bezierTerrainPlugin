@@ -27,6 +27,8 @@ public:
 
 	MeshData createDoubleSidedMesh();
 
+	void copyVertecies(std::vector<MMatrix> &output);
+
 private:
 	std::vector<FVector> vec;
 };

@@ -29,6 +29,7 @@ terrainCreator::~terrainCreator()
 
 terrainCreator::chunk::chunk(int xPos, int yPos)
 {
+    setTreesBlocked(false);
     x = xPos;
     y = yPos;
 
@@ -958,9 +959,8 @@ void terrainCreator::applyTerrainDataToMeshActors(std::vector<AcustomMeshActorBa
             }
             std::vector<std::vector<FVector>> &mapReference = currentChunk->readAndMerge(top, right, topright);
 
-            bool treesBlocked = currentChunk->createTrees();
-            currentActor->createTerrainFrom2DMap(mapReference, treesBlocked);
-            //currentActor->setMaterialBehaiviour(materialEnum::grassMaterial, false); //no split
+            bool createTrees = currentChunk->createTrees();
+            currentActor->createTerrainFrom2DMap(mapReference, createTrees);
 
             
 
@@ -1048,27 +1048,30 @@ void terrainCreator::applyHillData(terrainHillSetup &hillData){
  * 
  */
 void terrainCreator::debugCreateTerrain(UWorld *world){
-    FVector location(0, 0, 0);
-    int meters = 200;
-    createTerrain(world, meters);
+    if(world != nullptr){
+        FVector location(0, 0, 0);
+        int meters = 200;
+        createTerrain(world, meters);
 
-    int numberCreated = chunkNum();
-    std::vector<AcustomMeshActorBase *> meshactors;// = e->requestMeshActors(world, numberCreated);
+        int numberCreated = chunkNum();
+        std::vector<AcustomMeshActor *> meshactors;// = e->requestMeshActors(world, numberCreated);
 
-    for (int i = 0; i < numberCreated; i++){
-        FRotator rotation;
-        FActorSpawnParameters params;
-        AcustomMeshActorBase *SpawnedActor = world->SpawnActor<AcustomMeshActorBase>(
-            AcustomMeshActorBase::StaticClass(),
-            location,
-            FRotator::ZeroRotator,
-            params
-        );
-        if(SpawnedActor != nullptr){
-            meshactors.push_back(SpawnedActor);
+        for (int i = 0; i < numberCreated; i++){
+            FRotator rotation;
+            FActorSpawnParameters params;
+            AcustomMeshActor *SpawnedActor = world->SpawnActor<AcustomMeshActor>(
+                AcustomMeshActor::StaticClass(),
+                location,
+                FRotator::ZeroRotator,
+                params
+            );
+            if(SpawnedActor != nullptr){
+                meshactors.push_back(SpawnedActor);
+            }
         }
-    }
 
-    applyTerrainDataToMeshActors(meshactors);
+        applyTerrainDataToMeshActors(meshactors);
+    }
+    
 
 }

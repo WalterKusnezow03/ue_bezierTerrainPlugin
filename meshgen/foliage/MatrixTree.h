@@ -28,7 +28,7 @@ public:
 private:
 	void clean();
 
-	int leafCountPerJoint = 20;
+	int leafCountPerJoint = 10;
 
 	void generateMesh();
 	void generateLeafs();
@@ -39,21 +39,19 @@ private:
 
 	ETreeType treeType;
 	int stemCountTop;
-	MMatrix stemTop();
 
+	MMatrix stemTop;
 
-	/** 
-	 * Alle matrizen sollten in einem vektor festgehalten werden
-	 * Die chains sollten mit indices erstellt werden
-	 */
 	std::vector<MMatrix> matrices;
+
+	/// @brief index chains to save subtrees instead of copying all matrices
 	std::vector<IndexChain> indexChains;
 	MMatrix identityMatrix;
 
 	std::vector<MMatrix> leafTops;
 
 	std::vector<FVectorShape> shapeByEnum(ETreeType type);
-	std::vector<MMatrix> buildChain(IndexChain &indexChain);
+	void buildChain(IndexChain &indexChain);
 
 	FVectorShape leafShapeByEnum(ETreeType type);
 
@@ -63,12 +61,15 @@ private:
 
 	void wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &meshToAddTo);
 
+
+	void createSubTrees(MMatrix &offset);
 	void createSubTrees(MMatrix &offset, int partsPerTree, int count);
 	IndexChain createSubTree(MMatrix &offset, int parts);
 
 	int subTreeCountByEnum(ETreeType type);
 	int rotationRangeByEnum(ETreeType type);
-
+	int partsPerSubTreeByEnum(ETreeType type);
 
 	MMatrix randomRotator();
+	MMatrix randomRotator(int lower, int heigher);
 };

@@ -71,7 +71,6 @@ public:
 		MeshData &outputData
 	);
 
-	MeshData createTree(int sizeMeters, float thicknessMeters);
 
 	void createCube(
 		FVector &a,
@@ -117,40 +116,6 @@ public:
 		MeshData &meshDataOutput
 	);
 
-	/*
-	void createTwoSidedQuad(
-		FVector &a, 
-		FVector &b, 
-		FVector &c, 
-		FVector &d, 
-		UMaterial *material);
-
-	void createTwoSidedQuad(
-		FVector &a,
-		FVector &b,
-		FVector &c,
-		FVector &d,
-		UMaterial *material,
-		bool calculateNormals
-	);
-
-
-
-	static void createQuad(
-		FVector &a,
-		FVector &b,
-		FVector &c,
-		FVector &d,
-		MeshData &output
-	);
-
-	static void createTwoSidedQuad(
-		FVector &a,
-		FVector &b,
-		FVector &c,
-		FVector &d,
-		MeshData &output
-	);*/
 
 	void setDamagedOwner(IDamageinterface *damagedOwnerIn);
 
@@ -166,46 +131,13 @@ protected:
 
 	class IDamageinterface *damagedOwner = nullptr;
 
-	/*
-	/// @brief saves the mesh data in a map for each layer, keeps things organized
-	std::map<int, MeshData> meshLayersMap;
 
-
-	UPROPERTY(VisibleAnywhere)
-	class UProceduralMeshComponent *Mesh;
-
-
-	void updateMesh(MeshData otherMesh, bool createNormals, int layer);
-
-
-
-	static void buildQuad(
-		FVector &a,
-		FVector &b,
-		FVector &c,
-		FVector &d,
-		TArray<FVector> &output,
-		TArray<int32> &trianglesOutput
+	void createFoliage(TArray<FVectorTouple> &touples);
+	void createTreeAndSaveMeshTo(
+		FVector &location,
+		MeshData &meshDataStem,
+		MeshData &meshDataLeaf
 	);
-
-	static void buildTriangle(
-		FVector &a,
-		FVector &b,
-		FVector &c,
-		TArray<FVector> &output,
-		TArray<int32> &trianglesOutput
-	);
-
-	void ApplyMaterial(UProceduralMeshComponent *ProceduralMeshComponent, UMaterial *Material);
-	void ApplyMaterial(
-		UProceduralMeshComponent *ProceduralMeshComponent,
-		UMaterial *Material,
-		int layer
-	);
-	*/
-
-
-	MeshData createFoliage(TArray<FVectorTouple> &touples); //, MeshData &outputAppend);
 
 	materialEnum materialtypeSet = materialEnum::grassMaterial;
 };

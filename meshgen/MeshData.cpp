@@ -238,6 +238,13 @@ void MeshData::buildTriangle(
 
 
 
+/// @brief offsets all vertecies in a given direction
+/// @param offset 
+void MeshData::offsetAllvertecies(FVector &offset){
+    for (int i = 0; i < vertecies.Num(); i++){
+        vertecies[i] += offset;
+    }
+}
 
 
 
