@@ -5,5 +5,6 @@ UENUM()
 enum class ETreeType
 {
     Edefault,
-    EPalmTree
+    EPalmTree,
+    EPalmBush
 };

@@ -15,7 +15,7 @@ bezierCurve::~bezierCurve()
 /// @brief will calculate the bezier tangential spline for you, EXPECTS ANCHORS TO BE ALONG X AXIS!
 /// @param ref reference anchor points (p0s and p3s)
 /// @param output output vector to save in, MUST BE CLEAR
-/// @param _einheitsValue einheits value between vectors, for example 100cm unreal engine scale
+/// @param _einheitsValue einheits value (distance step) between vectors, for example 100cm unreal engine scale
 void bezierCurve::calculatecurve(
     std::vector<FVector2D> &ref, 
     TVector<FVector2D> &output,
@@ -40,6 +40,61 @@ void bezierCurve::calculatecurve(
     //interpolate
     processAllPoints(ref, output); //what if you do it more than once
    
+}
+
+
+/**
+ * 
+ * ---- new 3D vertecies ---- 
+ * 
+ */
+void bezierCurve::calculatecurve(
+    std::vector<FVector> &ref, 
+    std::vector<FVector> &output,
+    float _einheitsValue
+){
+    std::vector<FVector2D> vecA;
+    std::vector<FVector2D> vecB;
+    for (int i = 0; i < ref.size(); i++){
+        FVector &current = ref[i];
+        vecA.push_back(FVector2D(current.X, current.Y));
+        vecB.push_back(FVector2D(current.X, current.Z));
+    }
+
+    TVector<FVector2D> outA;
+    TVector<FVector2D> outB;
+    calculatecurve(
+        vecA,
+        outA,
+        _einheitsValue
+    );
+    calculatecurve(
+        vecB,
+        outB,
+        _einheitsValue
+    );
+
+    //merge
+    int larger = outA.size() > outB.size() ? outA.size() : outB.size();
+    for (int i = 0; i < larger; i++)
+    {
+        FVector2D currentA;
+        FVector2D currentB;
+        if(i < outA.size()){
+            currentA = outA[i];
+        }else{
+            currentA = outA[outA.size() - 1];
+        }
+
+        if(i < outB.size()){
+            currentB = outB[i];
+        }else{
+            currentB = outB[outB.size() - 1];
+        }
+
+        FVector merge(currentA.X, currentA.Y, currentB.Y);
+        output.push_back(merge);
+    }
 }
 
 /// @brief iterates over the anchors and moves them closer on y axis together based on their distance on x
@@ -89,15 +144,22 @@ void bezierCurve::createContinuityCurve(std::vector<FVector2D> &anchors){
 
             //is just linear at first
             FVector2D p1 = p0 + direction * BETAConst; 
-            FVector2D p2 = p3 - direction * BETAConst; 
+            //FVector2D p2 = p3 - direction * BETAConst; 
 
-            FVector2D p4 = p3 + direction * BETAConst;
+            //FVector2D p4 = p3 + direction * BETAConst;
 
             curve.push_back(p0);
             curve.push_back(p1);
-            curve.push_back(p2);
-            curve.push_back(p3);
-            curve.push_back(p4); //p1 für den nächsten ist das. 
+
+            createNewtangentsAndPushP2P3P4(
+                p0,
+                p3,
+                curve,
+                BETAConst
+            );
+            //curve.push_back(p2);
+            //curve.push_back(p3);
+            //curve.push_back(p4); //p1 für den nächsten ist das. 
 
 
             i++;
@@ -111,6 +173,14 @@ void bezierCurve::createContinuityCurve(std::vector<FVector2D> &anchors){
 
                 //p3 und p4 wurden dann ja von vorher gepusht!, nurnoch to next tangent, point und next next tangent
                 FVector2D p6 = anchors.at(i); //next anchor
+                createNewtangentsAndPushP2P3P4(
+                    p3,
+                    p6,
+                    curve,
+                    BETAConst
+                );
+
+                /*
                 FVector2D dirToNextAnchor = (p6 - p3);
 
                 //create instead p5 and push p6
@@ -120,6 +190,7 @@ void bezierCurve::createContinuityCurve(std::vector<FVector2D> &anchors){
 
                 FVector2D tangentFromNext_p7 = p6 + dirToNextAnchor * BETAConst;
                 curve.push_back(tangentFromNext_p7); //is p4 for next!
+                */
             }
             else
             {
@@ -154,6 +225,32 @@ void bezierCurve::createContinuityCurve(std::vector<FVector2D> &anchors){
     }
 
 }
+
+
+
+/// @brief new tangents will be created (pushed into vector: p2, p3, p4)
+/// @param p0 
+/// @param p3 
+/// @param curve 
+/// @param constSkalar 
+void bezierCurve::createNewtangentsAndPushP2P3P4(
+    FVector2D &p0,
+    FVector2D &p3,
+    std::vector<FVector2D> &curve,
+    float constSkalar
+){
+    FVector2D dirToNextAnchor = (p3 - p0);
+
+    FVector2D tangentToNext_p2 = p3 - dirToNextAnchor * constSkalar; //tangent to p6 from p3
+    curve.push_back(tangentToNext_p2);
+    curve.push_back(p3);
+
+    FVector2D tangentFromNext_p4 = p3 + dirToNextAnchor * constSkalar;
+    curve.push_back(tangentFromNext_p4); //is p4 for next! (p1)
+}
+
+
+
 
 
 

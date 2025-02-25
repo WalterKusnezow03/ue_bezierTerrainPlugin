@@ -16,33 +16,58 @@ MatrixTree::~MatrixTree()
 {
 }
 
+/// @brief creates presets for different tree types
 void MatrixTree::loadProperties(){
-    TreeProperties palmProperty(1000, 100, ETreeType::EPalmTree, ETerrainType::ETropical, 8, 8, 2);
+    /*
+    constructor:
+    TreeProperties(
+		int heightIn, 
+		int detailstep, 
+		ETreeType typeIn, 
+		ETerrainType terrainTypeIn,
+		int leafcountPerJointIn,
+		int partsPerSubtreeIn,
+		int subTreeCountIn
+	);
+    
+    */
+    TreeProperties palmProperty(1000, 100, ETreeType::EPalmTree, ETerrainType::ETropical, 8, 8, 3);
+    palmProperty.addTerrainType(ETerrainType::EDesert); //additional types for more than one terrain
     addPropertyToMap(palmProperty);
 
     TreeProperties oakProperty(1000, 100, ETreeType::Edefault, ETerrainType::ETropical, 30, 10, 3);
+    oakProperty.addTerrainType(ETerrainType::EForest);
     defaultProperty = oakProperty;
     addPropertyToMap(oakProperty);
 
-    TreeProperties oakProperty1(1000, 100, ETreeType::Edefault, ETerrainType::EForest, 30, 10, 3);
-    addPropertyToMap(oakProperty1);
 
+    TreeProperties palmBush(100, 50, ETreeType::EPalmBush, ETerrainType::ETropical, 30, 1, 0);
+    palmBush.addTerrainType(ETerrainType::EForest);
+    addPropertyToMap(palmBush);
 }
 
 void MatrixTree::addPropertyToMap(TreeProperties &property){
-    ETerrainType typeOfTerrain = property.getTerrainType();
-    if(terrainPropertyMap.find(typeOfTerrain) == terrainPropertyMap.end()){
-        std::vector<TreeProperties> newVec;
-        newVec.push_back(property);
-        terrainPropertyMap[typeOfTerrain] = newVec;
-        return;
-    }
 
-    std::vector<TreeProperties> &vec = terrainPropertyMap[typeOfTerrain];
-    vec.push_back(property);
+    std::vector<ETerrainType> &typesOfTerrain = property.getTerrainTypes();
+    for (int i = 0; i < typesOfTerrain.size(); i++){
+        ETerrainType typeOfTerrain = typesOfTerrain[i];
+
+        if(terrainPropertyMap.find(typeOfTerrain) == terrainPropertyMap.end()){
+            std::vector<TreeProperties> newVec;
+            newVec.push_back(property);
+            terrainPropertyMap[typeOfTerrain] = newVec;
+            return;
+        }
+    
+        std::vector<TreeProperties> &vec = terrainPropertyMap[typeOfTerrain];
+        vec.push_back(property);
+    }
+    
 }
 
-
+/// @brief founds a random tree / preset from the map by terrain type
+/// @param typeOfTerrain type of terrain wanted
+/// @return Preset found or default property
 TreeProperties MatrixTree::findProperty(ETerrainType typeOfTerrain){
     //default
     if(terrainPropertyMap.find(typeOfTerrain) == terrainPropertyMap.end()){
@@ -111,9 +136,8 @@ void MatrixTree::generate(ETerrainType terrainType){
     MMatrix identity;
     IndexChain stem = createSubTree(identity, properties);
     indexChains.push_back(stem);
-
-
     stemTop = stem.endMatrixRef();
+
     createSubTrees(stemTop, properties);
 
     generateMesh();
@@ -147,10 +171,12 @@ std::vector<FVectorShape> MatrixTree::shapeByEnum(ETreeType type){
     if(type == ETreeType::Edefault){
         size = 50;
         FVectorShape shape;
-        shape.push_back(FVector(0,0,0));
+        shape.push_back(FVector(0, 0, 0));
         shape.push_back(FVector(0,size,0));
         shape.push_back(FVector(size,size,0));
         shape.push_back(FVector(size,0,0));
+        
+
         output.push_back(shape);
     }
     if(type == ETreeType::EPalmTree){
@@ -163,6 +189,7 @@ std::vector<FVectorShape> MatrixTree::shapeByEnum(ETreeType type){
         shapeOuter.push_back(FVector(0,size,0));
         shapeOuter.push_back(FVector(size,size,0));
         shapeOuter.push_back(FVector(size,0,0));
+        
 
         MMatrix offset;
         offset.setTranslation(- size / 2.0f, - size / 2.0f, 0);
@@ -174,6 +201,7 @@ std::vector<FVectorShape> MatrixTree::shapeByEnum(ETreeType type){
         shapeInner.push_back(FVector(0,sizeInner,0));
         shapeInner.push_back(FVector(sizeInner,sizeInner,0));
         shapeInner.push_back(FVector(sizeInner,0,0));
+        
 
 
         offset.setTranslation(- sizeInner / 2.0f, - sizeInner / 2.0f, 0);
@@ -186,7 +214,7 @@ std::vector<FVectorShape> MatrixTree::shapeByEnum(ETreeType type){
 }
 
 
-
+/// @brief generates the stem meshes from the created index chains
 void MatrixTree::generateMesh(){
     for (int i = 0; i < indexChains.size(); i++){
         IndexChain &indexChain = indexChains[i];
@@ -194,14 +222,16 @@ void MatrixTree::generateMesh(){
     }
 }
 
-
+/// @brief pass in the vector of INTERPOLATED / concatenated matricies (multiplied), translation will be copied
+/// @param matricesIn matricies which are only translation copies of multiplied once
+/// @param mesh mesh data to append the stem to
 void MatrixTree::wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &mesh){
 
     MeshData subMesh;
     if (matricesIn.size() > 1)
     {
 
-        //einfach alle shapes moven und dann connecten
+        //einfach alle shapes moven und dann connecten nacheinander
         std::vector<FVectorShape> allShapes;
         
         for (int i = 0; i < matricesIn.size(); i++)
@@ -215,37 +245,36 @@ void MatrixTree::wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &mesh){
             }
         }
 
-        FVectorShape &prevShape = allShapes[0];
-        for (int i = 1; i < allShapes.size(); i++){ //was 1
-            FVectorShape &currentShape = allShapes[i];
+        if(allShapes.size() > 0){
+            
+            for (int i = 0; i < allShapes.size(); i++)
+            { 
+                FVectorShape &currentShape = allShapes[i];
+                currentShape.joinMeshData(subMesh);
+            }
 
-            // ---- OLD ----
-            //join together
-            //MeshData joinedMesh = currentShape.join(prevShape);
-            //mesh.append(joinedMesh);
+            //add to leaf locations
+            leafTops.push_back(matricesIn.back());
+            
+            FVectorShape &lastShape = allShapes.back();
+            std::vector<MMatrix> leaftopLocations;
+            lastShape.copyVertecies(leaftopLocations);
 
-            // --- NEw ----
-            currentShape.joinMeshData(subMesh);
-
-            //keep
-            prevShape = currentShape;
+            for (int i = 0; i < leaftopLocations.size(); i++){
+                leafTops.push_back(leaftopLocations[i]);
+            }
         }
-
-        //add to leaf locations
-        leafTops.push_back(matricesIn.back());
-        std::vector<MMatrix> leaftopLocations;
-        prevShape.copyVertecies(leaftopLocations);
-        for (int i = 0; i < leaftopLocations.size(); i++){
-            leafTops.push_back(leaftopLocations[i]);
-        }
+        
         
         subMesh.calculateNormals();
     }
 
-    
-    mesh.append(subMesh);
+    mesh.append(subMesh); //add new subtree mesh to data
 }
 
+/// @brief creates subtrees for a desired tree property
+/// @param offset offset to have the subtree for
+/// @param prop properties
 void MatrixTree::createSubTrees(MMatrix &offset, TreeProperties &prop){
     for (int i = 0; i < prop.subTreeCount(); i++){
         IndexChain subtree = createSubTree(offset, prop);
@@ -253,6 +282,10 @@ void MatrixTree::createSubTrees(MMatrix &offset, TreeProperties &prop){
     }
 }
 
+/// @brief creates a subtree (index chain) with the index and matricies build up
+/// @param offset offset to start the sub tree at
+/// @param prop properties of the tree
+/// @return new sub tree
 IndexChain MatrixTree::createSubTree(MMatrix &offset, TreeProperties &prop){
     IndexChain subtree;
     subtree.setOffsetMatrix(offset);

@@ -18,7 +18,7 @@ TreeProperties &TreeProperties::operator=(const TreeProperties &other){
     if(this == &other){
         return *this;
     }
-    terrainType = other.terrainType;
+    terrainTypes = other.terrainTypes;
     type = other.type;
     height = other.height;
     detailStepCm = other.detailStepCm;
@@ -45,35 +45,69 @@ TreeProperties::TreeProperties(
 ){
     subTreeCountSaved = std::abs(subTreeCountIn);
     leafcountPerJointSaved = std::abs(leafcountPerJointIn);
-    terrainType = terrainTypeIn;
+    addTerrainType(terrainTypeIn);
     type = typeIn;
     height = std::abs(heightIn);
     detailStepCm = std::abs(detailStepIn);
     partsPerSubtreeSaved = std::abs(partsPerSubtreeIn);
 }
 
+/// @brief adds the terrain type to the vector if not contained yet
+/// @param typeIn some terrain type
+void TreeProperties::addTerrainType(ETerrainType typeIn){
+    bool found = false;
+    for (int i = 0; i < terrainTypes.size(); i++)
+    {
+        if(terrainTypes[i] == typeIn){
+            found = true;
+            i = terrainTypes.size();
+        }
+    }
+    if(!found){
+        terrainTypes.push_back(typeIn);
+    }
+}
+
+/// @brief terrain types for this property preset, do not modify
+/// @return terrainProperties
+std::vector<ETerrainType> &TreeProperties::getTerrainTypes(){
+    return terrainTypes;
+}
+
+/// @brief returns the desired height for this tree
+/// @return 
 int TreeProperties::getHeight(){
     return height;
 }
 
+/// @brief returns the detail step between matrices
+/// @return 
 int TreeProperties::getDetailStep(){
     return detailStepCm;
 }
 
+
+/// @brief returns the tree type of this preset
+/// @return type of this tree
 ETreeType TreeProperties::getTreeType(){
     return type;
 }
 
-ETerrainType TreeProperties::getTerrainType(){
-    return terrainType;
-}
-
+/// @brief returns the lead count per (top) joint for this tree wanted
+/// @return 
 int TreeProperties::leafCountPerJoint(){
     return leafcountPerJointSaved;
 }
 
+/// @brief returns the parts per subtree to create (half to full count for better randomness of trees)
+/// @return 
 int TreeProperties::partsPerSubtree(){
-    return partsPerSubtreeSaved;
+    if(partsPerSubtreeSaved < 2){
+        return partsPerSubtreeSaved;
+    }
+    int half = partsPerSubtreeSaved / 2.0f;
+    int rand = FVectorUtil::randomNumber(half, partsPerSubtreeSaved);
+    return rand;
 }
 
 

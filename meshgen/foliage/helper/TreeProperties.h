@@ -31,7 +31,10 @@ public:
 	int getHeight();
 	int getDetailStep();
 	ETreeType getTreeType();
-	ETerrainType getTerrainType();
+	
+
+	void addTerrainType(ETerrainType typeIn);
+	std::vector<ETerrainType> &getTerrainTypes();
 
 	int leafCountPerJoint();
 	int partsPerSubtree();
@@ -42,7 +45,9 @@ private:
 	int height;
 	int detailStepCm;
 	ETreeType type;
-	ETerrainType terrainType;
+
+	std::vector<ETerrainType> terrainTypes;
+
 	int leafcountPerJointSaved;
 	int subTreeCountSaved;
 

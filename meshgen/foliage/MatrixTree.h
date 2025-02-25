@@ -41,6 +41,7 @@ private:
 
 	MMatrix stemTop;
 
+	/// @brief vector for all matricies to build upon
 	std::vector<MMatrix> matrices;
 
 	/// @brief index chains to save subtrees instead of copying all matrices
@@ -75,6 +76,8 @@ private:
 
 	void loadProperties();
 	void addPropertyToMap(TreeProperties &property);
+	
+	/// @brief all property map
 	std::map<ETerrainType, std::vector<TreeProperties>> terrainPropertyMap;
 	TreeProperties defaultProperty;
 	TreeProperties findProperty(ETerrainType type);

@@ -3,6 +3,8 @@
 
 #include "FVectorShape.h"
 #include "p2/meshgen/MeshData.h"
+#include "p2/meshgen/generation/bezierCurve.h"
+#include "p2/util/TVector.h"
 
 FVectorShape::FVectorShape()
 {
@@ -34,7 +36,7 @@ FVectorShape &FVectorShape::operator=(const FVectorShape &other){
 }
 
 /// @brief moves the vertecies with a desired matrix
-/// @param mat 
+/// @param mat some matrix
 void FVectorShape::moveVerteciesWith(MMatrix &mat){
     for (int i = 0; i < vec.size(); i++){
         FVector &current = vec[i];
@@ -54,59 +56,34 @@ void FVectorShape::push_back(FVectorShape &other){
     }
 }
 
-/// @brief will joint this and the other shape together AND create the needed normals!
-/// @param other other shape to connect to
-/// @return new meshdata
-MeshData FVectorShape::join(FVectorShape &other){
-    MeshData mesh;
-    if(other.vec.size() > 0){
-        for (int i = 0; i < vec.size(); i++)
-        {
-            /*
-            1 2    i, next
-            0 3    i, next
-            */
-            int iOther = i % other.vec.size();
-            int nextThis = (i + 1) % vec.size();
-            int nextOther = (i + 1) % other.vec.size();
-
-            FVector &a = vec[i];
-            FVector &b = other.vec[iOther];
-            FVector &c = other.vec[nextOther];
-            FVector &d = vec[nextThis];
-
-            mesh.append(a, b, c, d);
-        }
+void FVectorShape::push_back(std::vector<FVector> &other){
+    for (int i = 0; i < other.size(); i++){
+        vec.push_back(other[i]);
     }
-    mesh.calculateNormals();
-    return mesh;
 }
 
 
-
-// new method to join smoothley
+/// @brief joins the previous vertecies added without bricking the illumnation / shading
+/// @param other mesh data to append smoothley to
 void FVectorShape::joinMeshData(MeshData &other){
     other.appendVertecies(vec);
 }
 
 /// @brief creates a double sided mesh from own shape and center of mass
-/// @return shape Mesh data, double sided
+/// @return shape Mesh data, double sided, with calculated normals done!
 MeshData FVectorShape::createDoubleSidedMesh(){
     MeshData mesh;
     
     //center of mass
-    FVector center;
-    for (int i = 0; i < vec.size(); i++){
-        center += vec[i];
-    }
-    center /= vec.size();
+    FVector center = calculateCenter();
 
     // connect triangles to center
-    for (int i = 1; i < vec.size(); i++){
+    for (int i = 0; i < vec.size(); i++){
         //create double sided triangle
-        FVector &prev = vec[i - 1];
+        int nextIndex = (i + 1) % vec.size();
         FVector &current = vec[i];
-        mesh.appendDoublesided(center, prev, current);
+        FVector &next = vec[nextIndex];
+        mesh.appendDoublesided(center, current, next);
     }
 
     mesh.calculateNormals();
@@ -114,12 +91,93 @@ MeshData FVectorShape::createDoubleSidedMesh(){
 }
 
 
+/// @brief closes mesh at center: clockwise means up, counter clockwise is down dir (bool flag)
+/// @param clockWise clockwise means up, counter clockwise is down dir (bool flag)
+/// @return meshdata, with calculated normals done!
+MeshData FVectorShape::closeMeshAtCenter(bool clockWise){
+    MeshData mesh;
+    
+    //center of mass
+    FVector center = calculateCenter();
+    mesh.closeMeshAtCenter(center, vec, clockWise);
+    mesh.calculateNormals();
+    return mesh;
+
+}
 
 
+/// @brief calculates the center of all vertecies
+/// @return center
+FVector FVectorShape::calculateCenter(){
+    FVector center;
+    for (int i = 0; i < vec.size(); i++){
+        center += vec[i];
+    }
+    center /= vec.size();
+    return center;
+}
+
+/// @brief creates vertecies in mmatrix represantation
+/// @param output 
 void FVectorShape::copyVertecies(std::vector<MMatrix> &output){
     for (int i = 0; i < vec.size(); i++){
         MMatrix mat;
         mat.setTranslation(vec[i]);
         output.push_back(mat);
     }
+}
+
+
+
+
+/**
+ * new rand function for rocks
+ */
+void FVectorShape::randomizeVertecies(int maxdistance){
+
+    FVector center = calculateCenter();
+    for (int i = 0; i < vec.size(); i++)
+    {
+        FVector &current = vec[i];
+        FVector dir = center - current;
+        dir = dir.GetSafeNormal();
+
+        current += dir * FVectorUtil::randomNumber(-maxdistance, maxdistance);
+    }
+}
+
+
+
+
+/// @brief will smooth the shape with a detail of avg distance * 10
+void FVectorShape::smoothWithBezier(){
+    //distance on average
+    if(vec.size() == 0){
+        return;
+    }
+    float distance = 0.0f;
+    for (int i = 0; i < vec.size(); i++){
+        int nextIndex = (i + 1) % vec.size();
+        distance += FVector::Dist(vec[i], vec[nextIndex]);
+    }
+    distance /= vec.size();
+
+    //say 4 for example
+    smoothWithBezier(distance / 10);
+}
+
+void FVectorShape::smoothWithBezier(int detailStep){
+    if(vec.size() == 0){
+        return;
+    }
+
+    std::vector<FVector> output;
+    bezierCurve curve;
+    curve.calculatecurve(
+        vec,
+        output,
+        detailStep // einheits value
+    );
+
+    vec = output;
 }

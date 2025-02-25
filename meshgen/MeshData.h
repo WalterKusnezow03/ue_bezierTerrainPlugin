@@ -58,7 +58,13 @@ public:
 
 	void appendVertecies(std::vector<FVector> &vec);
 
+	void closeMeshAtCenter(FVector &center, std::vector<FVector> &vec, bool clockWise);
+
+	static std::vector<FVector> create2DQuadVertecies(int xMax, int yMax);
+
 private:
+	void fillUpMissingVertecies(int count);
+
 	void clearNormals();
 
 	void buildTriangle(
@@ -79,10 +85,9 @@ private:
 
 	//what ever these are
 	TArray<FVector2D> UV0;
-    
 
+	int findClosestIndexTo(FVector &vertex);
 
-	
 	void join(TArray<FVector> &vertecies, TArray<int32> &triangles, TArray<FVector> &normalsin);
 	
 };

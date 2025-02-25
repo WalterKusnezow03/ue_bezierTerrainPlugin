@@ -81,18 +81,13 @@ std::vector<std::vector<FVector>> &terrainCreator::chunk::readMap(){
 /// @param top top chunk 
 /// @param right right chunk
 /// @param topRight top right chunk
-/// @return slightly extended map - fixes a bug where each chunk had one meter gap
+/// @return right top and corner vertecy height is adjusted to match the other starting chunks
 std::vector<std::vector<FVector>>& terrainCreator::chunk::readAndMerge(
     terrainCreator::chunk *top,
     terrainCreator::chunk *right,
     terrainCreator::chunk *topRight
 ){
 
-    //debug:
-    //return innerMap;
-
-    //std::vector<std::vector<FVector>> copy = innerMap;
-    float offset = terrainCreator::CHUNKSIZE * terrainCreator::ONEMETER;
 
     if(right != nullptr){
         //new column to be added

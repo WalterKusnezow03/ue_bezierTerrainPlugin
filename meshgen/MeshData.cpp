@@ -140,6 +140,8 @@ void MeshData::join(TArray<FVector> &verteciesRef, TArray<int32> &trianglesRef, 
     for (int i = 0; i < trianglesRef.Num(); i++){
         int32 copy = trianglesRef[i];
         copy += triangleOffset;
+        //--> offset index weil buffer sich verschiebt insgesamt um size des aktuellen
+        //    vertex buffers
         triangles.Add(copy);
     }
 
@@ -198,10 +200,10 @@ void MeshData::appendDoublesided(
     1 2
     0 
     */
+   //kann nicht weiter vereinfacht werden damit jene duplikat vertecies auch andere normalen haben
     append(a, b, c); 
     append(a, c, b); 
 }
-
 
 void MeshData::buildTriangle(
     FVector &a, 
@@ -234,7 +236,13 @@ void MeshData::offsetAllvertecies(FVector &offset){
 
 
 
-
+/// @brief appends the vertecies to the meshbuffer and creates triangles with n latest vertecies
+/// to connect each vertex of the passed vector (allows for smooth 
+/// shading and not duplicating vertecies)
+/// caution: vec.size() should not be greater than the current vertex count, unless
+/// this mesh data vertexcount is 0
+/// will connect to the latest vec.size() vertecies, gaps cannot be detected
+/// @param vec vector to connect, expected in some correct order 
 void MeshData::appendVertecies(std::vector<FVector> &vec){
     if(vec.size() <= 0){
         return;
@@ -252,6 +260,11 @@ void MeshData::appendVertecies(std::vector<FVector> &vec){
     //aber ohne vertecies zu duplizieren
 
     int32 startingIndex = vertecies.Num() - vec.size(); // 0
+    if(startingIndex < 0){
+        fillUpMissingVertecies(startingIndex);
+        startingIndex = 0;
+    }
+
     int32 offset = vertecies.Num();
     for (int i = 0; i < vec.size(); i++){
         vertecies.Add(vec[i]);
@@ -259,38 +272,140 @@ void MeshData::appendVertecies(std::vector<FVector> &vec){
 
     //für jeden vertex den man hinzugefügt hat, aus 3 (+2) dreiecke basteln
     for (int i = 0; i < vec.size(); i++){
-
-        //So richtig
         /*
-            2 1       
-            0         
+        if(false){
+            //So richtig
+            / *
+                2 1       
+                0         
+            * /
+            int next = (i + 1) % vec.size();
+            triangles.Add(startingIndex + i);
+            triangles.Add(offset + next);
+            triangles.Add(offset + i);
+
+            / *
+                3           
+                0 2       
+            * /
+            triangles.Add(startingIndex + i);
+            triangles.Add(startingIndex + next);
+            triangles.Add(offset + next);
+        }*/
+
+        //so.
+        /*
+        1 2
+        0 3
         */
+        //1 triangle
         int next = (i + 1) % vec.size();
-        triangles.Add(startingIndex + i);
-        triangles.Add(offset + next);
-        triangles.Add(offset + i);
+        triangles.Add(startingIndex + i); //lower(0)
+        triangles.Add(startingIndex + next); //lower(3)
+        triangles.Add(offset + i); //upper(1)
+        
+        //2 triangle
+        triangles.Add(startingIndex + next); //lower (3)
+        triangles.Add(offset + next); //upper(2)
+        triangles.Add(offset + i); //upper (1)
 
-        /*
-              3           
-            0 2       
-        */
-        triangles.Add(startingIndex + i);
-        triangles.Add(startingIndex + next);
-        triangles.Add(offset + next);
+
     }
-
-
 
 }
 
 
+/// @brief will fill up vertecies between the last two ones
+/// @param count 
+void MeshData::fillUpMissingVertecies(int count){
+    int sizeOfVertexbuffer = vertecies.Num();
+    count = std::abs(count);
+    if(sizeOfVertexbuffer == 1){
+        FVector copy = vertecies[0];
+        for (int i = 0; i < count; i++)
+        {
+            vertecies.Add(copy);
+        }
+        return;
+    }
+
+    FVector last = vertecies[sizeOfVertexbuffer - 1];
+    FVector prev = vertecies[sizeOfVertexbuffer - 2];
+    FVector connect = last - prev; //AB = B - A
+    connect /= count;
+    for (int i = 0; i < count; i++)
+    {
+        FVector inner = prev + connect * i;
+        vertecies.Add(inner);
+    }
+}
 
 
 
+void MeshData::closeMeshAtCenter(FVector &center, std::vector<FVector> &vec, bool clockWise){
+    int32 offset = vertecies.Num();
+    vertecies.Add(center); //jetzt offset index valid 
+    for (int i = 0; i < vec.size(); i++){
+        vertecies.Add(vec[i]);
+    }
+    for (int i = 0; i < vec.size(); i++){
+        int next = (i + 1) % vec.size();
+        if(clockWise){
+            /*
+            1 2
+            0
+            */
+            triangles.Add(offset); //0
+            triangles.Add(offset + i); //1
+            triangles.Add(offset + next); //2
+        }else{
+            /*
+            2 1
+            0
+            */
+           triangles.Add(offset); //0
+           triangles.Add(offset + next); //2
+           triangles.Add(offset + i); //1
+        }
+    }
+}
+
+/**
+ * --- helper function ---
+ */
+/// @brief finds the closest index to a vertex, -1 if the vertex buffer is clear
+/// @param vertex position to find
+/// @return index in vertecies array
+int MeshData::findClosestIndexTo(FVector &vertex){
+    if(vertecies.Num() == 0){
+        return -1;
+    }
+    int closestIndex = 0;
+    float dist = FVector::Dist(vertex, vertecies[0]);
+    for (int i = 1; i < vertecies.Num(); i++){
+        float newDist = FVector::Dist(vertex, vertecies[1]);
+        if(newDist < dist){
+            dist = newDist;
+            closestIndex = i;
+        }
+    }
+    return closestIndex;
+}
 
 
 
-
+/// @brief creates a vertex buffer sample of 0123 clockwise dir on XY Pane
+/// @param xMax xMax size
+/// @param yMax yMax size
+/// @return starting from (0,0,0) 0123 clockwise buffer quad
+std::vector<FVector> MeshData::create2DQuadVertecies(int xMax, int yMax){
+    std::vector<FVector> shape;
+    shape.push_back(FVector(0,0,0));
+    shape.push_back(FVector(0,yMax,0));
+    shape.push_back(FVector(xMax,yMax,0));
+    shape.push_back(FVector(xMax,0,0));
+    return shape;
+}
 
 /**
  * --- Data references ---
@@ -321,7 +436,6 @@ TArray<FProcMeshTangent> &MeshData::getTangentsRef(){
 TArray<FColor> &MeshData::getVertexColorsRef(){
     return VertexColors;
 }
-
 
 
 

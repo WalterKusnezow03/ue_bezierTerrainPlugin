@@ -21,17 +21,27 @@ public:
 
 	void push_back(FVector other);
 	void push_back(FVectorShape &other);
+	void push_back(std::vector<FVector> &other);
 
 	void moveVerteciesWith(MMatrix &mat);
-
-
-	MeshData join(FVectorShape &other);
 	void joinMeshData(MeshData &other);
 
+
 	MeshData createDoubleSidedMesh();
+	MeshData closeMeshAtCenter(bool clockwise);
 
 	void copyVertecies(std::vector<MMatrix> &output);
 
+	void randomizeVertecies(int maxdistance);
+
+	
+	void smoothWithBezier();
+	void smoothWithBezier(int detailStep);
+
 private:
 	std::vector<FVector> vec;
+
+	FVector calculateCenter();
+
+	std::vector<FVector2D> create2DverteciesXY();
 };

@@ -19,6 +19,12 @@ public:
 		float _einheitsValue
 	);
 
+	void calculatecurve(
+		std::vector<FVector> &ref, 
+		std::vector<FVector> &output,
+		float _einheitsValue
+	);
+
 private:
 
 	float EinheitsValue;
@@ -41,4 +47,11 @@ private:
 	);
 
 	float validatePercentage(float val);
+
+	void createNewtangentsAndPushP2P3P4(
+		FVector2D &p0,
+		FVector2D &p3,
+		std::vector<FVector2D> &curve,
+		float constSkalar
+	);
 };
