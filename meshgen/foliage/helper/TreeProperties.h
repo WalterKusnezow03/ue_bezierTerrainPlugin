@@ -52,4 +52,6 @@ private:
 	int subTreeCountSaved;
 
 	int partsPerSubtreeSaved;
+
+	void updateDetailStepAndHeight(int heightIn, int detailStepIn);
 };

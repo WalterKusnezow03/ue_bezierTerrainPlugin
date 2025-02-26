@@ -13,6 +13,8 @@ class P2_API RockCreator
 {
 public:
 	RockCreator();
+	RockCreator(int maxSize);
+
 	~RockCreator();
 
 	MeshData createMesh();
@@ -20,9 +22,10 @@ public:
 
 private:
 	
-	FVectorShape createShape(int detailStep, int sizeX, int sizeY);
+	int rockMaxSize = 2000;
 
-	
+	FVectorShape createShape(int detailStep, int sizeX, int sizeY);
+	FVectorShape createRandomShape(int detailStep);
 
 	void addVertecies(
 		FVectorShape &shape,
@@ -30,4 +33,7 @@ private:
 		FVector &offset,
 		int count
 	);
+
+	//new
+	void createShapes(std::vector<FVectorShape> &shapes, int layers, int detailStep);
 };

@@ -41,6 +41,9 @@ public:
 	int vertexCount();
 	void keepVertexCountFromFront(int countLimit);
 
+	
+	void makeCenterPivot();
+
 private:
 	std::vector<FVector> vec;
 

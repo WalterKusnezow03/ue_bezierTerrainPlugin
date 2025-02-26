@@ -46,11 +46,27 @@ TreeProperties::TreeProperties(
     subTreeCountSaved = std::abs(subTreeCountIn);
     leafcountPerJointSaved = std::abs(leafcountPerJointIn);
     addTerrainType(terrainTypeIn);
+    updateDetailStepAndHeight(heightIn, detailStepIn);
+
     type = typeIn;
-    height = std::abs(heightIn);
-    detailStepCm = std::abs(detailStepIn);
     partsPerSubtreeSaved = std::abs(partsPerSubtreeIn);
 }
+
+void TreeProperties::updateDetailStepAndHeight(int heightIn, int detailStepIn){
+    height = std::abs(heightIn);
+    detailStepIn = std::abs(detailStepIn);
+    if (height == 0)
+    {
+        height = 1;
+    }
+    if(detailStepIn > height){
+        detailStepIn = height;
+    }
+    detailStepCm = std::abs(detailStepIn);
+}
+
+
+
 
 /// @brief adds the terrain type to the vector if not contained yet
 /// @param typeIn some terrain type
@@ -105,8 +121,11 @@ int TreeProperties::partsPerSubtree(){
     if(partsPerSubtreeSaved < 2){
         return partsPerSubtreeSaved;
     }
-    int half = partsPerSubtreeSaved / 2.0f;
-    int rand = FVectorUtil::randomNumber(half, partsPerSubtreeSaved);
+    int half = partsPerSubtreeSaved / 2;
+    int rand = std::abs(FVectorUtil::randomNumber(half, partsPerSubtreeSaved));
+    if(rand == 0){
+        rand = 1;
+    }
     return rand;
 }
 

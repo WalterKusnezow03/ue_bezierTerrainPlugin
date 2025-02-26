@@ -2,14 +2,28 @@
 
 
 #include "RockCreator.h"
+#include "p2/meshgen/foliage/helper/GrahamScan.h"
 
 RockCreator::RockCreator()
 {
+    rockMaxSize = 2000;
+}
+
+RockCreator::RockCreator(int maxSize)
+{
+    maxSize = std::abs(maxSize);
+    if(maxSize > 100){
+        rockMaxSize = maxSize;
+    }
 }
 
 RockCreator::~RockCreator()
 {
 }
+
+
+
+
 
 MeshData RockCreator::createMesh(){
     int layers = 5;
@@ -31,10 +45,21 @@ MeshData RockCreator::createMesh(int sizeX, int sizeY, int detailStep, int layer
     MeshData meshDataOut;
 
     std::vector<FVectorShape> shapes;
+
+    //old
+    
     //create shapes
-    for (int i = 0; i < layers; i++){
-        shapes.push_back(createShape(detailStep, sizeX, sizeY));
+    if(true){
+        for (int i = 0; i < layers; i++){
+            shapes.push_back(createShape(detailStep, sizeX, sizeY));
+        }
     }
+    //new
+    if(false){
+        createShapes(shapes, layers, detailStep);
+    }
+
+
 
     //find smallest count
     int smallestCount = shapes[0].vertexCount();
@@ -103,8 +128,8 @@ FVectorShape RockCreator::createShape(int detailStep, int sizeX, int sizeY){
             countNow
         );
     }
-    outShape.randomizeVertecies(detailStep / 2);
-    outShape.smoothWithBezier(detailStep / 10);
+    outShape.randomizeVertecies(detailStep / 2); //must be made more random
+    outShape.smoothWithBezier(detailStep / 10); //must be made by some other function
 
     //debug log vertex count
     FString message = FString::Printf(TEXT("debugShape vertex count %d"), outShape.vertexCount());
@@ -115,7 +140,11 @@ FVectorShape RockCreator::createShape(int detailStep, int sizeX, int sizeY){
 
 
 
-
+/// @brief adds an amount of vertecies in a scaled direction 
+/// @param shape shape to add to
+/// @param directionWithDistance direction to add to 
+/// @param offset starting offset 
+/// @param count count of vertecies 
 void RockCreator::addVertecies(
     FVectorShape &shape,
     FVector &directionWithDistance,
@@ -128,3 +157,72 @@ void RockCreator::addVertecies(
     }
 }
 
+
+
+
+/**
+ * 
+ * 
+ * ---- NEW -----
+ * 
+ * 
+ */
+
+ void RockCreator::createShapes(std::vector<FVectorShape> &shapes, int layers, int detailStep){
+    if(layers < 1){
+        return;
+    }
+    FVectorShape baseShape = createRandomShape(detailStep);
+    shapes.push_back(baseShape);
+    // create shapes
+    for (int i = 1; i < layers; i++){
+        //MMatrix downScale;
+        //downScale.scaleUniform(0.9f);
+        //baseShape.moveVerteciesWith(downScale);
+
+        FVectorShape copy = baseShape;
+        copy.randomizeVertecies(detailStep);
+        copy.smoothWithBezier(detailStep / 10); //must be made by some other function
+
+        shapes.push_back(copy);
+    }
+ }
+
+
+
+
+FVectorShape RockCreator::createRandomShape(int detailStep){
+    //create random vertecies
+    detailStep = std::abs(detailStep);
+    int vertexCount = FVectorUtil::randomNumber(30, 50);
+    std::vector<FVector> vertecies;
+    for (int i = 0; i < vertexCount; i++){
+        FVector newVertex = FVectorUtil::randomOffset(rockMaxSize);
+        newVertex.Z = 0.0f; //remove z height
+        vertecies.push_back(newVertex);
+    }
+
+    //convex hull sort
+    GrahamScan scan;
+    scan.ComputeConvexHull(vertecies);
+
+    //filter for min distance
+    FVectorShape shape;
+    if (vertecies.size() > 0)
+    {
+        FVector &prev = vertecies[0];
+        shape.push_back(prev);
+        for (int i = 1; i < vertecies.size(); i++){
+            FVector &current = vertecies[i];
+            if (FVector::Dist(prev, current) >= detailStep){
+                shape.push_back(current);
+                prev = current;
+            }
+        }
+    }
+
+    shape.smoothWithBezier(detailStep / 10); // must be made by some other function
+    shape.makeCenterPivot();
+
+    return shape;
+}

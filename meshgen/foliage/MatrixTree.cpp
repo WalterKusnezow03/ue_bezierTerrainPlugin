@@ -11,6 +11,13 @@
 MatrixTree::MatrixTree()
 {
     loadProperties();
+    //erstmal matrizen generieren
+    int count = 40;
+    for (int i = 0; i < count; i++)
+    {
+        MMatrix mat;
+        matrices.push_back(mat);
+    }
 }
 
 MatrixTree::~MatrixTree()
@@ -41,10 +48,9 @@ void MatrixTree::loadProperties(){
     defaultProperty = oakProperty;
     addPropertyToMap(oakProperty);
 
-
-    TreeProperties palmBush(100, 50, ETreeType::EPalmBush, ETerrainType::ETropical, 30, 1, 0);
-    palmBush.addTerrainType(ETerrainType::EForest);
-    addPropertyToMap(palmBush);
+    //ab 300 kein recursion aber wieso!
+    TreeProperties palmBush(100, 100, ETreeType::EPalmBush, ETerrainType::ETropical, 8, 2, 1);
+    addPropertyToMap(palmBush); //recursion?
 }
 
 void MatrixTree::addPropertyToMap(TreeProperties &property){
@@ -57,11 +63,10 @@ void MatrixTree::addPropertyToMap(TreeProperties &property){
             std::vector<TreeProperties> newVec;
             newVec.push_back(property);
             terrainPropertyMap[typeOfTerrain] = newVec;
-            return;
+        }else{
+            std::vector<TreeProperties> &vec = terrainPropertyMap[typeOfTerrain];
+            vec.push_back(property);
         }
-    
-        std::vector<TreeProperties> &vec = terrainPropertyMap[typeOfTerrain];
-        vec.push_back(property);
     }
     
 }
@@ -69,7 +74,7 @@ void MatrixTree::addPropertyToMap(TreeProperties &property){
 /// @brief founds a random tree / preset from the map by terrain type
 /// @param typeOfTerrain type of terrain wanted
 /// @return Preset found or default property
-TreeProperties MatrixTree::findProperty(ETerrainType typeOfTerrain){
+TreeProperties &MatrixTree::findProperty(ETerrainType typeOfTerrain){
     //default
     if(terrainPropertyMap.find(typeOfTerrain) == terrainPropertyMap.end()){
         return defaultProperty;
@@ -90,7 +95,7 @@ void MatrixTree::clean(){
     leafMeshData.clearMesh();
     ownMeshData.clearMesh();
 
-    matrices.clear();
+    //matrices.clear();
     indexChains.clear();
     leafTops.clear();
 }
@@ -113,25 +118,23 @@ MeshData &MatrixTree::meshDataLeafByReference(){
 /// @param cmPerStep 
 /// @param terrainType 
 void MatrixTree::generate(ETerrainType terrainType){
-    TreeProperties properties = findProperty(terrainType);
+    TreeProperties &properties = findProperty(terrainType);
 
-    int height = properties.getHeight();
+    
     int cmPerStep = properties.getDetailStep();
     treeType = properties.getTreeType();
 
     clean();
 
-    //erstmal matrizen generieren
-    int count = 40;
-    for (int i = 0; i < count; i++)
-    {
-        MMatrix mat;
-        mat.setTranslation(0, 0, cmPerStep);
-        matrices.push_back(mat);
-    }
-
     //create randomRotations
     randomRotationForAllMatrices();
+
+    //erstmal matrizen generieren
+    for (int i = 0; i < matrices.size(); i++)
+    {
+        MMatrix &mat = matrices[i];
+        mat.setTranslation(0, 0, cmPerStep);
+    }
 
     //create stem
     MMatrix identity;
@@ -179,8 +182,9 @@ std::vector<FVectorShape> MatrixTree::shapeByEnum(ETreeType type){
         
 
         output.push_back(shape);
+        
     }
-    if(type == ETreeType::EPalmTree){
+    if(type == ETreeType::EPalmTree || type == ETreeType::EPalmBush){
         size = 20;
         int sizeInner = 10;
         
@@ -208,8 +212,8 @@ std::vector<FVectorShape> MatrixTree::shapeByEnum(ETreeType type){
         offset.setTranslation(- sizeInner / 2.0f, - sizeInner / 2.0f, 0);
         shapeInner.moveVerteciesWith(offset);
         output.push_back(shapeInner);
-    }
 
+    }
 
     return output; //for vertecies sorroundign the shape
 }
@@ -434,7 +438,7 @@ FVectorShape MatrixTree::leafShapeByEnum(ETreeType type){
 
 
     }
-    if(type == ETreeType::EPalmTree){
+    if(type == ETreeType::EPalmTree || type == ETreeType::EPalmBush){
         FVectorShape oneSide;
         oneSide.push_back(FVector(0, 0, 0));
         oneSide.push_back(FVector(-10, 0, 20));

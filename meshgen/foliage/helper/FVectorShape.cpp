@@ -200,3 +200,18 @@ void FVectorShape::keepVertexCountFromFront(int countLimit){
 
     vec.erase(vec.begin() + countLimit, vec.end());
 }
+
+
+
+
+/// @brief moves all vertecies so the pivot is the center
+void FVectorShape::makeCenterPivot(){
+    FVector centerToZero = -1 * calculateCenter();
+    if(centerToZero.Size() == 0.0f){
+        return;
+    }
+
+    MMatrix moveToCenter;
+    moveToCenter.setTranslation(centerToZero);
+    moveVerteciesWith(moveToCenter);
+}

@@ -46,6 +46,7 @@ private:
 
 	/// @brief index chains to save subtrees instead of copying all matrices
 	std::vector<IndexChain> indexChains;
+	
 	MMatrix identityMatrix;
 
 	std::vector<MMatrix> leafTops;
@@ -80,5 +81,5 @@ private:
 	/// @brief all property map
 	std::map<ETerrainType, std::vector<TreeProperties>> terrainPropertyMap;
 	TreeProperties defaultProperty;
-	TreeProperties findProperty(ETerrainType type);
+	TreeProperties &findProperty(ETerrainType type);
 };
