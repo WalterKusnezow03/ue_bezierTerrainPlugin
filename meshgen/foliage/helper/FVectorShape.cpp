@@ -181,3 +181,22 @@ void FVectorShape::smoothWithBezier(int detailStep){
 
     vec = output;
 }
+
+
+
+int FVectorShape::vertexCount(){
+    return vec.size();
+}
+
+
+
+void FVectorShape::keepVertexCountFromFront(int countLimit){
+    if(vec.size() == 0){
+        return;
+    }
+    if(countLimit >= vec.size()){
+        return;
+    }
+
+    vec.erase(vec.begin() + countLimit, vec.end());
+}

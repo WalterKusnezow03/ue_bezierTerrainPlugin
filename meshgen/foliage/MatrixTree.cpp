@@ -4,6 +4,7 @@
 #include "MatrixTree.h"
 #include "ETreeType.h"
 #include "p2/meshgen/foliage/ETerrainType.h"
+#include "p2/meshgen/foliage/helper/IndexChain.h"
 #include "p2/meshgen/foliage/helper/TreeProperties.h"
 #include "p2/meshgen/foliage/helper/FVectorShape.h"
 

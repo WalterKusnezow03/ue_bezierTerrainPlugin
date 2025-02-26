@@ -34,9 +34,12 @@ public:
 
 	void randomizeVertecies(int maxdistance);
 
-	
+
 	void smoothWithBezier();
 	void smoothWithBezier(int detailStep);
+
+	int vertexCount();
+	void keepVertexCountFromFront(int countLimit);
 
 private:
 	std::vector<FVector> vec;

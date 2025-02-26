@@ -16,17 +16,10 @@ public:
 	~RockCreator();
 
 	MeshData createMesh();
+	MeshData createMesh(int sizeX, int sizeY, int detailStep, int layers, int heightStep);
 
 private:
-	void createShapeAndAppend(
-		MeshData &other, 
-		int zHeight, 
-		bool closeShape, 
-		bool clockwiseClosed,
-		int detailStep, 
-		int sizeX, 
-		int sizeY
-	);
+	
 	FVectorShape createShape(int detailStep, int sizeX, int sizeY);
 
 	

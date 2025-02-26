@@ -260,45 +260,28 @@ void MeshData::appendVertecies(std::vector<FVector> &vec){
     //aber ohne vertecies zu duplizieren
 
     int32 startingIndex = vertecies.Num() - vec.size(); // 0
-    if(startingIndex < 0){
-        fillUpMissingVertecies(startingIndex);
+    if(vertecies.Num() < vec.size()){
+        fillUpMissingVertecies(startingIndex); //difference abs
         startingIndex = 0;
     }
 
-    int32 offset = vertecies.Num();
-    for (int i = 0; i < vec.size(); i++){
+    int32 offset = vertecies.Num(); //stimmt so, getestet
+    for (int i = 0; i < vec.size(); i++)
+    {
         vertecies.Add(vec[i]);
     }
 
     //für jeden vertex den man hinzugefügt hat, aus 3 (+2) dreiecke basteln
     for (int i = 0; i < vec.size(); i++){
-        /*
-        if(false){
-            //So richtig
-            / *
-                2 1       
-                0         
-            * /
-            int next = (i + 1) % vec.size();
-            triangles.Add(startingIndex + i);
-            triangles.Add(offset + next);
-            triangles.Add(offset + i);
 
-            / *
-                3           
-                0 2       
-            * /
-            triangles.Add(startingIndex + i);
-            triangles.Add(startingIndex + next);
-            triangles.Add(offset + next);
-        }*/
-
-        //so.
+        
+        // so.
         /*
         1 2
         0 3
         */
-        //1 triangle
+        // 1 triangle
+        
         int next = (i + 1) % vec.size();
         triangles.Add(startingIndex + i); //lower(0)
         triangles.Add(startingIndex + next); //lower(3)
@@ -308,13 +291,16 @@ void MeshData::appendVertecies(std::vector<FVector> &vec){
         triangles.Add(startingIndex + next); //lower (3)
         triangles.Add(offset + next); //upper(2)
         triangles.Add(offset + i); //upper (1)
-
+        
 
     }
 
 }
 
 
+/**
+ * caution: this function is not tested
+ */
 /// @brief will fill up vertecies between the last two ones
 /// @param count 
 void MeshData::fillUpMissingVertecies(int count){
@@ -329,20 +315,40 @@ void MeshData::fillUpMissingVertecies(int count){
         return;
     }
 
+    DebugHelper::logMessage("meshData_debug inserted vertecies");
+
     FVector last = vertecies[sizeOfVertexbuffer - 1];
     FVector prev = vertecies[sizeOfVertexbuffer - 2];
     FVector connect = last - prev; //AB = B - A
     connect /= count;
+    vertecies.RemoveAt(vertecies.Num() - 1);
     for (int i = 0; i < count; i++)
     {
         FVector inner = prev + connect * i;
         vertecies.Add(inner);
+    }
+    vertecies.Add(last);
+
+    //fix triangle buffer offset because of insert
+    for (int i = 0; i < triangles.Num(); i++){
+        if(triangles[i] == sizeOfVertexbuffer - 1){
+            triangles[i] = triangles.Num() - 1;
+        }
     }
 }
 
 
 
 void MeshData::closeMeshAtCenter(FVector &center, std::vector<FVector> &vec, bool clockWise){
+    //vertecies.Add(center); //jetzt offset index valid
+    for (int i = 0; i < vec.size(); i++){
+        vertecies.Add(vec[i]);
+    }
+    closeMeshAtCenter(center, vec.size(), clockWise);
+    return;
+
+    //old
+    /*
     int32 offset = vertecies.Num();
     vertecies.Add(center); //jetzt offset index valid 
     for (int i = 0; i < vec.size(); i++){
@@ -350,6 +356,40 @@ void MeshData::closeMeshAtCenter(FVector &center, std::vector<FVector> &vec, boo
     }
     for (int i = 0; i < vec.size(); i++){
         int next = (i + 1) % vec.size();
+        if(clockWise){
+            / *
+            1 2
+            0
+            * /
+            triangles.Add(offset); //0
+            triangles.Add(offset + i); //1
+            triangles.Add(offset + next); //2
+        }else{
+            / *
+            2 1
+            0
+            * /
+           triangles.Add(offset); //0
+           triangles.Add(offset + next); //2
+           triangles.Add(offset + i); //1
+        }
+    }*/
+}
+
+void MeshData::closeMeshAtCenter(FVector &center, int bufferSizeToConnect, bool clockWise){
+    int limit = bufferSizeToConnect; //vertex count um an mitte zu binden
+    if(limit > vertecies.Num()){
+        limit = vertecies.Num();
+    }
+    int offset = vertecies.Num() - bufferSizeToConnect;
+    if(offset < 0){
+        offset = 0;
+    }
+    vertecies.Add(center);
+
+    for (int i = 0; i < limit; i++)
+    {
+        int next = (i + 1) % limit;
         if(clockWise){
             /*
             1 2
@@ -369,6 +409,11 @@ void MeshData::closeMeshAtCenter(FVector &center, std::vector<FVector> &vec, boo
         }
     }
 }
+
+
+
+
+
 
 /**
  * --- helper function ---

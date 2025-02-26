@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "p2/entities/customIk/MMatrix.h"
 #include "p2/meshgen/MeshData.h"
-#include "IndexChain.h"
+#include "p2/meshgen/foliage/helper/IndexChain.h"
 #include "p2/meshgen/foliage/helper/TreeProperties.h"
 #include "p2/meshgen/foliage/helper/FVectorShape.h"
 #include "ETreeType.h"

@@ -12,63 +12,73 @@ RockCreator::~RockCreator()
 }
 
 MeshData RockCreator::createMesh(){
-    MeshData outData;
     int layers = 5;
+    int detailStep = 100;
+    int sizeX = 500;
+    int sizeY = 500;
+    int heightStep = 100;
+
+    return createMesh(sizeX, sizeY, detailStep, layers, heightStep);
+}
+
+
+
+MeshData RockCreator::createMesh(int sizeX, int sizeY, int detailStep, int layers, int heightStep){
+    if(layers == 0){
+        return MeshData();
+    }
+
+    MeshData meshDataOut;
+
+    std::vector<FVectorShape> shapes;
+    //create shapes
     for (int i = 0; i < layers; i++){
-        bool closeShape = (i == layers - 1) || (i == 0);
-        bool clockwiseClosed = (i == layers - 1); //oben versiegeln (ist ggf unten wenn i == 0)
-
-        int detailStep = 100;
-        int sizeX = 500;
-        int sizeY = 500;
-
-        createShapeAndAppend(
-            outData, 
-            i * 100, 
-            closeShape, 
-            clockwiseClosed,
-            detailStep,
-            sizeX,
-            sizeY
-        );
+        shapes.push_back(createShape(detailStep, sizeX, sizeY));
     }
-    return outData;
+
+    //find smallest count
+    int smallestCount = shapes[0].vertexCount();
+    for (int i = 1; i < shapes.size(); i++){
+        int countNew = shapes[i].vertexCount();
+        if (countNew < smallestCount)
+        {
+            smallestCount = countNew;
+        }
+    }
+
+    //limit all to smallest count
+    MMatrix up;
+    for (int i = 0; i < shapes.size(); i++){
+        FVectorShape &currentShape = shapes[i];
+        currentShape.keepVertexCountFromFront(smallestCount);
+
+        //move vertecies up
+        up.setTranslation(0, 0, heightStep * i);
+        currentShape.moveVerteciesWith(up);
+
+        //append all data
+        currentShape.joinMeshData(meshDataOut);
+    }
+    meshDataOut.calculateNormals();
+
+    //close at bottom and top
+    int layer0 = 0;
+    int lastLayer = shapes.size() - 1;
+    MeshData bottom = shapes[layer0].closeMeshAtCenter(false); //clockwise false, look to bottom
+    MeshData top = shapes[lastLayer].closeMeshAtCenter(true); //clockwise true, look to top
+
+    meshDataOut.append(bottom);
+    meshDataOut.append(top);
+    return meshDataOut;
 }
 
 
-/// @brief creates a new shape and appends it. Either open and or closed
-/// @param other mesh to append to
-/// @param zHeight height of the vertecies wanted
-/// @param closeShape close this shape (at top or bottom)
-/// @param clockwiseClosed only gets checked if closeShape is true (up normal or down normal vertex order)
-void RockCreator::createShapeAndAppend(
-    MeshData &other, 
-    int zHeight, 
-    bool closeShape, 
-    bool clockwiseClosed,
-    int detailStep,
-    int sizeX,
-    int sizeY
-){
-    
-    FVectorShape shape = createShape(detailStep, sizeX, sizeY);
 
-    MMatrix moveUp;
-    moveUp.setTranslation(0, 0, zHeight);
-    shape.moveVerteciesWith(moveUp);
-    shape.joinMeshData(other); // merge to last layer
-
-
-    if(closeShape){
-        //close at top? true
-        MeshData top = shape.closeMeshAtCenter(clockwiseClosed); 
-        //achtung wenn unten dicht gemacht wird gibt es 
-        //beim vertex append probleme
-        //es muss anders geregelt werden ---> center at start?
-        other.append(top);
-    }
-}
-
+/// @brief creates a smoothed shape in sizeX, sizeY and initial anchor detailStep
+/// @param detailStep 
+/// @param sizeX 
+/// @param sizeY 
+/// @return 
 FVectorShape RockCreator::createShape(int detailStep, int sizeX, int sizeY){
 
     std::vector<FVector> sideStartPoints = MeshData::create2DQuadVertecies(sizeX, sizeY);
@@ -95,6 +105,11 @@ FVectorShape RockCreator::createShape(int detailStep, int sizeX, int sizeY){
     }
     outShape.randomizeVertecies(detailStep / 2);
     outShape.smoothWithBezier(detailStep / 10);
+
+    //debug log vertex count
+    FString message = FString::Printf(TEXT("debugShape vertex count %d"), outShape.vertexCount());
+    DebugHelper::logMessage(message);
+
     return outShape;
 }
 

@@ -59,6 +59,7 @@ public:
 	void appendVertecies(std::vector<FVector> &vec);
 
 	void closeMeshAtCenter(FVector &center, std::vector<FVector> &vec, bool clockWise);
+	void closeMeshAtCenter(FVector &center, int bufferSizeToConnect, bool clockWise);
 
 	static std::vector<FVector> create2DQuadVertecies(int xMax, int yMax);
 
