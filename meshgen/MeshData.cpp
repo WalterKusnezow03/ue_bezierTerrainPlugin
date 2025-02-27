@@ -545,7 +545,7 @@ TArray<FColor> &MeshData::getVertexColorsRef(){
 
 /**
  * 
- * is not tested!
+ * is tested!
  * 
  */
 
@@ -606,7 +606,7 @@ void MeshData::appendEfficent(
 void MeshData::appendEfficent(MeshData &other){
 
     TArray<int32> &trianglesRef = other.getTrianglesRef();
-    for (int i = 0; i < trianglesRef.Num() - 2; i += 3){
+    for (int i = 0; i < trianglesRef.Num() - 3; i += 3){ //-2 ? (no, -3 is correct)
         int32 v0 = trianglesRef[i];
         int32 v1 = trianglesRef[i + 1];
         int32 v2 = trianglesRef[i + 2];
