@@ -102,17 +102,19 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
                     FVector normal = FVectorUtil::calculateNormal(vzero, vone, vtwo); //direction obviously
                     if(FVectorUtil::directionIsVertical(normal)){
                         //add to standard output, if direction of normal is vertical, the pane is flat
-                        //buildQuad(vzero, vone, vtwo, vthree, output_grass_layer, triangles_grass_layer);
 
-                        createQuad(vzero, vone, vtwo, vthree, grassLayer);
+                        //grassLayer.append(vzero, vone, vtwo, vthree);
+
+                        grassLayer.appendEfficent(vzero, vone, vtwo, vthree); 
                     }
                     else
                     {
                         //otherwise the quad should be added to the second
                         //triangle / vertecy array for stone material, more vertical
-                        //buildQuad(vzero, vone, vtwo, vthree, output_stone_layer, triangles_stone_layer);
+                        
+                        //stoneLayer.append(vzero, vone, vtwo, vthree);
 
-                        createQuad(vzero, vone, vtwo, vthree, stoneLayer);
+                        stoneLayer.appendEfficent(vzero, vone, vtwo, vthree); 
                     }
 
                     //calculate center
@@ -357,7 +359,7 @@ void AcustomMeshActorBase::updateMesh(
 
 
 
-
+/*
 /// @brief all quads MUST BE BUILD out of TRIANGLES, OTHERWISE MANY BUGS OCCUR!
 /// @param a corner 0
 /// @param b corner 1
@@ -409,7 +411,7 @@ void AcustomMeshActorBase::buildQuad(
     buildTriangle(a, c, d, output, trianglesOutput);
     return;
 
-    /*
+    / *
                 1--2
                 |  |
                 0<-3
@@ -417,9 +419,9 @@ void AcustomMeshActorBase::buildQuad(
                 b--c
                 |  |
                 a<-d
-    */
+    * /
 
-}
+}*/
 
 
 
@@ -446,10 +448,8 @@ void AcustomMeshActorBase::createTwoSidedQuad(
 	FVector &d,
 	MeshData &output
 ){
-    createQuad(a, b, c, d, output);
-    createQuad(a, d, c, b, output);
+    output.appendDoublesided(a, b, c, d);
 }
-
 
 /// @brief applys a material to the whole component (slot 0 by default)
 /// @param ProceduralMeshComponent 
@@ -495,7 +495,7 @@ void AcustomMeshActorBase::createTwoSidedQuad(
     FVector &d,
     UMaterial *material
 ){
-    createTwoSidedQuad(a, b, c, d, material, false);
+    createTwoSidedQuad(a, b, c, d, material, true);
 }
 
 void AcustomMeshActorBase::createTwoSidedQuad(
@@ -508,7 +508,7 @@ void AcustomMeshActorBase::createTwoSidedQuad(
 ){
     if(material != nullptr){
         MeshData meshDataOut;
-        createTwoSidedQuad(a, b, c, d, meshDataOut);
+        meshDataOut.appendDoublesided(a, b, c, d);
 
         updateMesh(meshDataOut, calculateNormals, 0);
         ApplyMaterial(Mesh, material, 0);

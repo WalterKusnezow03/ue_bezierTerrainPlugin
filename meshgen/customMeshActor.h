@@ -66,10 +66,7 @@ public:
 		bool createTrees
 	) override;
 
-	void process2DMapSimple(
-		std::vector<std::vector<FVector>> &map,
-		MeshData &outputData
-	);
+	
 
 
 	void createCube(
@@ -119,8 +116,12 @@ public:
 
 	void setDamagedOwner(IDamageinterface *damagedOwnerIn);
 
+	void enableDebug();
+
 protected:
-	
+	bool DEBUG_enabled = false;
+	void debugThis();
+
 	int health = 100;
 	bool destructableBool = false;
 	bool splitOnDeath = false;

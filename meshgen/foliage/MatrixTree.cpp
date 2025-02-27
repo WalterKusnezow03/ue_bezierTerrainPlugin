@@ -270,11 +270,12 @@ void MatrixTree::wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &mesh){
             }
         }
         
-        
         subMesh.calculateNormals();
     }
 
-    mesh.append(subMesh); //add new subtree mesh to data
+    //mesh.append(subMesh); //add new subtree mesh to data
+
+    mesh.appendEfficent(subMesh); //NEW
 }
 
 /// @brief creates subtrees for a desired tree property

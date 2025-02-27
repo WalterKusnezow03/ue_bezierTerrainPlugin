@@ -32,10 +32,31 @@ public:
 		FVector &d
 	);
 
+	void appendEfficent(
+		FVector &a,
+		FVector &b,
+		FVector &c
+	);
+	void appendEfficent(
+		FVector &a,
+		FVector &b,
+		FVector &c,
+		FVector &d
+	);
+	void appendEfficent(MeshData &other);
+
+
 	void appendDoublesided(
 		FVector &a,
 		FVector &b,
 		FVector &c
+	);
+
+	void appendDoublesided(
+		FVector &a,
+		FVector &b,
+		FVector &c,
+		FVector &d
 	);
 
 	void rebuild(TArray<FVector> &&verteciesIn, TArray<int> &&trianglesIn);
@@ -63,7 +84,15 @@ public:
 
 	static std::vector<FVector> create2DQuadVertecies(int xMax, int yMax);
 
+
+
+
 private:
+	float EPSILON = 0.5f;
+	bool isCloseSame(FVector &a, FVector &b);
+	bool isCloseSame(FVector &a, int index);
+	
+
 	void fillUpMissingVertecies(int count);
 
 	void clearNormals();
@@ -90,5 +119,9 @@ private:
 	int findClosestIndexTo(FVector &vertex);
 
 	void join(TArray<FVector> &vertecies, TArray<int32> &triangles, TArray<FVector> &normalsin);
-	
+
+	bool isValidVertexIndex(int i);
+	bool isValidTriangleIndex(int i);
+	bool isValidNormalIndex(int index);
+	FVector createNormal(int v0, int v1, int v2);
 };

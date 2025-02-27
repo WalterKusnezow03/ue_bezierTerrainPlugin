@@ -2,6 +2,7 @@
 
 
 #include "p2/meshgen/MeshData.h"
+#include <set>
 
 MeshData::MeshData()
 {
@@ -124,7 +125,11 @@ void MeshData::setTriangles(TArray<int32> &&trianglesIn){
     triangles = MoveTemp(trianglesIn);
 }
 
-/// join another mesh, vertecies add, triangles added with offset added to index
+/// @brief join another mesh, vertecies add, triangles added with offset added to index
+/// all data will be COPIED, regardless of duplicated vertecies, normals and triangles
+/// use appendEfficent(Meshdata) to get more data efficent results
+/// but with computational overhead!
+/// @param other 
 void MeshData::append(MeshData &other)
 {
     TArray<FVector> &verteciesRef = other.getVerteciesRef();
@@ -205,6 +210,23 @@ void MeshData::appendDoublesided(
     append(a, c, b); 
 }
 
+void MeshData::appendDoublesided(
+    FVector &a,
+    FVector &b,
+    FVector &c,
+    FVector &d
+){
+    /*
+    b c
+    a d
+    */
+    appendDoublesided(a, b, c);
+    appendDoublesided(a, c, d);
+}
+
+
+
+
 void MeshData::buildTriangle(
     FVector &a, 
     FVector &b, 
@@ -213,6 +235,7 @@ void MeshData::buildTriangle(
     TArray<int32> &trianglesOutput
 ){
     //add vertecies
+    /*
     output.Add(a);
     output.Add(b);
     output.Add(c);
@@ -221,7 +244,19 @@ void MeshData::buildTriangle(
     int32 offset = trianglesOutput.Num();
     trianglesOutput.Add(0 + offset); // 0th vertex in the first triangle
     trianglesOutput.Add(1 + offset); // 1st vertex in the first triangle
+    trianglesOutput.Add(2 + offset); // 2nd vertex in the first triangle*/
+
+    
+
+    //add triangles (new more readable)
+    int32 offset = output.Num();
+    trianglesOutput.Add(0 + offset); // 0th vertex in the first triangle
+    trianglesOutput.Add(1 + offset); // 1st vertex in the first triangle
     trianglesOutput.Add(2 + offset); // 2nd vertex in the first triangle
+
+    output.Add(a);
+    output.Add(b);
+    output.Add(c);
 }
 
 
@@ -415,6 +450,12 @@ void MeshData::closeMeshAtCenter(FVector &center, int bufferSizeToConnect, bool 
 
 
 
+
+
+
+
+
+
 /**
  * --- helper function ---
  */
@@ -427,8 +468,9 @@ int MeshData::findClosestIndexTo(FVector &vertex){
     }
     int closestIndex = 0;
     float dist = FVector::Dist(vertex, vertecies[0]);
+
     for (int i = 1; i < vertecies.Num(); i++){
-        float newDist = FVector::Dist(vertex, vertecies[1]);
+        float newDist = FVector::Dist(vertex, vertecies[i]);
         if(newDist < dist){
             dist = newDist;
             closestIndex = i;
@@ -436,6 +478,22 @@ int MeshData::findClosestIndexTo(FVector &vertex){
     }
     return closestIndex;
 }
+
+bool MeshData::isCloseSame(FVector &a, int index){
+    if(index < 0 || index >= vertecies.Num()){
+        return false;
+    }
+    return isCloseSame(a, vertecies[index]);
+}
+
+bool MeshData::isCloseSame(FVector &a, FVector &b){
+    return std::abs(a.X - b.X) < EPSILON &&
+           std::abs(a.Y - b.Z) < EPSILON &&
+           std::abs(a.Z - b.Z) < EPSILON;
+}
+
+
+
 
 
 
@@ -483,6 +541,123 @@ TArray<FColor> &MeshData::getVertexColorsRef(){
 }
 
 
+
+
+/**
+ * 
+ * is not tested!
+ * 
+ */
+
+void MeshData::appendEfficent(
+    FVector &a, 
+    FVector &b, 
+    FVector &c
+){
+    int indexA = findClosestIndexTo(a);
+    int indexB = findClosestIndexTo(b);
+    int indexC = findClosestIndexTo(c);
+
+    int debugEfficentAdded = 3;
+
+    //add if not found correctly
+    if(!isCloseSame(a, indexA)){
+        vertecies.Add(a);
+        indexA = vertecies.Num() - 1; //0
+        debugEfficentAdded--;
+    }
+    if(!isCloseSame(b, indexB)){
+        vertecies.Add(b);
+        indexB = vertecies.Num() - 1; //1
+        debugEfficentAdded--;
+    }
+    if(!isCloseSame(c, indexC)){
+        vertecies.Add(c);
+        indexC = vertecies.Num() - 1; //2
+        debugEfficentAdded--;
+    }
+    //add to triangle buffer
+    triangles.Add(indexA);
+    triangles.Add(indexB);
+    triangles.Add(indexC);
+
+    if(debugEfficentAdded > 0 && false){
+        FString message = FString::Printf(TEXT("meshdata efficentAdded %d"), debugEfficentAdded);
+        DebugHelper::logMessage(message);
+    }
+}
+
+
+void MeshData::appendEfficent(
+    FVector &a, 
+    FVector &b, 
+    FVector &c,
+    FVector &d
+){
+    appendEfficent(a, b, c);
+    appendEfficent(a, c, d);
+}
+
+
+
+/// @brief appends all mesh data, eliminates duplicated vertecies,
+/// and recalculates all normals
+/// @param other some mesh data
+void MeshData::appendEfficent(MeshData &other){
+
+    TArray<int32> &trianglesRef = other.getTrianglesRef();
+    for (int i = 0; i < trianglesRef.Num() - 2; i += 3){
+        int32 v0 = trianglesRef[i];
+        int32 v1 = trianglesRef[i + 1];
+        int32 v2 = trianglesRef[i + 2];
+
+        if(
+            other.isValidVertexIndex(v0) &&
+            other.isValidVertexIndex(v1) &&
+            other.isValidVertexIndex(v2)
+        ){
+            FVector &v0vertex = other.vertecies[v0];
+            FVector &v1vertex = other.vertecies[v1];
+            FVector &v2vertex = other.vertecies[v2];
+
+            appendEfficent(v0vertex, v1vertex, v2vertex);
+        }
+    }
+
+    calculateNormals();
+}
+
+
+
+FVector MeshData::createNormal(int v0, int v1, int v2){
+    if(isValidVertexIndex(v0) && isValidVertexIndex(v1) && isValidVertexIndex(v2)){
+        FVector &a = vertecies[v0];
+        FVector &b = vertecies[v1];
+        FVector &c = vertecies[v2];
+
+        FVector ab = b - a;
+        FVector ac = c - a;
+        return FVector::CrossProduct(ab, ac);
+    }
+    return FVector(0,0,0);
+}
+
+
+
+
+
+bool MeshData::isValidVertexIndex(int i){
+    return i >= 0 && i < vertecies.Num();
+}
+
+
+bool MeshData::isValidTriangleIndex(int i){
+    return i >= 0 && i < triangles.Num();
+}
+
+bool MeshData::isValidNormalIndex(int i){
+    return i >= 0 && i < normals.Num();
+}
 
 
 
