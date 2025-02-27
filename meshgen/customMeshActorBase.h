@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "ProceduralMeshComponent.h"
 #include <map>
+#include "MeshDataLod.h"
+#include "ELod.h"
 #include "customMeshActorBase.generated.h"
 
 UCLASS()
@@ -25,6 +27,8 @@ public:
 	void enableCollisionOnLayer(materialEnum type, bool enable);
 	void enableCollisionOnLayer(int layer, bool enable);
 	void enableCollisionByPreset();
+
+	ELod lodLevelByDistanceTo(FVector &other);
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -50,58 +54,46 @@ public:
 	);
 
 
-	static void createQuad(
-		FVector &a,
-		FVector &b,
-		FVector &c,
-		FVector &d,
-		MeshData &output
-	);
-
-	static void createTwoSidedQuad(
-		FVector &a,
-		FVector &b,
-		FVector &c,
-		FVector &d,
-		MeshData &output
-	);
-
-	void createTwoSidedQuad(
-		FVector &a, 
-		FVector &b, 
-		FVector &c, 
-		FVector &d, 
-		UMaterial *material
-	);
 
 	void createTwoSidedQuad(
 		FVector &a,
 		FVector &b,
 		FVector &c,
 		FVector &d,
-		UMaterial *material,
-		bool calculateNormals
+		materialEnum material
 	);
-	
-	
-	void updateMesh(MeshData &otherMesh, bool createNormals, int layer);
-	void updateMeshNoRaycastLayer(MeshData &otherMesh, bool createNormals, int layer);
 
+	void replaceMeshData(MeshData &meshdata, materialEnum type, ELod lodLevel);
+	void replaceMeshData(MeshData &meshdata, materialEnum type);
+
+	void ReloadMeshAndApplyAllMaterials();
 protected:
+	ELod currentLodLevel = ELod::lodNear;
 
-	void updateMesh(
-		UProceduralMeshComponent &meshcomponent,
-		MeshData &otherMesh, 
-		bool createNormals, 
-		int layer, 
-		std::map<int, MeshData> &map,
-		bool enableCollision
+	
+	MeshData &findMeshDataReference(
+		materialEnum type,
+		ELod lodLevel,
+		bool raycastOnLayer
 	);
-
 
 	/// @brief saves the mesh data in a map for each layer, keeps things organized
-	std::map<int, MeshData> meshLayersMap;
-	std::map<int, MeshData> meshLayersMapNoRaycast;
+	//std::map<int, MeshData> meshLayersMap;
+	//std::map<int, MeshData> meshLayersMapNoRaycast;
+	MeshData singleLayerMesh;
+
+	//new!
+	std::map<int, MeshDataLod> meshLayersLodMap;
+	std::map<int, MeshDataLod> meshLayersLodMapNoRaycast;
+
+	
+	void updateLodLevelAndReloadMesh(ELod level);
+	void updateMesh(
+		UProceduralMeshComponent &meshcomponent,
+		MeshData &otherMesh,
+		int layer,
+		bool enableCollision
+	);
 
 	UPROPERTY(VisibleAnywhere)
 	class UProceduralMeshComponent *Mesh;
@@ -147,4 +139,7 @@ protected:
 
 public:
 	static int layerByMaterialEnum(materialEnum type);
+	static std::vector<materialEnum> materialVector();
+	static std::vector<ELod> lodVector();
+
 };

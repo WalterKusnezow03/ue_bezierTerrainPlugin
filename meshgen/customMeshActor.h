@@ -48,18 +48,10 @@ public:
 	void setMaterialAndHealthAndSplitOnDeath(materialEnum mat, int health, bool split);
 
 
+	
+	void splitIntoAllTriangles();
+	void createNewMeshActors(std::vector<MeshData> &meshes, materialEnum material);
 
-	static void splitAndreplace(AActor *actor, FVector &bottom, int cmTile, materialEnum materialType);
-
-	static void splitAndreplace(
-		FVector &bottomCenter,
-		int xBound,
-		int yBound,
-		int zBound,
-		int cmTile,
-		materialEnum materialType,
-		UWorld *world
-	);
 
 	void createTerrainFrom2DMap(
 		std::vector<std::vector<FVector>> &map,
@@ -76,17 +68,20 @@ public:
 		FVector &d,
 		FVector &dir,
 		int cmheight,
-		UMaterial *material
+		materialEnum type
 	);
+
 
 	void createCube(
 		FVector &a,
 		FVector &b,
 		FVector &c,
 		FVector &d,
-		FVector &dir,
-		int cmheight,
-		MeshData &outputMeshData
+		FVector &a1,
+		FVector &b1,
+		FVector &c1,
+		FVector &d1,
+		materialEnum material
 	);
 
 	void createCube(
@@ -98,21 +93,8 @@ public:
 		FVector &b1,
 		FVector &c1,
 		FVector &d1,
-		UMaterial *material
+		MeshData &cubeMesh
 	);
-
-	void createCube(
-		FVector &a,
-		FVector &b,
-		FVector &c,
-		FVector &d,
-		FVector &a1,
-		FVector &b1,
-		FVector &c1,
-		FVector &d1,
-		MeshData &meshDataOutput
-	);
-
 
 	void setDamagedOwner(IDamageinterface *damagedOwnerIn);
 

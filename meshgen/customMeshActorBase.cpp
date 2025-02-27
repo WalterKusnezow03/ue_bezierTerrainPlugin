@@ -7,6 +7,7 @@
 #include "Components/BoxComponent.h"
 #include "KismetProceduralMeshLibrary.h"
 #include "p2/meshgen/generation/bezierCurve.h"
+#include "ELod.h"
 #include "p2/meshgen/customMeshActorBase.h"
 
 // Sets default values
@@ -25,6 +26,8 @@ AcustomMeshActorBase::AcustomMeshActorBase()
 
     // Attach it to the RootComponent (Mesh) so it has the same transform
     MeshNoRaycast->SetupAttachment(RootComponent);
+
+    currentLodLevel = ELod::lodNear;
 }
 
 // Called when the game starts or when spawned
@@ -69,8 +72,11 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
 
     
     //new refacturing
-    MeshData grassLayer;
-    MeshData stoneLayer;
+    /*MeshData grassLayer;
+    MeshData stoneLayer;*/
+
+    MeshData &grassLayer = findMeshDataReference(materialEnum::grassMaterial, ELod::lodNear, true);
+    MeshData &stoneLayer = findMeshDataReference(materialEnum::stoneMaterial, ELod::lodNear, true);
 
 
     std::vector<FVector> navMeshAdd;
@@ -162,15 +168,18 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
 
 
     //process created data and apply meshes and materials
+    /*
     updateMesh(grassLayer, true, layerByMaterialEnum(materialEnum::grassMaterial));
     updateMesh(stoneLayer, true, layerByMaterialEnum(materialEnum::stoneMaterial));
 
     ApplyMaterial(materialEnum::grassMaterial);
-    ApplyMaterial(materialEnum::stoneMaterial);
+    ApplyMaterial(materialEnum::stoneMaterial);*/
+    //updateLodLevelAndReloadMesh(ELod::lodNear);
 
+    grassLayer.calculateNormals();
+    stoneLayer.calculateNormals();
+    ReloadMeshAndApplyAllMaterials();
 
-    
-	
     /**
      * ADD NODES TO NAVMESH
      */
@@ -194,262 +203,206 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
 
 
 
-/// @brief updates a mesh layer given on a mesh data object (which will be deep copied)
-/// @param otherMesh some mesh, will be COPIED
-/// @param createNormals recreate normals
-/// @param layer layer to save in
-void AcustomMeshActorBase::updateMesh(MeshData &otherMesh, bool createNormals, int layer){
-    if(Mesh){
-        updateMesh(
-            *Mesh,
-            otherMesh,
-            createNormals,
-            layer,
-            meshLayersMap,
-            true // enableCollision
-        );
-    }
-    /*
-    meshLayersMap[layer] = otherMesh; //assign operator is overriden
 
-    MeshData *data = nullptr;
-    if (meshLayersMap.find(layer) != meshLayersMap.end()){
-        //find meshData from map by reference
-        data = &meshLayersMap[layer]; //hier mit eckigen klammern weil .find ein iterator ist
-    }
 
-    if(data != nullptr && Mesh != nullptr){
-        
-        
-        if(createNormals){
-            data->calculateNormals();
+
+
+
+
+
+
+
+/**
+ * 
+ * 
+ * ------ NEW LOD LEVEL METHODS ------
+ * 
+ * 
+ */
+
+
+
+MeshData &AcustomMeshActorBase::findMeshDataReference(
+    materialEnum type,
+    ELod lodLevel,
+    bool raycastOnLayer
+){
+    int layer = layerByMaterialEnum(type);
+    if(raycastOnLayer){
+        if(meshLayersLodMap.find(layer) == meshLayersLodMap.end()){
+            meshLayersLodMap[layer] = MeshDataLod();
         }
+        MeshDataLod &meshLodLevel = meshLayersLodMap[layer];
+        MeshData &data = meshLodLevel.meshDataReference(lodLevel); //Alles per value irgendwo, wie es sein soll! :-)
+        return data;
+    }else{
 
-        / *
-         * example: 
-         * 
-        Mesh->CreateMeshSection(
-            layer, 
-            newvertecies, 
-            this->triangles, 
-            normals, 
-            UV0, 
-            VertexColors, 
-            Tangents, 
-            true
-        );* / 
-        Mesh->ClearMeshSection(layer);
-        Mesh->CreateMeshSection(
-            layer, 
-            data->getVerteciesRef(),//newvertecies, 
-            data->getTrianglesRef(),//this->triangles, 
-            data->getNormalsRef(),//normals, 
-            data->getUV0Ref(),//UV0, 
-            data->getVertexColorsRef(),//VertexColors, 
-            data->getTangentsRef(),//Tangents, 
-            true
-        );
-
-        //set for spehere overlap
-        Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-        Mesh->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-        Mesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
-
+        if(meshLayersLodMapNoRaycast.find(layer) == meshLayersLodMapNoRaycast.end()){
+            meshLayersLodMapNoRaycast[layer] = MeshDataLod();
+        }
+        MeshDataLod &meshLodLevel = meshLayersLodMapNoRaycast[layer];
+        MeshData &data = meshLodLevel.meshDataReference(lodLevel);
+        return data;
     }
-    //enable if was disabled!
-    AActorUtil::showActor(*this, true);
-    AActorUtil::enableColliderOnActor(*this, true);
-    */
-
 }
 
 
 
-void AcustomMeshActorBase::updateMeshNoRaycastLayer(MeshData &otherMesh, bool createNormals, int layer){
+
+void AcustomMeshActorBase::updateLodLevelAndReloadMesh(ELod level){
+    if(level != currentLodLevel){
+        currentLodLevel = level;
+        ReloadMeshAndApplyAllMaterials();
+    }
+}
+
+
+/// @brief reloads all meshes, raycast, no raycast, all meshdata, all materials!
+/// call this method when replacing mesh data or changing the lod!
+void AcustomMeshActorBase::ReloadMeshAndApplyAllMaterials(){
+
+    std::vector<materialEnum> materials = AcustomMeshActorBase::materialVector();
+
+    //raycast
+    if(Mesh){
+        bool raycastOn = true;
+        for (int i = 0; i < materials.size(); i++){
+            int layer = layerByMaterialEnum(materials[i]);
+            MeshData &meshData = findMeshDataReference(materials[i], currentLodLevel, raycastOn);
+            /*
+            updateMesh(
+                UProceduralMeshComponent &meshcomponent,
+                MeshData &otherMesh, //must be a reference which is in class scope, safe
+                bool createNormals, 
+                int layer,
+                bool enableCollision
+            )
+            */
+            updateMesh(*Mesh, meshData, layer, raycastOn);
+            ApplyMaterial(materials[i]);
+        }
+    }
+
+
+    //noraycast
     if(MeshNoRaycast){
-        updateMesh(
-            *MeshNoRaycast,
-            otherMesh,
-            createNormals,
-            layer,
-            meshLayersMapNoRaycast,
-            false // enableCollision
-        );
+        bool raycastOn = false;
+        for (int i = 0; i < materials.size(); i++)
+        {
+            int layer = layerByMaterialEnum(materials[i]);
+            MeshData &meshData = findMeshDataReference(materials[i], currentLodLevel, raycastOn);
+            updateMesh(*MeshNoRaycast, meshData, layer, raycastOn);
+            ApplyMaterialNoRaycastLayer(materials[i]);
+        }
     }
+
+
 }
 
 
+//TESTED
 void AcustomMeshActorBase::updateMesh(
     UProceduralMeshComponent &meshcomponent,
-    MeshData &otherMesh, 
-    bool createNormals, 
-    int layer, 
-    std::map<int, MeshData> &map,
+    MeshData &otherMesh, //MUST BE SAVED IN A VALUE CLASS SCOPE SOMEWHERE!
+    int layer,
     bool enableCollision
 ){
-    map[layer] = otherMesh; //assign operator is overriden
-
-    MeshData *data = nullptr;
-    if (map.find(layer) != map.end()){
-        //find meshData from map by reference
-        data = &map[layer]; //hier mit eckigen klammern weil .find ein iterator ist
+    if(otherMesh.getVerteciesRef().Num() == 0){
+        return;
     }
 
-    if(data != nullptr){
-        
-        
-        if(createNormals){
-            data->calculateNormals();
-        }
 
-        /**
-         * example: 
-         * 
-        Mesh->CreateMeshSection(
-            layer, 
-            newvertecies, 
-            this->triangles, 
-            normals, 
-            UV0, 
-            VertexColors, 
-            Tangents, 
-            true
-        );*/
-        meshcomponent.ClearMeshSection(layer);
-        meshcomponent.CreateMeshSection(
-            layer, 
-            data->getVerteciesRef(),//newvertecies, 
-            data->getTrianglesRef(),//this->triangles, 
-            data->getNormalsRef(),//normals, 
-            data->getUV0Ref(),//UV0, 
-            data->getVertexColorsRef(),//VertexColors, 
-            data->getTangentsRef(),//Tangents, 
-            true
-        );
+    /**
+     * example: 
+     * 
+    Mesh->CreateMeshSection(
+        layer, 
+        newvertecies, 
+        this->triangles, 
+        normals, 
+        UV0, 
+        VertexColors, 
+        Tangents, 
+        true
+    );*/
+    meshcomponent.ClearMeshSection(layer);
+    meshcomponent.CreateMeshSection(
+        layer, 
+        otherMesh.getVerteciesRef(),//newvertecies, 
+        otherMesh.getTrianglesRef(),//this->triangles, 
+        otherMesh.getNormalsRef(),//normals, 
+        otherMesh.getUV0Ref(),//UV0, 
+        otherMesh.getVertexColorsRef(),//VertexColors, 
+        otherMesh.getTangentsRef(),//Tangents, 
+        true
+    );
 
-        //set for spehere overlap
-        meshcomponent.SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-        meshcomponent.SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-        meshcomponent.SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+    //set for spehere overlap
+    meshcomponent.SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    meshcomponent.SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+    meshcomponent.SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 
-    }
+
+
+
+
+
+
+
+
     //enable if was disabled!
     AActorUtil::showActor(*this, true);
     AActorUtil::enableColliderOnActor(*this, true);
 
 
     if(!enableCollision){
-        MeshNoRaycast->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        meshcomponent.SetCollisionEnabled(ECollisionEnabled::NoCollision);
     }else{
-        MeshNoRaycast->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        meshcomponent.SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     }
 }
 
 
+/**
+ * 
+ * --- helper functions for special meshes: rooms ---
+ * 
+ */
 
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-/// @brief all quads MUST BE BUILD out of TRIANGLES, OTHERWISE MANY BUGS OCCUR!
-/// @param a corner 0
-/// @param b corner 1
-/// @param c corner 2
-/// @param output output to append in
-/// @param trianglesOutput triangle int32 as nums saved in here, also appended
-void AcustomMeshActorBase::buildTriangle(
-    FVector &a, 
-    FVector &b, 
-    FVector &c,
-    TArray<FVector> &output,
-    TArray<int32> &trianglesOutput
-){
-    //add vertecies
-    output.Add(a);
-    output.Add(b);
-    output.Add(c);
-
-    //add triangles
-    int32 offset = trianglesOutput.Num();
-
-    trianglesOutput.Add(0 + offset); // 0th vertex in the first triangle
-    trianglesOutput.Add(1 + offset); // 1st vertex in the first triangle
-    trianglesOutput.Add(2 + offset); // 2nd vertex in the first triangle
-    
+/// @brief adds mesh data to all lod layers (Use on custom mesh creation, for example rooms)
+/// @param meshdata meshdata to add and COPY
+/// @param type type of material for this layer, will be raycast enabled by default!
+void AcustomMeshActorBase::replaceMeshData(MeshData &meshdata, materialEnum type){
+    //all lod levels included
+    std::vector<ELod> lodvector = AcustomMeshActorBase::lodVector();
+    for (int i = 0; i < lodvector.size(); i++){
+        replaceMeshData(meshdata, type, lodvector[i]);
+    }
 }
 
-
-
-/// @brief build a quad out of two triangles! Important otherwise unfixable issues are in the mesh
-/// @param a 
-/// @param b 
-/// @param c 
-/// @param d 
-/// @param output 
-/// @param trianglesOutput 
-void AcustomMeshActorBase::buildQuad(
-    FVector &a, 
-    FVector &b, 
-    FVector &c, 
-    FVector &d, 
-    TArray<FVector> &output,
-    TArray<int32> &trianglesOutput
-){
-
-    //must be individual triangles:
-    //quads: buggy + the engine is converting it to triangles back again anyway
-    buildTriangle(a, b, c, output, trianglesOutput);
-    buildTriangle(a, c, d, output, trianglesOutput);
-    return;
-
-    / *
-                1--2
-                |  |
-                0<-3
-
-                b--c
-                |  |
-                a<-d
-    * /
-
-}*/
-
-
-
-
-
-void AcustomMeshActorBase::createQuad(
-		FVector &a,
-		FVector &b,
-		FVector &c,
-		FVector &d,
-		MeshData &output
-){
-    output.append(a,b,c,d);
+/// @brief replaces the mesh data for a lod level and a material (layer automatically found),
+/// will be raycast enabled by default! (Use on custom mesh creation, for example rooms)
+/// @param meshdata 
+/// @param type 
+/// @param lodLevel 
+void AcustomMeshActorBase::replaceMeshData(MeshData &meshdata, materialEnum type, ELod lodLevel){
+    int layer = layerByMaterialEnum(type);
+    if (meshLayersLodMap.find(layer) == meshLayersLodMap.end())
+    {
+        meshLayersLodMap[layer] = MeshDataLod();
+    }
+    MeshDataLod &meshLodLevel = meshLayersLodMap[layer];
+    meshLodLevel.replace(lodLevel, meshdata);
 }
 
 
 
 
 
-void AcustomMeshActorBase::createTwoSidedQuad(
-    FVector &a,
-	FVector &b,
-	FVector &c,
-	FVector &d,
-	MeshData &output
-){
-    output.appendDoublesided(a, b, c, d);
-}
+
+
+
+
 
 /// @brief applys a material to the whole component (slot 0 by default)
 /// @param ProceduralMeshComponent 
@@ -493,34 +446,14 @@ void AcustomMeshActorBase::createTwoSidedQuad(
     FVector &b,
     FVector &c,
     FVector &d,
-    UMaterial *material
+    materialEnum material
 ){
-    createTwoSidedQuad(a, b, c, d, material, true);
+    MeshData meshData;
+    meshData.appendDoublesided(a, b, c, d);
+    meshData.calculateNormals();
+    replaceMeshData(meshData, material);
+    ReloadMeshAndApplyAllMaterials();
 }
-
-void AcustomMeshActorBase::createTwoSidedQuad(
-    FVector &a, 
-    FVector &b,
-    FVector &c,
-    FVector &d,
-    UMaterial *material,
-    bool calculateNormals
-){
-    if(material != nullptr){
-        MeshData meshDataOut;
-        meshDataOut.appendDoublesided(a, b, c, d);
-
-        updateMesh(meshDataOut, calculateNormals, 0);
-        ApplyMaterial(Mesh, material, 0);
-
-        DebugHelper::logMessage("material was not null!");
-    }
-}
-
-
-
-
-
 
 /// @brief applies the material to the no raycast layer as expected
 /// @param type 
@@ -553,6 +486,17 @@ void AcustomMeshActorBase::ApplyMaterial(
 /// @param type type of material
 /// @return int layer index
 int AcustomMeshActorBase::layerByMaterialEnum(materialEnum type){
+    std::vector<materialEnum> types = AcustomMeshActorBase::materialVector();
+    for (int i = 0; i < types.size(); i++)
+    {
+        if(type == types[i]){
+            return i;
+        }
+    }
+    return 0;
+}
+
+std::vector<materialEnum> AcustomMeshActorBase::materialVector(){
     std::vector<materialEnum> types = {
         materialEnum::grassMaterial,
         materialEnum::wallMaterial,
@@ -562,12 +506,28 @@ int AcustomMeshActorBase::layerByMaterialEnum(materialEnum type){
         materialEnum::treeMaterial,
         materialEnum::palmLeafMaterial
     };
-    for (int i = 0; i < types.size(); i++){
-        if(type == types[i]){
-            return i;
-        }
-    }
-    return 0;
+    return types;
 }
 
 
+
+
+
+
+
+
+/**
+ * 
+ * 
+ * --- lod helper methods ---
+ * 
+ * 
+ */
+std::vector<ELod> AcustomMeshActorBase::lodVector(){
+    std::vector<ELod> types = {
+        ELod::lodFar,
+        ELod::lodMiddle,
+        ELod::lodNear
+    };
+    return types;
+}

@@ -85,9 +85,38 @@ public:
 	static std::vector<FVector> create2DQuadVertecies(int xMax, int yMax);
 
 
+	//new helper
+	void seperateMeshIntoAllTrianglesDoubleSided(std::vector<MeshData> &meshDataVectorOutput);
+	void splitAllTrianglesInHalfAndSeperateMeshIntoAllTrianglesDoubleSided(
+		std::vector<MeshData> &meshDataVectorOutput
+	);
 
+	FVector center();
+	void centerMesh();
+
+	void appendCube(
+		FVector &a,
+		FVector &b,
+		FVector &c,
+		FVector &d,
+		FVector &a1,
+		FVector &b1,
+		FVector &c1,
+		FVector &d1
+	);
+
+	void appendCube(
+		FVector &a,
+		FVector &b,
+		FVector &c,
+		FVector &d,
+		FVector orthogonalDir
+	);
 
 private:
+	float MIN_SPLITDISTANCE = 20.0f;
+	bool canSplit(FVector &a, FVector &b, FVector &c);
+
 	float EPSILON = 0.5f;
 	bool isCloseSame(FVector &a, FVector &b);
 	bool isCloseSame(FVector &a, int index);

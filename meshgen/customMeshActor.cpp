@@ -98,7 +98,9 @@ void AcustomMeshActor::takedamage(int d){
 
                 health = 100;
                 if(splitOnDeath){
-                    splitAndreplace(this, originPoint, 50, materialtypeSet);
+
+                    splitIntoAllTriangles();
+                    // splitAndreplace(this, originPoint, 50, materialtypeSet);
                 }
 
                 SetActorLocation(FVector(0, 0, -10000));
@@ -180,7 +182,7 @@ void AcustomMeshActor::createTerrainFrom2DMap(
     setMaterialBehaiviour(materialEnum::grassMaterial, false); //no split
     
     DebugHelper::logMessage("debugCreateFoliage_terrain!");
-    if(createTrees){
+    if(createTrees){ //debug test
         DebugHelper::logMessage("debugCreateFoliage");
         createFoliage(touples);
     }
@@ -214,21 +216,16 @@ void AcustomMeshActor::createCube(
     FVector &d,
     FVector &dir,
     int cmheight,
-    UMaterial *material
+    materialEnum type
 ){
-    if(material != nullptr){
+    dir = dir.GetSafeNormal() * cmheight;
 
-        dir = dir.GetSafeNormal() * cmheight;
+    FVector a1 = a + dir;
+    FVector b1 = b + dir;
+    FVector c1 = c + dir;
+    FVector d1 = d + dir;
 
-        FVector a1 = a + dir;
-        FVector b1 = b + dir;
-        FVector c1 = c + dir;
-        FVector d1 = d + dir;
-
-        createCube(a, b, c, d, a1, b1, c1, d1, material);
-
-
-    }
+    createCube(a, b, c, d, a1, b1, c1, d1, type);
 }
 
 /// @brief expect a -d to be clockwise bottom quad and a1-d1 to be clockwise top quad
@@ -249,50 +246,23 @@ void AcustomMeshActor::createCube(
     FVector &b1,
     FVector &c1,
     FVector &d1,
-    UMaterial *material
+    materialEnum material
 ){
 
-    MeshData meshDataOutput;
-    createQuad(a, d, c, b, meshDataOutput);
-    createQuad(a1, b1, c1, d1, meshDataOutput);
+    MeshData cubeMesh;
+    cubeMesh.appendEfficent(a, d, c, b);
+    cubeMesh.appendEfficent(a1, b1, c1, d1);
+    cubeMesh.appendEfficent(b, b1, a1, a);
+    cubeMesh.appendEfficent(c, c1, b1, b);
+    cubeMesh.appendEfficent(d, d1, c1, c);
+    cubeMesh.appendEfficent(a, a1, d1, d);
+    cubeMesh.calculateNormals();
 
-    //sides
-    //must be reverse winding order (ccl)
-    //instead of 0123 -> 3210 to be flipped correctly!
-    createQuad(b, b1, a1, a, meshDataOutput); //correct, must be reverse winding order (ccl)
-    createQuad(c, c1, b1, b, meshDataOutput); 
-    createQuad(d, d1, c1, c, meshDataOutput);
-    createQuad(a, a1, d1, d, meshDataOutput);
-    
-
-    //AcustomMeshActor::updateMesh(MeshData otherMesh, bool createNormals, int layer)
-    updateMesh(meshDataOutput, false, 0);
-    if(material != nullptr){
-        ApplyMaterial(Mesh, material);
-    }else{
-        //find wall material if none was provided / nullptr
-        if(assetManager *e = assetManager::instance()){
-            ApplyMaterial(Mesh, e->findMaterial(materialEnum::wallMaterial));
-        }
-    }
-
-
+    replaceMeshData(cubeMesh, material);
+    ReloadMeshAndApplyAllMaterials();
 }
 
-
-
-
-/// @brief creates a cube mesh from  vertecies, a extend direction and extend length
-/// the mesh data will  be written into the pass by ref output object
-/// @param a 
-/// @param b 
-/// @param c 
-/// @param d 
-/// @param a1 
-/// @param b1 
-/// @param c1 
-/// @param d1 
-/// @param meshDataOutput 
+/*
 void AcustomMeshActor::createCube(
     FVector &a, 
     FVector &b,
@@ -302,56 +272,17 @@ void AcustomMeshActor::createCube(
     FVector &b1,
     FVector &c1,
     FVector &d1,
-    MeshData &meshDataOutput
+    MeshData &cubeMesh
 ){
-    meshDataOutput.append(a, d, c, b);
-    meshDataOutput.append(a1, b1, c1, d1);
-    meshDataOutput.append(b, b1, a1, a);
-    meshDataOutput.append(c, c1, b1, b);
-    meshDataOutput.append(d, d1, c1, c);
-    meshDataOutput.append(a, a1, d1, d);
-
-    /*
-
-    createQuad(a, d, c, b, meshDataOutput);
-    createQuad(a1, b1, c1, d1, meshDataOutput);
-
-    //sides
-    //must be reverse winding order (ccl)
-    //instead of 0123 -> 3210 to be flipped correctly!
-    createQuad(b, b1, a1, a, meshDataOutput); //correct, must be reverse winding order (ccl)
-    createQuad(c, c1, b1, b, meshDataOutput); 
-    createQuad(d, d1, c1, c, meshDataOutput);
-    createQuad(a, a1, d1, d, meshDataOutput);
-    */
+    cubeMesh.appendEfficent(a, d, c, b);
+    cubeMesh.appendEfficent(a1, b1, c1, d1);
+    cubeMesh.appendEfficent(b, b1, a1, a);
+    cubeMesh.appendEfficent(c, c1, b1, b);
+    cubeMesh.appendEfficent(d, d1, c1, c);
+    cubeMesh.appendEfficent(a, a1, d1, d);
+    cubeMesh.calculateNormals();
 }
-
-
-/// @brief creates a cube mesh from  vertecies, a extend direction and extend length
-/// the mesh data will  be written into the pass by ref output object
-/// @param a 
-/// @param b 
-/// @param c 
-/// @param d 
-/// @param dir direction of extend
-/// @param cmheight cm extend to have
-/// @param outputMeshData mesh data to write to
-void AcustomMeshActor::createCube(
-	FVector &a,
-	FVector &b,
-	FVector &c,
-	FVector &d,
-	FVector &dir,
-	int cmheight,
-	MeshData &outputMeshData
-){
-    dir = dir.GetSafeNormal() * cmheight;
-    FVector a1 = a + dir;
-    FVector b1 = b + dir;
-    FVector c1 = c + dir;
-    FVector d1 = d + dir;
-    createCube(a, b, c, d, a1, b1, c1, d1, outputMeshData);
-}
+*/
 
 
 
@@ -368,8 +299,10 @@ void AcustomMeshActor::createCube(
 /// @param touples lcoation and normal in a touple
 /// @param outputAppend for example a terrain mesh to create trees on
 void AcustomMeshActor::createFoliage(TArray<FVectorTouple> &touples){
-    MeshData meshDataStem;
-    MeshData meshDataLeaf;
+    //MeshData meshDataStem;
+    //MeshData meshDataLeaf;
+    MeshData &meshDataStem = findMeshDataReference(materialEnum::treeMaterial, ELod::lodNear, true);
+    MeshData &meshDataLeaf = findMeshDataReference(materialEnum::palmLeafMaterial, ELod::lodNear, false); //noraycast
 
     // iterate over touples
     // determine normal angle and apply foliage, rocks, trees accordingly
@@ -405,18 +338,23 @@ void AcustomMeshActor::createFoliage(TArray<FVectorTouple> &touples){
 
 
     //updateMeshNoRaycastLayer(meshDataStem, false, layerByMaterialEnum(materialEnum::treeMaterial));
-
+    /*
     updateMesh(meshDataStem, false, layerByMaterialEnum(materialEnum::treeMaterial));
     ApplyMaterial(materialEnum::treeMaterial);
 
     //different layer for meshes, no raycast / physics
     updateMeshNoRaycastLayer(meshDataLeaf, false, layerByMaterialEnum(materialEnum::palmLeafMaterial));
     ApplyMaterialNoRaycastLayer(materialEnum::palmLeafMaterial);
+    */
+    ReloadMeshAndApplyAllMaterials();
 
 }
 
 
-
+/// @brief creates a matrix tree and appends the meshdata to the wanted output passed by reference
+/// @param location 
+/// @param meshDataStem 
+/// @param meshDataLeaf 
 void AcustomMeshActor::createTreeAndSaveMeshTo(
     FVector &location, 
     MeshData &meshDataStem, 
@@ -435,273 +373,92 @@ void AcustomMeshActor::createTreeAndSaveMeshTo(
     meshDataLeaf.append(currentLeafMesh);
 }
 
-/// @brief will replace the actor and split it (int terms of bounds) and apply an material
-/// will not use original mesh, just the bounds
-/// @param actor actor to replace with splitted mesh
-/// @param bottomCenter bottom center of the actor, very important, do not ignore
-/// @param cmTile each tile to be cm wide and high
-/// @param material material to set for the mesh
-void AcustomMeshActor::splitAndreplace(
-    AActor *actor,
-    FVector &bottomCenter,
-    int cmTile,
-    materialEnum materialType
-)
-{
+
+
+
+
+
+void AcustomMeshActor::splitIntoAllTriangles(){
     
-    UMaterial *material = nullptr;
-    assetManager *am = assetManager::instance();
-    if(am != nullptr){
-        material = am->findMaterial(materialType);
+    std::vector<MeshDataLod> newLodMeshes;
+    std::vector<materialEnum> materials = materialVector();
+    std::vector<bool> raycastFlags = {true, false};
+
+    FVector actorLocation = GetActorLocation();
+
+    for (int flag = 0; flag < raycastFlags.size(); flag++){
+        bool raycastFlag = raycastFlags[flag];
+        for (int i = 0; i < materials.size(); i++)
+        {
+            
+
+            // only on nearest lod, because a single triangle is the simplest shape at all
+            materialEnum currentMaterial = materials[i];
+            MeshData &meshFound = findMeshDataReference(
+                currentMaterial,
+                ELod::lodNear,
+                raycastFlag
+            );
+
+            std::vector<MeshData> allTrianglesDoubleSided;
+            meshFound.splitAllTrianglesInHalfAndSeperateMeshIntoAllTrianglesDoubleSided(allTrianglesDoubleSided);
+
+            createNewMeshActors(allTrianglesDoubleSided, currentMaterial);
+        }
     }
 
-    if(actor != nullptr && material != nullptr){
+        
+}
 
-        int xBound = 0;
-        int yBound = 0;
-        int zBound = 0;
-        AActorUtil::calculateActorBounds(actor, xBound, yBound, zBound);
+void AcustomMeshActor::createNewMeshActors(std::vector<MeshData> &meshes, materialEnum material){
+
+    FString message = FString::Printf(
+        TEXT("DEBUGSPLIT CREATE: %d"), meshes.size()
+    );
+    DebugHelper::logMessage(message);
+
+    EntityManager *entityManagerPointer = worldLevel::entityManager();
+    if(entityManagerPointer == nullptr){
+        return;
+    }
+
+    FVector actorLocation = GetActorLocation();
+    for (int meshIndex = 0; meshIndex < meshes.size(); meshIndex++)
+    {
+        MeshData &currentMeshData = meshes[meshIndex];
+        FVector centerOfMesh = currentMeshData.center();
+
+        //offset lang bewegen,
+        //dann vertecies des meshes zentrieren
+        FVector offsetFromActorLocation = actorLocation + centerOfMesh;
+        currentMeshData.centerMesh();
+
+        // process all triangles to new actors
+        AcustomMeshActor *newActor = entityManagerPointer->spawnAcustomMeshActor(
+            GetWorld(), 
+            offsetFromActorLocation
+        );
+
+        if (newActor != nullptr){
+            newActor->setMaterialBehaiviour(material, splitOnDeath); //split on death so kopieren!
+            newActor->replaceMeshData(currentMeshData, material);
+            newActor->ReloadMeshAndApplyAllMaterials();
+        }
 
 
-        //create a mesh where the pieces are almost a similar side viewed from the larger side
-        //like consitent quads
-
-        EntityManager *eM = worldLevel::entityManager();
-        if (eM != nullptr)
-        {
-            //bottom left corner
-            FVector anchor = bottomCenter;
-            anchor.X -= xBound / 2; //bottom left now (bounds adjusted half way obviosuly)
-            anchor.Y -= yBound / 2;
-
-            FVector up(0, 0, cmTile); //always in up direction for now
-            FVector side = (xBound > yBound) ? FVector(cmTile, 0, 0) : FVector(0, cmTile, 0); //iterate along longer
-            FVector extension = (xBound > yBound) ? FVector(0, yBound, 0) : FVector(xBound, 0, 0);  //90 degree to longer
-            
-
-            
-            float tilesXAxis = (xBound > yBound) ? xBound / cmTile : yBound / cmTile;
-            float tilesZAxis = zBound / cmTile;
-            if(tilesXAxis < 1){
-                side *= tilesXAxis; //scale accordinly down!
-                tilesXAxis = 1; // set to one to still iterate once
-            }
-            if(tilesZAxis < 1){
-                up *= tilesZAxis; //scale accordinly down!
-                tilesZAxis = 1; // set to one to still iterate once
-            }
-            
-
-            //DEBUGGING NEEDED
-
-            //new: symetrical splitting, randomize offset, create meshes
-            std::vector<std::vector<FVector>> splitted;
-            for (int i = 0; i <= tilesXAxis; i++)
-            {
-                std::vector<FVector> positions;
-                for (int j = 0; j <= tilesZAxis; j++)
-                {
-                    //create the grid properly
-                    FVector pos = i * side + j * up;
-                    positions.push_back(pos);
-                }
-                splitted.push_back(positions);
-            }
-
-            //random offsets
-            for (int i = 1; i < splitted.size() - 1; i++)
-            {
-                for (int j = 1; j < splitted[i].size() - 1; j++){ //only inner vertecies to offset
-                    // scale from 0 to 1
-                    FVector offset = side * FVectorUtil::randomFloatNumber(-1.0f, 1.0f) * 0.5f;
-                    splitted[i][j] += offset;
-                }
-            }
-            //create cubes from touples like 2d map
-            for (int i = 0; i < splitted.size() - 1; i++)
-            {
-                for (int j = 0; j < splitted[i].size() - 1; j++){
-
-                    FVector center = anchor + splitted[i][j];
-                    AcustomMeshActor *newActor = eM->spawnAcustomMeshActor(actor->GetWorld(), center);
-                    if (newActor != nullptr){
-                        /*
-                        1  2
-
-                        0  3
-                        */
-                        FVector &t0_base = splitted[i][j];
-                        FVector t0(0, 0, 0);
-                        FVector t1 = splitted[i][j+1] - t0_base;
-                        FVector t2 = splitted[i+1][j+1] - t0_base;
-                        FVector t3 = splitted[i+1][j] -t0_base;
-
-                        FVector t0a = t0 + extension;
-                        FVector t1a = t1 + extension;
-                        FVector t2a = t2 + extension;
-                        FVector t3a = t3 + extension;
-
-                        DebugHelper::showLineBetween(actor->GetWorld(), center + t0, center + t1);
-                        DebugHelper::showLineBetween(actor->GetWorld(), center + t1, center + t2);
-                        DebugHelper::showLineBetween(actor->GetWorld(), center + t2, center + t3);
-                        DebugHelper::showLineBetween(actor->GetWorld(), center + t3, center + t0);
-
-                        // init on begin!
-                        bool split = false;
-                        newActor->setMaterialBehaiviour(materialType, split);
-                        // newActor->init(materialType);
-
-                        // apply mesh
-                        // is correct like this, do not touch
-                        newActor->createCube(
-                            t0, t1, t2, t3,     //bottom quad clw
-                            t0a, t1a, t2a, t3a, //top quad clw
-                            material
-                        );
-                        
-                    }
-                }
-            }
-
+        //debugDraw
+        TArray<FVector> verteciesRef = currentMeshData.getVerteciesRef();
+        for (int i = 0; i < verteciesRef.Num(); i++){
+            DebugHelper::showLineBetween(
+                GetWorld(),
+                offsetFromActorLocation + verteciesRef[i],
+                offsetFromActorLocation,
+                FColor::Red,
+                100.0f
+            );
         }
     }
 }
-
-
-
-
-
-
-
-
-/// @brief will replace the actor and split it (int terms of bounds) and apply an material
-/// will not use original mesh, just the bounds
-/// @param actor actor to replace with splitted mesh
-/// @param bottomCenter bottom center of the actor, very important, do not ignore
-/// @param cmTile each tile to be cm wide and high
-/// @param material material to set for the mesh
-void AcustomMeshActor::splitAndreplace(
-    FVector &bottomCenter,
-    int xBound,
-    int yBound,
-    int zBound,
-    int cmTile,
-    materialEnum materialType,
-    UWorld *world
-)
-{
-    
-    UMaterial *material = nullptr;
-    assetManager *am = assetManager::instance();
-    if(am != nullptr){
-        material = am->findMaterial(materialType);
-    }
-
-    if(material != nullptr){
-
-        //create a mesh where the pieces are almost a similar side viewed from the larger side
-        //like consitent quads
-
-        EntityManager *eM = worldLevel::entityManager();
-        if (eM != nullptr)
-        {
-            //bottom left corner
-            FVector anchor = bottomCenter;
-            anchor.X -= xBound / 2; //bottom left now (bounds adjusted half way obviosuly)
-            anchor.Y -= yBound / 2;
-
-            FVector up(0, 0, cmTile); //always in up direction for now
-            FVector side = (xBound > yBound) ? FVector(cmTile, 0, 0) : FVector(0, cmTile, 0); //iterate along longer
-            FVector extension = (xBound > yBound) ? FVector(0, yBound, 0) : FVector(xBound, 0, 0);  //90 degree to longer
-            
-
-            
-            float tilesXAxis = (xBound > yBound) ? xBound / cmTile : yBound / cmTile;
-            float tilesZAxis = zBound / cmTile;
-            if(tilesXAxis < 1){
-                side *= tilesXAxis; //scale accordinly down!
-                tilesXAxis = 1; // set to one to still iterate once
-            }
-            if(tilesZAxis < 1){
-                up *= tilesZAxis; //scale accordinly down!
-                tilesZAxis = 1; // set to one to still iterate once
-            }
-            
-
-            //DEBUGGING NEEDED
-
-            //new: symetrical splitting, randomize offset, create meshes
-            std::vector<std::vector<FVector>> splitted;
-            for (int i = 0; i <= tilesXAxis; i++)
-            {
-                std::vector<FVector> positions;
-                for (int j = 0; j <= tilesZAxis; j++)
-                {
-                    //create the grid properly
-                    FVector pos = i * side + j * up;
-                    positions.push_back(pos);
-                }
-                splitted.push_back(positions);
-            }
-
-            //random offsets
-            for (int i = 1; i < splitted.size() - 1; i++)
-            {
-                for (int j = 1; j < splitted[i].size() - 1; j++){ //only inner vertecies to offset
-                    // scale from 0 to 1
-                    FVector offset = side * FVectorUtil::randomFloatNumber(-1.0f, 1.0f) * 0.5f;
-                    splitted[i][j] += offset;
-                }
-            }
-            //create cubes from touples like 2d map
-            for (int i = 0; i < splitted.size() - 1; i++)
-            {
-                for (int j = 0; j < splitted[i].size() - 1; j++){
-
-                    FVector center = anchor + splitted[i][j];
-                    AcustomMeshActor *newActor = eM->spawnAcustomMeshActor(world, center);
-                    if (newActor != nullptr){
-                        /*
-                        1  2
-
-                        0  3
-                        */
-                        FVector &t0_base = splitted[i][j];
-                        FVector t0(0, 0, 0);
-                        FVector t1 = splitted[i][j+1] - t0_base;
-                        FVector t2 = splitted[i+1][j+1] - t0_base;
-                        FVector t3 = splitted[i+1][j] -t0_base;
-
-                        FVector t0a = t0 + extension;
-                        FVector t1a = t1 + extension;
-                        FVector t2a = t2 + extension;
-                        FVector t3a = t3 + extension;
-
-                        // init on begin!
-                        bool split = false;
-                        newActor->setMaterialBehaiviour(materialType, split);
-                        // newActor->init(materialType);
-
-                        // apply mesh
-                        // is correct like this, do not touch
-                        newActor->createCube(
-                            t0, t1, t2, t3,     //bottom quad clw
-                            t0a, t1a, t2a, t3a, //top quad clw
-                            material
-                        );
-                        
-                    }
-                }
-            }
-
-        }
-    }
-}
-
-
-
-
-
 
 
 

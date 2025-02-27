@@ -95,7 +95,7 @@ void MeshData::calculateNormals(){
     // Iteriere über die Dreiecke und berechne Normalen
     clearNormals();
     normals.SetNum(vertecies.Num());
-    for (int i = 0; i < triangles.Num() - 2; i += 3) {
+    for (int i = 0; i < triangles.Num() - 3; i += 3) {
         int32 Index0 = triangles[i];
         int32 Index1 = triangles[i + 1];
         int32 Index2 = triangles[i + 2];
@@ -510,38 +510,6 @@ std::vector<FVector> MeshData::create2DQuadVertecies(int xMax, int yMax){
     return shape;
 }
 
-/**
- * --- Data references ---
- */
-
-/// @brief returns the reference to the mesh data vertecies, be carefull with modifying
-/// @return mesh data vertecies by reference
-TArray<FVector> &MeshData::getVerteciesRef(){
-    return vertecies;
-}
-
-/// @brief returns the reference to the mesh data triangles, be carefull with modifying
-/// @return mesh data triangles by reference
-TArray<int32> &MeshData::getTrianglesRef(){
-    return triangles;
-}
-
-TArray<FVector> &MeshData::getNormalsRef(){
-    return normals;
-}
-
-TArray<FVector2D> &MeshData::getUV0Ref(){
-    return UV0;
-}
-TArray<FProcMeshTangent> &MeshData::getTangentsRef(){
-    return Tangents;
-}
-TArray<FColor> &MeshData::getVertexColorsRef(){
-    return VertexColors;
-}
-
-
-
 
 /**
  * 
@@ -650,7 +618,6 @@ bool MeshData::isValidVertexIndex(int i){
     return i >= 0 && i < vertecies.Num();
 }
 
-
 bool MeshData::isValidTriangleIndex(int i){
     return i >= 0 && i < triangles.Num();
 }
@@ -662,3 +629,187 @@ bool MeshData::isValidNormalIndex(int i){
 
 
 
+
+
+
+
+
+/**
+ * --- Data references ---
+ */
+
+/// @brief returns the reference to the mesh data vertecies, be carefull with modifying
+/// @return mesh data vertecies by reference
+TArray<FVector> &MeshData::getVerteciesRef(){
+    return vertecies;
+}
+
+/// @brief returns the reference to the mesh data triangles, be carefull with modifying
+/// @return mesh data triangles by reference
+TArray<int32> &MeshData::getTrianglesRef(){
+    return triangles;
+}
+
+TArray<FVector> &MeshData::getNormalsRef(){
+    return normals;
+}
+
+TArray<FVector2D> &MeshData::getUV0Ref(){
+    return UV0;
+}
+TArray<FProcMeshTangent> &MeshData::getTangentsRef(){
+    return Tangents;
+}
+TArray<FColor> &MeshData::getVertexColorsRef(){
+    return VertexColors;
+}
+
+
+
+
+
+
+
+
+
+
+/**
+ * 
+ * --- special split mesh function ---
+ * 
+ */
+void MeshData::seperateMeshIntoAllTrianglesDoubleSided(std::vector<MeshData> &meshDataVectorOutput){
+    for (int i = 0; i < triangles.Num() - 3; i += 3) {
+        int32 Index0 = triangles[i];
+        int32 Index1 = triangles[i + 1];
+        int32 Index2 = triangles[i + 2];
+
+        if(
+            isValidVertexIndex(Index0) && 
+            isValidVertexIndex(Index1) &&
+            isValidVertexIndex(Index2)
+        ){
+            FVector &v0 = vertecies[Index0];
+            FVector &v1 = vertecies[Index1];
+            FVector &v2 = vertecies[Index2];
+            MeshData newTriangleMesh;
+            newTriangleMesh.appendDoublesided(v0, v1, v2); //normals will be calculated in the constructor
+            meshDataVectorOutput.push_back(newTriangleMesh);
+        }
+    }
+}
+
+
+
+/// @brief will create all triangles possible to split and append it into the vector
+/// traingles being lower than the min distance will not be added!
+/// @param meshDataVectorOutput 
+void MeshData::splitAllTrianglesInHalfAndSeperateMeshIntoAllTrianglesDoubleSided(
+    std::vector<MeshData> &meshDataVectorOutput
+){
+    for (int i = 0; i < triangles.Num() - 3; i += 3) {
+        int32 Index0 = triangles[i];
+        int32 Index1 = triangles[i + 1];
+        int32 Index2 = triangles[i + 2];
+
+        FVector &v0 = vertecies[Index0];
+        FVector &v1 = vertecies[Index1];
+        FVector &v2 = vertecies[Index2];
+
+        if(canSplit(v0,v1,v2)){
+            FVector middle = v1 + 0.5f * (v2 - v1); // gx = A + r(B-A)
+
+            MeshData newTriangleMeshA;
+            newTriangleMeshA.appendDoublesided(v0, v1, middle);
+            newTriangleMeshA.calculateNormals();
+            meshDataVectorOutput.push_back(newTriangleMeshA);
+
+            MeshData newTriangleMeshB;
+            newTriangleMeshB.appendDoublesided(v0, middle, v2);
+            newTriangleMeshB.calculateNormals();
+            meshDataVectorOutput.push_back(newTriangleMeshB);
+        }else{
+            DebugHelper::logMessage("DEBUGSPLIT could not split");
+        }
+    }
+
+}
+
+bool MeshData::canSplit(FVector &a, FVector &b, FVector &c){
+    if(FVector::Dist(a,b) < MIN_SPLITDISTANCE){
+        return false;
+    }
+    if(FVector::Dist(a,c) < MIN_SPLITDISTANCE){
+        return false;
+    }
+    if(FVector::Dist(b,c) < MIN_SPLITDISTANCE){
+        return false;
+    }
+    return true;
+}
+
+
+/// @brief calculates the center of the vertecies
+/// @return center
+FVector MeshData::center(){
+    FVector zeroVec(0, 0, 0);
+    if(vertecies.Num() <= 0){
+        return zeroVec;
+    }
+
+    for (int i = 0; i < vertecies.Num(); i++){
+        zeroVec += vertecies[i];
+    }
+    zeroVec /= vertecies.Num();
+    return zeroVec;
+}
+
+/// @brief centers the mesh
+void MeshData::centerMesh(){
+    FVector thiscenter = center();
+    for (int i = 0; i < vertecies.Num(); i++){
+        vertecies[i] -= thiscenter;
+    }
+}
+
+
+
+
+/**
+ * 
+ * room mesh data helper 
+ * 
+ */
+
+void MeshData::appendCube(
+    FVector &a, 
+    FVector &b,
+    FVector &c,
+    FVector &d,
+    FVector &a1, 
+    FVector &b1,
+    FVector &c1,
+    FVector &d1
+){
+    appendEfficent(a, d, c, b);
+    appendEfficent(a1, b1, c1, d1);
+    appendEfficent(b, b1, a1, a);
+    appendEfficent(c, c1, b1, b);
+    appendEfficent(d, d1, c1, c);
+    appendEfficent(a, a1, d1, d);
+    calculateNormals();
+}
+
+void MeshData::appendCube(
+    FVector &a,
+    FVector &b,
+    FVector &c,
+    FVector &d,
+    FVector orthogonalDir
+){
+    FVector a1 = a + orthogonalDir;
+    FVector b1 = b + orthogonalDir;
+    FVector c1 = c + orthogonalDir;
+    FVector d1 = d + orthogonalDir;
+    appendCube(a, b, c, d, a1, b1, c1, d1);
+}

@@ -28,6 +28,7 @@ public:
 
 	int chunkNum();
 	void createTerrain(UWorld *world, int meters);
+	void createTerrainAndSpawnMeshActors(UWorld *world, int meters);
 	void setFlatArea(FVector &location, int sizeMetersX, int sizeMetersY);
 
 	//apply terrain
@@ -65,8 +66,7 @@ private:
 				int xIn,
 				int yIn,
 				float newHeight,
-				bool override,
-				UWorld *world
+				bool override
 			);
 
 			std::vector<std::vector<FVector>> &readMap();

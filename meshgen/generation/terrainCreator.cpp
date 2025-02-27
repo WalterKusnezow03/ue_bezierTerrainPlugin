@@ -350,23 +350,10 @@ void terrainCreator::chunk::applyIndivualVertexIndexBased(
     int xIn,
     int yIn,
     float newHeight,
-    bool override,
-    UWorld *world
+    bool override
 ){
     
     if(xIsValid(xIn) && yIsValid(yIn)){
-        
-        //draw debug
-        /*
-        if(world != nullptr){
-            FVector posToSet(
-                xIn * terrainCreator::ONEMETER + xPositionInCm(),
-                yIn * terrainCreator::ONEMETER + yPositionInCm(),
-                newHeight
-            );
-            DebugHelper::showLineBetween(world, posToSet, posToSet + FVector(10, 0, -100), FColor::Green);
-        }
-        */
 
         //override
         if(override){
@@ -384,18 +371,6 @@ void terrainCreator::chunk::applyIndivualVertexIndexBased(
             }
             innerMap.at(xIn).at(yIn).Z = newAvg;
         }
-    }else{
-        FString message = FString::Printf(TEXT("CHUNK DEBUG was not valid %d, %d"), xIn, yIn);
-        DebugHelper::logMessage(message);
-        /*
-        if(world != nullptr){
-            FVector posToSet(
-                xIn * terrainCreator::ONEMETER + xPositionInCm(),
-                yIn * terrainCreator::ONEMETER + yPositionInCm(),
-                newHeight
-            );
-            DebugHelper::showLineBetween(world, posToSet, posToSet + FVector(10, 0, -100), FColor::Purple);
-        }*/
     }
 }
 
@@ -683,8 +658,7 @@ void terrainCreator::applyColumnOrRow(
                     other_InnerIndex,
                     newHeight,
                     //true,
-                    isColumn,
-                    worldPointer
+                    isColumn
                 );
                 bool draw = false;
                 if(draw){
@@ -840,9 +814,7 @@ int terrainCreator::clampIndex(int a){
 /// @brief debug plotting
 /// @param world 
 void terrainCreator::plotAllChunks(UWorld * world){
-
-    bool enable = true;
-    if (world != nullptr && (terrainCreator::PLOTTING_ENABLED || enable))
+    if (world != nullptr && (terrainCreator::PLOTTING_ENABLED))
     {
 
         for (int i = 0; i < map.size(); i++){
@@ -952,6 +924,7 @@ void terrainCreator::applyTerrainDataToMeshActors(std::vector<AcustomMeshActorBa
             if(x + 1 < xLimit && y + 1 < yLimit){
                 topright = &map.at(x+1).at(y+1);
             }
+
             std::vector<std::vector<FVector>> &mapReference = currentChunk->readAndMerge(top, right, topright);
 
             bool createTrees = currentChunk->createTrees();
@@ -972,15 +945,19 @@ void terrainCreator::applyTerrainDataToMeshActors(std::vector<AcustomMeshActorBa
         }
     }
 
-    DebugHelper::logTime("elapsed total raycast time"); //30 seconds.
-    PathFinder *p = PathFinder::instance();
-    if(p != nullptr){
-        p->debugCountNodes();
-    }
 }
 
 
 
+
+
+/**
+ * 
+ * 
+ * --- create height maps ---
+ * 
+ * 
+ */
 
 
 /// @brief will create a random height map chunk wide, then to be smoothed
@@ -1043,9 +1020,21 @@ void terrainCreator::applyHillData(terrainHillSetup &hillData){
  * 
  */
 void terrainCreator::debugCreateTerrain(UWorld *world){
+    createTerrainAndSpawnMeshActors(world, 200);
+}
+
+
+/// @brief creates a terrain and brand new mesh actors without using the entity manager
+/// @param world world to spawn in, must not be nullptr
+/// @param meters meters xy of terrain
+void terrainCreator::createTerrainAndSpawnMeshActors(UWorld *world, int meters){
+    meters = std::abs(meters);
+    if(meters < 100){
+        meters = 100;
+    }
+
     if(world != nullptr){
         FVector location(0, 0, 0);
-        int meters = 200;
         createTerrain(world, meters);
 
         int numberCreated = chunkNum();
@@ -1067,6 +1056,4 @@ void terrainCreator::debugCreateTerrain(UWorld *world){
 
         applyTerrainDataToMeshActors(meshactors);
     }
-    
-
 }
