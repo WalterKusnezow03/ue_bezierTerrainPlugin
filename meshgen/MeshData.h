@@ -153,4 +153,13 @@ private:
 	bool isValidTriangleIndex(int i);
 	bool isValidNormalIndex(int index);
 	FVector createNormal(int v0, int v1, int v2);
+
+
+	//helper for foliage:
+public:
+	materialEnum targetMaterial();
+	void setTargetMaterial(materialEnum inMaterial);
+
+private:
+	materialEnum materialPreferred = materialEnum::wallMaterial;
 };

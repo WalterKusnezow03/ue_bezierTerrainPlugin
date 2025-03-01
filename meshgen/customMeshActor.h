@@ -118,11 +118,13 @@ protected:
 
 
 	void createFoliage(TArray<FVectorTouple> &touples);
-	void createTreeAndSaveMeshTo(
-		FVector &location,
-		MeshData &meshDataStem,
-		MeshData &meshDataLeaf
-	);
+
+	void createTreeAndSaveToMesh(FVector &location);
 
 	materialEnum materialtypeSet = materialEnum::grassMaterial;
+
+	void filterTouplesForVerticalVectors(
+		TArray<FVectorTouple> &touples,
+		std::vector<FVector> &potentialLocations
+	);
 };

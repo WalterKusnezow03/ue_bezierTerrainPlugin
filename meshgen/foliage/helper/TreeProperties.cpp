@@ -25,6 +25,9 @@ TreeProperties &TreeProperties::operator=(const TreeProperties &other){
     leafcountPerJointSaved = other.leafcountPerJointSaved;
     partsPerSubtreeSaved = other.partsPerSubtreeSaved;
     subTreeCountSaved = other.subTreeCountSaved;
+
+    leafMaterial = other.leafMaterial;
+	stemMaterial = other.stemMaterial;
     return *this;
 }
 
@@ -118,14 +121,11 @@ int TreeProperties::leafCountPerJoint(){
 /// @brief returns the parts per subtree to create (half to full count for better randomness of trees)
 /// @return 
 int TreeProperties::partsPerSubtree(){
-    if(partsPerSubtreeSaved < 2){
+    if(partsPerSubtreeSaved <= 4){
         return partsPerSubtreeSaved;
     }
     int half = partsPerSubtreeSaved / 2;
     int rand = std::abs(FVectorUtil::randomNumber(half, partsPerSubtreeSaved));
-    if(rand == 0){
-        rand = 1;
-    }
     return rand;
 }
 
@@ -136,4 +136,19 @@ int TreeProperties::subTreeCount(){
         return rand;
     }
     return 0;
+}
+
+
+
+void TreeProperties::setTargetedMaterials(materialEnum stem, materialEnum leaf){
+    stemMaterial = stem;
+    leafMaterial = leaf;
+}
+
+materialEnum TreeProperties::targetMaterialForStem(){
+    return stemMaterial;
+}
+
+materialEnum TreeProperties::targetMaterialForLeaf(){
+    return leafMaterial;
 }

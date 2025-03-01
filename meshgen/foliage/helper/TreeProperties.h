@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "p2/meshgen/foliage/ETreeType.h"
+#include "p2/gamestart/assetEnums/materialEnum.h"
 #include "p2/meshgen/foliage/ETerrainType.h"
 
 /**
@@ -41,7 +42,14 @@ public:
 
 	int subTreeCount();
 
+	void setTargetedMaterials(materialEnum stem, materialEnum leaf);
+	materialEnum targetMaterialForStem();
+	materialEnum targetMaterialForLeaf();
+
 private:
+	materialEnum leafMaterial = materialEnum::palmLeafMaterial;
+	materialEnum stemMaterial = materialEnum::treeMaterial;
+
 	int height;
 	int detailStepCm;
 	ETreeType type;

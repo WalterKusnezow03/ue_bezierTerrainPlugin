@@ -56,7 +56,7 @@ void AcustomWaterActor::createWaterPane(int vertexCountXIn, int vertexCountYIn, 
     MeshData &waterMesh = findMeshDataReference(
         materialEnum::waterMaterial,
         ELod::lodNear,
-        false
+        false //Mesh 
     );
 
     for (int i = 0; i < vertexcountX; i++){
@@ -79,6 +79,17 @@ void AcustomWaterActor::createWaterPane(int vertexCountXIn, int vertexCountYIn, 
 
     ReloadMeshAndApplyAllMaterials();
     meshInited = true;
+
+
+    //enable collision anyway
+    if(MeshNoRaycast){
+        MeshNoRaycast->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+        EntityManager *entityManagerPointer = worldLevel::entityManager();
+        if(entityManagerPointer){
+            entityManagerPointer->addActorToIgnoredAllParams(this);
+        }
+    }
 }
 
 
@@ -107,12 +118,15 @@ void AcustomWaterActor::vertexShader(){
 /// @brief apply vertex shader to the given vertex
 /// @param vertex vertex to move
 void AcustomWaterActor::applyCurve(FVector &vertex){
-    
-    float frequency = 0.001f; // Wellenbreite
-    float amplitude = 25.0f; // Wellenhöhe
+    FVector actorLocation = GetActorLocation();
+    float distXAll = vertex.X + actorLocation.X;
+    float distYAll = vertex.Y + actorLocation.Y;
+
+    float frequency = 0.01f; // Wellenbreite
+    float amplitude = 10.0f; // Wellenhöhe
     float speed = 1.0f; // Wellengeschwindigkeit //1.0;
-    float wave = sin(vertex.X * frequency + runningTime * speed) + cos(vertex.Y * frequency + runningTime * speed);
-    
+    float wave = sin(distXAll * frequency + runningTime * speed) + cos(distYAll * frequency + runningTime * speed);
+
     vertex.Z = wave * amplitude;
 
 }
@@ -125,13 +139,31 @@ void AcustomWaterActor::refreshMesh(
     int layer
 ){
     if(meshInited){
+
+        double startTime = FPlatformTime::Seconds();
+
         meshComponent.UpdateMeshSection(
             layer, 
             other.getVerteciesRef(), 
             other.getNormalsRef(), 
-            other.getUV0Ref(), 
+            other.getUV0Ref(),
             other.getVertexColorsRef(), 
             other.getTangentsRef()
         );
+
+        // Berechne die verstrichene Zeit
+        double endTime = FPlatformTime::Seconds();
+        double deltaTime = endTime - startTime;
+
+        if(false){
+            DebugHelper::showScreenMessage("update time ", (float) deltaTime);
+        }
+        
     }
 }
+
+
+
+
+
+

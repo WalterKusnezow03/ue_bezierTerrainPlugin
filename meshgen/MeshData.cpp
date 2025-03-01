@@ -64,6 +64,8 @@ MeshData& MeshData::operator=(const MeshData &other){
         for (int i = 0; i < other.VertexColors.Num(); i++){
             VertexColors.Add(other.VertexColors[i]);
         }
+
+        materialPreferred = other.materialPreferred;
     }
     return *this;
 }
@@ -772,8 +774,17 @@ void MeshData::centerMesh(){
     }
 }
 
-
-
+/**
+ * 
+ * foliage helper
+ * 
+ */
+materialEnum MeshData::targetMaterial(){
+    return materialPreferred;
+}
+void MeshData::setTargetMaterial(materialEnum inMaterial){
+    materialPreferred = inMaterial;
+}
 
 /**
  * 
