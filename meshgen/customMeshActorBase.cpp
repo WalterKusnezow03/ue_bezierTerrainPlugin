@@ -30,6 +30,10 @@ AcustomMeshActorBase::AcustomMeshActorBase()
     currentLodLevel = ELod::lodNear;
 }
 
+void AcustomMeshActorBase::enableLodListening(){
+    LISTEN_FOR_LOD_PLAYER = true;
+}
+
 // Called when the game starts or when spawned
 void AcustomMeshActorBase::BeginPlay()
 {
@@ -41,25 +45,33 @@ void AcustomMeshActorBase::BeginPlay()
 void AcustomMeshActorBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+    changeLodBasedOnPlayerPosition();
 }
 
-
-
-
-void AcustomMeshActorBase::createTerrainFrom2DMap(
-    std::vector<std::vector<FVector>> &map
-){
-	TArray<FVectorTouple> touples;
-	createTerrainFrom2DMap(map, touples);
+void AcustomMeshActorBase::disablePhysicscollision(){
+    if(Mesh){
+        Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    }
 }
 
 
 void AcustomMeshActorBase::createTerrainFrom2DMap(
     std::vector<std::vector<FVector>> &map,
-    bool foliageFlag
+    ETerrainType typeIn
 ){
-    createTerrainFrom2DMap(map);
+    thisTerrainType = typeIn;
+    TArray<FVectorTouple> touples;
+    createTerrainFrom2DMap(map, touples, typeIn);
+}
+
+
+void AcustomMeshActorBase::createTerrainFrom2DMap(
+    std::vector<std::vector<FVector>> &map,
+    bool foliageFlag,
+    ETerrainType typeIn
+){
+    thisTerrainType = typeIn;
+    createTerrainFrom2DMap(map, typeIn);
 }
 
 /// @brief process a 2D map of local coordinates
@@ -67,78 +79,99 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
 /// @param map 2D vector of LOCAL coordinates!
 void AcustomMeshActorBase::createTerrainFrom2DMap(
     std::vector<std::vector<FVector>> &map,
-	TArray<FVectorTouple> &touples 
-){ //nach dem entity manager stirbt die refenz hier!
+	TArray<FVectorTouple> &touples, //MUST BE KEPT FOR SUBCLASS FOLIAGE CREATION!
+    ETerrainType typeIn
+){
+    thisTerrainType = typeIn;
 
-    
-    //new refacturing
-    /*MeshData grassLayer;
-    MeshData stoneLayer;*/
-
-    MeshData &grassLayer = findMeshDataReference(materialEnum::grassMaterial, ELod::lodNear, true);
-    MeshData &stoneLayer = findMeshDataReference(materialEnum::stoneMaterial, ELod::lodNear, true);
+    int distanceBetweenNodesMin = 300;
+    //MeshData &grassLayer = findMeshDataReference(materialEnum::grassMaterial, ELod::lodNear, true);
+    //MeshData &stoneLayer = findMeshDataReference(materialEnum::stoneMaterial, ELod::lodNear, true);
 
 
     std::vector<FVector> navMeshAdd;
-
     FVector originVec(0, 0, 0);
 
-    //iterate over the map and create all triangles by creating the quads from 4 given vertecies
-    for (int x = 0; x < map.size() - 1; x++){
-        for (int y = 0; y < map.at(x).size() - 1; y++){
-            /*
-                1--2
-                |  |
-                0<-3
-             */
-            bool copy = (x != 0); //prev 0 and 1 indices will be copied
+    
+    std::vector<ELod> lods = lodVector();
+    int prevLodStep = 1; //x++ y++ default as expected
+    for (int lodStep = 0; lodStep < lods.size(); lodStep++)
+    {
+        ELod lodNow = lods[lodStep];
 
 
-            if(x + 1 < map.size() && y + 1 < map.at(x + 1).size()){
-                try{
-                    //get the vertecies
+        materialEnum groundMaterial = AcustomMeshActorBase::groundMaterialFor(typeIn);
+        MeshData &grassLayer = findMeshDataReference(groundMaterial, lodNow, true);
+        //MeshData &grassLayer = findMeshDataReference(materialEnum::grassMaterial, lodNow, true);
+        MeshData &stoneLayer = findMeshDataReference(materialEnum::stoneMaterial, lodNow, true);
+
+        appendLodTerrain(
+            map,
+            touples, // MUST BE KEPT FOR SUBCLASS FOLIAGE CREATION!
+            navMeshAdd,
+            grassLayer,
+            stoneLayer,
+            prevLodStep, // index increase
+            lodStep == 0
+        );
+        grassLayer.calculateNormals();
+        stoneLayer.calculateNormals();
+
+        //go to next lod and clamp if needed
+        prevLodStep *= 2;
+        if(prevLodStep >= map.size()){
+            prevLodStep = map.size() - 1;
+        }
+    }
+
+    /*
+    // iterate over the map and create all triangles by creating the quads from 4 given vertecies
+    for (int x = 0; x < map.size() - 1; x++)
+    { // -1 for inbounce connect to next
+        for (int y = 0; y < map.at(x).size() - 1; y++)
+        {
+            // 
+            //    1--2
+            //    |  |
+            //    0<-3
+            //
+
+            if (x + 1 < map.size() && y + 1 < map.at(x + 1).size())
+            {
+                try
+                {
+                    // get the vertecies
                     FVector vzero = map.at(x).at(y);
                     FVector vone = map.at(x).at(y + 1);
                     FVector vtwo = map.at(x + 1).at(y + 1);
                     FVector vthree = map.at(x + 1).at(y);
 
-                    //add to standard output
-                    //buildQuad(vzero, vone, vtwo, vthree, output, newtriangles);
+                    // add to standard output
+                    // buildQuad(vzero, vone, vtwo, vthree, output, newtriangles);
 
-                    FVector normal = FVectorUtil::calculateNormal(vzero, vone, vtwo); //direction obviously
-                    if(FVectorUtil::directionIsVertical(normal)){
-                        //add to standard output, if direction of normal is vertical, the pane is flat
-
-                        //grassLayer.append(vzero, vone, vtwo, vthree);
-
-                        grassLayer.appendEfficent(vzero, vone, vtwo, vthree); 
+                    FVector normal = FVectorUtil::calculateNormal(vzero, vone, vtwo); // direction obviously
+                    if (FVectorUtil::directionIsVertical(normal))
+                    {
+                        grassLayer.appendEfficent(vzero, vone, vtwo, vthree);
                     }
                     else
                     {
-                        //otherwise the quad should be added to the second
-                        //triangle / vertecy array for stone material, more vertical
-                        
-                        //stoneLayer.append(vzero, vone, vtwo, vthree);
-
-                        stoneLayer.appendEfficent(vzero, vone, vtwo, vthree); 
+                        stoneLayer.appendEfficent(vzero, vone, vtwo, vthree);
                     }
 
-                    //calculate center
+                    // calculate center
                     FVector centerLocal = FVectorUtil::calculateCenter(vzero, vone, vtwo);
                     FVector centerWorld = centerLocal + GetActorLocation();
-                   
 
                     // create and add touple to list
                     FVectorTouple t(centerLocal, normal); // first center, then normal
                     touples.Add(t);
 
-                    
+                    //
+                    // COLLECT NODES FOR NAV MESH
+                    //
 
-                    /**
-                     * COLLECT NODES FOR NAV MESH
-                     */
-
-                    //testing only a few per chunk, raycasting takes a lot of time
+                    // testing only a few per chunk, raycasting takes a lot of time
                     if (navMeshAdd.size() <= 6 && FVectorUtil::edgeIsVertical(originVec, normal))
                     {
                         if (navMeshAdd.size() == 0)
@@ -149,40 +182,31 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
                         {
                             // only push nodes 3 meters away from each other -> reduce mesh count
                             FVector &prev = navMeshAdd.back();
-                            if (FVector::Dist(prev, centerWorld) >= 300)
+                            if (FVector::Dist(prev, centerWorld) >= distanceBetweenNodesMin)
                             {
                                 navMeshAdd.push_back(centerWorld);
                             }
                         }
                     }
-                }catch (const std::exception &e)
+                }
+                catch (const std::exception &e)
                 {
-                    //this try catch block was just added when debugging can certainly be
-                    //kept for safety 
+                    // this try catch block was just added when debugging can certainly be
+                    // kept for safety
                     DebugHelper::showScreenMessage("mesh actor exception!", FColor::Red);
                 }
             }
-            
         }
     }
 
-
-    //process created data and apply meshes and materials
-    /*
-    updateMesh(grassLayer, true, layerByMaterialEnum(materialEnum::grassMaterial));
-    updateMesh(stoneLayer, true, layerByMaterialEnum(materialEnum::stoneMaterial));
-
-    ApplyMaterial(materialEnum::grassMaterial);
-    ApplyMaterial(materialEnum::stoneMaterial);*/
-    //updateLodLevelAndReloadMesh(ELod::lodNear);
-
     grassLayer.calculateNormals();
-    stoneLayer.calculateNormals();
+    stoneLayer.calculateNormals();*/
     ReloadMeshAndApplyAllMaterials();
 
     /**
      * ADD NODES TO NAVMESH
      */
+
     bool addToNavMesh = true;
     if(addToNavMesh){
         double StartTime = FPlatformTime::Seconds();
@@ -196,7 +220,141 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
         DebugHelper::addTime(ElapsedTime);
         DebugHelper::logTime("nav mesh added");
     }
+
+    enableLodListening();
 }
+
+void AcustomMeshActorBase::appendLodTerrain(
+    std::vector<std::vector<FVector>> &map,
+	TArray<FVectorTouple> &touples, //MUST BE KEPT FOR SUBCLASS FOLIAGE CREATION!
+    std::vector<FVector> &navMeshAdd,
+    MeshData &grassLayer,
+    MeshData &stoneLayer,
+    int stepSize,
+    bool addTouplesAndNavmeshNodes
+){
+    int distanceBetweenNodesMin = 300;
+    FVector originVec(0, 0, 0);
+
+    int xstep = stepSize;
+    for (int x = 0; x < map.size(); x += stepSize)
+    { // -1 for inbounce connect to next
+
+        while (x + xstep >= map.size())
+        {
+            xstep--;
+            if(xstep <= 0){
+                return;
+            }
+        }
+
+        int ystep = stepSize;
+
+
+
+        for (int y = 0; y < map.at(x).size(); y += ystep)
+        {
+            bool quit = false;
+            while (y + ystep >= map.size())
+            {
+                ystep--;
+                if(ystep <= 0){
+                    quit = true;
+                    break;
+                }
+            }
+            if(quit){
+                break;
+            }
+            // 
+            //    1--2
+            //    |  |
+            //    0<-3
+            //
+
+            if (x + xstep < map.size() && y + ystep < map.at(x + xstep).size())
+            {
+                try
+                {
+                    // get the vertecies
+                    FVector vzero = map.at(x).at(y);
+                    FVector vone = map.at(x).at(y + ystep);
+                    FVector vtwo = map.at(x + xstep).at(y + ystep);
+                    FVector vthree = map.at(x + xstep).at(y);
+
+                    // add to standard output
+                    // buildQuad(vzero, vone, vtwo, vthree, output, newtriangles);
+
+                    FVector normal = FVectorUtil::calculateNormal(vzero, vone, vtwo); // direction obviously
+                    if (FVectorUtil::directionIsVertical(normal))
+                    {
+                        grassLayer.appendEfficent(vzero, vone, vtwo, vthree);
+                    }
+                    else
+                    {
+                        stoneLayer.appendEfficent(vzero, vone, vtwo, vthree);
+                    }
+
+
+                    if(addTouplesAndNavmeshNodes){
+                        // calculate center
+                        FVector centerLocal = FVectorUtil::calculateCenter(vzero, vone, vtwo);
+                        FVector centerWorld = centerLocal + GetActorLocation();
+
+                        // create and add touple to list
+                        FVectorTouple t(centerLocal, normal); // first center, then normal
+                        touples.Add(t);
+
+                        /**
+                         * COLLECT NODES FOR NAV MESH
+                        */
+
+                        // testing only a few per chunk, raycasting takes a lot of time
+                        if (navMeshAdd.size() <= 6 && FVectorUtil::edgeIsVertical(originVec, normal))
+                        {
+                            if (navMeshAdd.size() == 0)
+                            {
+                                navMeshAdd.push_back(centerWorld);
+                            }
+                            else
+                            {
+                                // only push nodes 3 meters away from each other -> reduce mesh count
+                                FVector &prev = navMeshAdd.back();
+                                if (FVector::Dist(prev, centerWorld) >= distanceBetweenNodesMin)
+                                {
+                                    navMeshAdd.push_back(centerWorld);
+                                }
+                            }
+                        }
+                    }
+
+                    
+                }
+                catch (const std::exception &e)
+                {
+                    // this try catch block was just added when debugging can certainly be
+                    // kept for safety
+                    DebugHelper::showScreenMessage("mesh actor exception!", FColor::Red);
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -249,8 +407,37 @@ MeshData &AcustomMeshActorBase::findMeshDataReference(
 
 
 
+
+
+
+void AcustomMeshActorBase::changeLodBasedOnPlayerPosition(){
+    if(!LISTEN_FOR_LOD_PLAYER){
+        return;
+    }
+
+    referenceManager *manager = referenceManager::instance();
+    if(manager != nullptr){
+        FVector locationOfPlayer = manager->playerLocation();
+        FVector ownLocation = GetActorLocation();
+
+        FVector connect = ownLocation - locationOfPlayer;
+        FVector playerLook = manager->playerLookDir();
+        if(connect.X * playerLook.X + connect.Y * playerLook.Y > 0.0f){ //in blickrichtung auf 180 grad ebene
+            updateLodLevelAndReloadMesh(
+                lodLevelByDistanceTo(locationOfPlayer)
+            );
+        }
+        
+    }
+}
+
+
+
+
+
 void AcustomMeshActorBase::updateLodLevelAndReloadMesh(ELod level){
-    if(level != currentLodLevel){
+    if (level != currentLodLevel)
+    {
         currentLodLevel = level;
         ReloadMeshAndApplyAllMaterials();
     }
@@ -273,7 +460,6 @@ void AcustomMeshActorBase::ReloadMeshAndApplyAllMaterials(){
             updateMesh(
                 UProceduralMeshComponent &meshcomponent,
                 MeshData &otherMesh, //must be a reference which is in class scope, safe
-                bool createNormals, 
                 int layer,
                 bool enableCollision
             )
@@ -325,7 +511,7 @@ void AcustomMeshActorBase::updateMesh(
         Tangents, 
         true
     );*/
-    meshcomponent.ClearMeshSection(layer);
+    //meshcomponent.ClearMeshSection(layer);
     meshcomponent.CreateMeshSection(
         layer, 
         otherMesh.getVerteciesRef(),//newvertecies, 
@@ -351,11 +537,12 @@ void AcustomMeshActorBase::updateMesh(
 
 
     //enable if was disabled!
-    AActorUtil::showActor(*this, true);
-    AActorUtil::enableColliderOnActor(*this, true);
+    //AActorUtil::showActor(*this, true);
+    //AActorUtil::enableColliderOnActor(*this, true);
 
 
     if(!enableCollision){
+        AActorUtil::enableColliderOnActor(*this, true);
         meshcomponent.SetCollisionEnabled(ECollisionEnabled::NoCollision);
     }else{
         meshcomponent.SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -503,18 +690,39 @@ std::vector<materialEnum> AcustomMeshActorBase::materialVector(){
         materialEnum::glassMaterial,
         materialEnum::stoneMaterial,
         materialEnum::sandMaterial,
+        materialEnum::redsandMaterial,
         materialEnum::treeMaterial,
-        materialEnum::palmLeafMaterial
+        materialEnum::palmLeafMaterial,
+        materialEnum::waterMaterial
     };
     return types;
 }
 
+materialEnum AcustomMeshActorBase::groundMaterialFor(ETerrainType terraintype){
+    if(terraintype == ETerrainType::EOcean){
+        return materialEnum::sandMaterial;
+    }
+    if(terraintype == ETerrainType::EDesert){
+        return materialEnum::redsandMaterial;
+    }
+    return materialEnum::grassMaterial;
+}
 
-
-
-
-
-
+/**
+ * 
+ * 
+ * -- terrain type helper --
+ * 
+ */
+std::vector<ETerrainType> AcustomMeshActorBase::terrainVector(){
+    std::vector<ETerrainType> vector = {
+        ETerrainType::EDesert,
+        ETerrainType::EOcean,
+        ETerrainType::EForest,
+        ETerrainType::ETropical
+    };
+    return vector;
+}
 
 /**
  * 
@@ -523,11 +731,38 @@ std::vector<materialEnum> AcustomMeshActorBase::materialVector(){
  * 
  * 
  */
+
+/// @brief creates a vector of all types from the enum in ascending order from near to far
+/// @return 
 std::vector<ELod> AcustomMeshActorBase::lodVector(){
     std::vector<ELod> types = {
-        ELod::lodFar,
+        ELod::lodNear,
         ELod::lodMiddle,
-        ELod::lodNear
+        ELod::lodFar
     };
     return types;
+}
+
+ELod AcustomMeshActorBase::lodLevelByDistanceTo(FVector &locationOfPlayer){
+    int oneMeter = 100; // 100; //WORKS GOOD WITH DISABLING ACTOR
+    if (isInRange(locationOfPlayer, 100 * oneMeter))
+    {
+        AActorUtil::showActor(*this, true);
+        return ELod::lodNear;
+    }
+    if(isInRange(locationOfPlayer, 200 * oneMeter)){
+        AActorUtil::showActor(*this, true);
+        return ELod::lodMiddle;
+    }
+
+    AActorUtil::showActor(*this, false);
+    return ELod::lodFar;
+}
+
+
+bool AcustomMeshActorBase::isInRange(FVector &a, int maxDistance){
+    FVector thisLocation = GetActorLocation();
+    return (std::abs(a.X - thisLocation.X) < maxDistance) &&
+           (std::abs(a.Y - thisLocation.Y) < maxDistance) &&
+           (std::abs(a.Z - thisLocation.Z) < maxDistance);
 }

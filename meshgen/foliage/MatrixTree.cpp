@@ -129,7 +129,7 @@ void MatrixTree::generate(ETerrainType terrainType){
     //create randomRotations
     randomRotationForAllMatrices();
 
-    //erstmal matrizen generieren
+    //erstmal matrizen verschieben
     for (int i = 0; i < matrices.size(); i++)
     {
         MMatrix &mat = matrices[i];
@@ -274,7 +274,6 @@ void MatrixTree::wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &mesh){
     }
 
     //mesh.append(subMesh); //add new subtree mesh to data
-
     mesh.appendEfficent(subMesh); //NEW
 }
 

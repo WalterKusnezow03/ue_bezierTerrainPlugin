@@ -4,6 +4,7 @@
 #include "FVectorShape.h"
 #include "p2/meshgen/MeshData.h"
 #include "p2/meshgen/generation/bezierCurve.h"
+#include "GrahamScan.h"
 #include "p2/util/TVector.h"
 
 FVectorShape::FVectorShape()
@@ -215,3 +216,96 @@ void FVectorShape::makeCenterPivot(){
     moveToCenter.setTranslation(centerToZero);
     moveVerteciesWith(moveToCenter);
 }
+
+
+
+
+/**
+ * 
+ * 
+ * --- helper functions for terrain ---
+ * 
+*/
+
+std::vector<FVector> FVectorShape::vectorCopy(){
+    return vec;
+}
+
+void FVectorShape::createRandomNewSmoothedShape(int sizeXYMax, int smoothStep){
+    int halfsize = sizeXYMax / 2;
+
+    int detail = 8;
+    for (int i = 0; i < detail; i++)
+    {
+        MMatrix rot;
+        int part = 360 / detail;
+        rot.yawRadAdd(MMatrix::degToRadian(part * i));
+        std::vector<FVector> newQuad = MeshData::create2DQuadVertecies(halfsize, halfsize);
+        for (int j = 0; j < newQuad.size(); j++){
+            FVector &current = newQuad[j];
+            current = rot * current;
+            vec.push_back(current);
+        }
+    }
+    GrahamScan grahamscan;
+    grahamscan.ComputeConvexHull(vec);
+
+    randomizeVertecies(sizeXYMax / 10);
+
+    smoothWithBezier(smoothStep);
+}
+
+
+void FVectorShape::createRandomNewSmoothedShapeClamped(int sizeXYMax, int smoothStep){
+    createRandomNewSmoothedShape(sizeXYMax, smoothStep);
+
+    /*
+    int limit = sizeXYMax - 1;
+    for (int i = 0; i < vec.size(); i++)
+    {
+        FVector &current = vec[i];
+        clampVector(current, 0, limit);
+    }*/
+}
+
+void FVectorShape::clampVector(FVector &pos, int minValue, int maxValue){
+    if(pos.X < minValue){
+        pos.X = minValue;
+    }
+    if(pos.Y < minValue){
+        pos.Y = minValue;
+    }
+
+    if(pos.X > maxValue){
+        pos.X = maxValue;
+    }
+    if(pos.Y > maxValue){
+        pos.Y = maxValue;
+    }
+}
+
+void FVectorShape::floorAllCoordinateValues(){
+    for (int i = 0; i < vec.size(); i++){
+        FVector &current = vec[i];
+        current.X = std::floor(current.X);
+        current.Y = std::floor(current.Y);
+        current.Z = std::floor(current.Z);
+    }
+}
+
+
+
+void FVectorShape::sortVerteciesOnXAxis(){
+    try {
+        std::sort(vec.begin(), vec.end(), [](const FVector &a, const FVector &b) {
+            if(a.X == b.X){
+                return a.Y < b.Y;
+            }
+            return a.X < b.X;
+        });
+    }
+    catch (const std::exception &e) {
+        DebugHelper::logMessage("error in sorting fvectorshape on xaxis");
+    }
+}
+

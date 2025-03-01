@@ -7,6 +7,9 @@
 #include "p2/util/TVector.h"
 #include "HAL/PlatformTime.h"
 #include <algorithm>
+#include "p2/meshgen/foliage/ETerrainType.h"
+#include "p2/entities/customIk/MMatrix.h"
+#include "p2/meshgen/foliage/helper/FVectorShape.h"
 #include "terrainCreator.h"
 
 terrainCreator::terrainCreator()
@@ -438,6 +441,12 @@ void terrainCreator::chunk::plot(UWorld *world){
 }
 
 
+ETerrainType terrainCreator::chunk::getTerrainType(){
+    return savedTerrainType;
+}
+void terrainCreator::chunk::updateTerraintype(ETerrainType typeIn){
+    savedTerrainType = typeIn;
+}
 
 /***
  * 
@@ -928,9 +937,8 @@ void terrainCreator::applyTerrainDataToMeshActors(std::vector<AcustomMeshActorBa
             std::vector<std::vector<FVector>> &mapReference = currentChunk->readAndMerge(top, right, topright);
 
             bool createTrees = currentChunk->createTrees();
-            currentActor->createTerrainFrom2DMap(mapReference, createTrees);
-
-            
+            ETerrainType terrainType = currentChunk->getTerrainType();
+            currentActor->createTerrainFrom2DMap(mapReference, createTrees, terrainType);
 
             x++;
             //top corner reached, return
@@ -1006,13 +1014,78 @@ void terrainCreator::applyHillData(terrainHillSetup &hillData){
 
 
 
+void terrainCreator::randomizeTerrainTypes(UWorld *world){
+    std::vector<ETerrainType> vector = AcustomMeshActorBase::terrainVector();
+
+    int sizeOfShape = 10; //Chunks
+    int step = 1;
+    FVectorShape shape;
+
+    int shapeCount = 10;
+    for (int i = 0; i < shapeCount; i++){
 
 
+        ETerrainType terraintypeRandom = ETerrainType::ETropical;
+        int randomIndex = FVectorUtil::randomNumber(0, vector.size());
+        randomIndex %= vector.size();
+        terraintypeRandom = vector[randomIndex];
 
+        if(true){
+            terraintypeRandom = ETerrainType::EDesert; //debug block tropical for now
+        }
 
+        shape.createRandomNewSmoothedShapeClamped(sizeOfShape, step);
+        shape.floorAllCoordinateValues();
+        
+        //DEBUG
+        std::vector<FVector> vertecies = shape.vectorCopy();
+        MMatrix m;
+        m.scale(-100, -100, 1);
+        for (int j = 0; j < vertecies.size(); j++)
+        {
+            vertecies[j] = m * vertecies[j];
+            vertecies[j].Z = 200.0f;
+        }
+        DebugHelper::showLine(world, vertecies, FColor::Blue);
+        //DEBUG
 
+        shape.sortVerteciesOnXAxis();
+        vertecies = shape.vectorCopy();
+       
+        
 
+        for (int vertex = 1; vertex < vertecies.size(); vertex++){
+            FVector &prevVertex = vertecies[vertex - 1];
+            FVector &currentVertex = vertecies[vertex];
+            applyTerrainTypeBetween(prevVertex, currentVertex, terraintypeRandom);
+        }
+    }
+}
 
+void terrainCreator::applyTerrainTypeBetween(FVector &a, FVector &b, ETerrainType typeIn){
+    if(a.X == b.X){
+        int xIndex = clampIndex(a.X);
+
+        FVector &smaller = a.Y < b.Y ? a : b;
+        FVector &bigger = a.Y > b.Y ? a : b;
+
+        for (int i = smaller.Y; i < bigger.Y; i++){
+            int yIndex = clampIndex(i);
+
+            terrainCreator::chunk *currentChunk = chunkAt(xIndex, yIndex);
+            if(currentChunk != nullptr){
+                currentChunk->updateTerraintype(typeIn);
+            }
+        }
+    }
+}
+
+terrainCreator::chunk *terrainCreator::chunkAt(int x, int y){
+    if(verifyIndex(x) && verifyIndex(y)){
+        return &map[x][y];
+    }
+    return nullptr;
+}
 
 /**
  * 
@@ -1054,6 +1127,7 @@ void terrainCreator::createTerrainAndSpawnMeshActors(UWorld *world, int meters){
             }
         }
 
+        randomizeTerrainTypes(world);
         applyTerrainDataToMeshActors(meshactors);
     }
 }

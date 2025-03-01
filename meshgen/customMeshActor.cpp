@@ -172,18 +172,20 @@ bool AcustomMeshActor::isDestructable(){
 /// @param map 2D vector of LOCAL coordinates!
 void AcustomMeshActor::createTerrainFrom2DMap(
     std::vector<std::vector<FVector>> &map,
-    bool createTrees    
+    bool createTrees,
+    ETerrainType typeIn
 ){ //nach dem entity manager stirbt die refenz hier!
+    thisTerrainType = typeIn;
 
     TArray<FVectorTouple> touples;
-    Super::createTerrainFrom2DMap(map, touples);
+    Super::createTerrainFrom2DMap(map, touples, typeIn);
 
     //must be called here.
     setMaterialBehaiviour(materialEnum::grassMaterial, false); //no split
     
-    DebugHelper::logMessage("debugCreateFoliage_terrain!");
+    //DebugHelper::logMessage("debugCreateFoliage_terrain!");
     if(createTrees){ //debug test
-        DebugHelper::logMessage("debugCreateFoliage");
+        //DebugHelper::logMessage("debugCreateFoliage");
         createFoliage(touples);
     }
 
@@ -262,28 +264,6 @@ void AcustomMeshActor::createCube(
     ReloadMeshAndApplyAllMaterials();
 }
 
-/*
-void AcustomMeshActor::createCube(
-    FVector &a, 
-    FVector &b,
-    FVector &c,
-    FVector &d,
-    FVector &a1, 
-    FVector &b1,
-    FVector &c1,
-    FVector &d1,
-    MeshData &cubeMesh
-){
-    cubeMesh.appendEfficent(a, d, c, b);
-    cubeMesh.appendEfficent(a1, b1, c1, d1);
-    cubeMesh.appendEfficent(b, b1, a1, a);
-    cubeMesh.appendEfficent(c, c1, b1, b);
-    cubeMesh.appendEfficent(d, d1, c1, c);
-    cubeMesh.appendEfficent(a, a1, d1, d);
-    cubeMesh.calculateNormals();
-}
-*/
-
 
 
 
@@ -299,8 +279,8 @@ void AcustomMeshActor::createCube(
 /// @param touples lcoation and normal in a touple
 /// @param outputAppend for example a terrain mesh to create trees on
 void AcustomMeshActor::createFoliage(TArray<FVectorTouple> &touples){
-    //MeshData meshDataStem;
-    //MeshData meshDataLeaf;
+    
+
     MeshData &meshDataStem = findMeshDataReference(materialEnum::treeMaterial, ELod::lodNear, true);
     MeshData &meshDataLeaf = findMeshDataReference(materialEnum::palmLeafMaterial, ELod::lodNear, false); //noraycast
 
@@ -337,15 +317,6 @@ void AcustomMeshActor::createFoliage(TArray<FVectorTouple> &touples){
     }
 
 
-    //updateMeshNoRaycastLayer(meshDataStem, false, layerByMaterialEnum(materialEnum::treeMaterial));
-    /*
-    updateMesh(meshDataStem, false, layerByMaterialEnum(materialEnum::treeMaterial));
-    ApplyMaterial(materialEnum::treeMaterial);
-
-    //different layer for meshes, no raycast / physics
-    updateMeshNoRaycastLayer(meshDataLeaf, false, layerByMaterialEnum(materialEnum::palmLeafMaterial));
-    ApplyMaterialNoRaycastLayer(materialEnum::palmLeafMaterial);
-    */
     ReloadMeshAndApplyAllMaterials();
 
 }
@@ -361,7 +332,7 @@ void AcustomMeshActor::createTreeAndSaveMeshTo(
     MeshData &meshDataLeaf
 ){
     MatrixTree tree;
-    tree.generate(ETerrainType::ETropical); //1000 height, 100 step per matrix
+    tree.generate(thisTerrainType); //this terrain type now available
     
     MeshData &currentTreeStemMesh = tree.meshDataStemByReference();
     MeshData &currentLeafMesh = tree.meshDataLeafByReference();
@@ -403,14 +374,18 @@ void AcustomMeshActor::splitIntoAllTriangles(){
             std::vector<MeshData> allTrianglesDoubleSided;
             meshFound.splitAllTrianglesInHalfAndSeperateMeshIntoAllTrianglesDoubleSided(allTrianglesDoubleSided);
 
-            createNewMeshActors(allTrianglesDoubleSided, currentMaterial);
+            createNewMeshActors(allTrianglesDoubleSided, currentMaterial, false);
         }
     }
 
         
 }
 
-void AcustomMeshActor::createNewMeshActors(std::vector<MeshData> &meshes, materialEnum material){
+void AcustomMeshActor::createNewMeshActors(
+    std::vector<MeshData> &meshes, 
+    materialEnum material,
+    bool splitOnDeathIn
+){
 
     FString message = FString::Printf(
         TEXT("DEBUGSPLIT CREATE: %d"), meshes.size()
@@ -443,8 +418,9 @@ void AcustomMeshActor::createNewMeshActors(std::vector<MeshData> &meshes, materi
             newActor->setMaterialBehaiviour(material, splitOnDeath); //split on death so kopieren!
             newActor->replaceMeshData(currentMeshData, material);
             newActor->ReloadMeshAndApplyAllMaterials();
-        }
 
+            newActor->splitOnDeath = splitOnDeathIn;
+        }
 
         //debugDraw
         TArray<FVector> verteciesRef = currentMeshData.getVerteciesRef();

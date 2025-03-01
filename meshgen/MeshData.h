@@ -114,7 +114,7 @@ public:
 	);
 
 private:
-	float MIN_SPLITDISTANCE = 20.0f;
+	float MIN_SPLITDISTANCE = 50.0f;
 	bool canSplit(FVector &a, FVector &b, FVector &c);
 
 	float EPSILON = 0.5f;

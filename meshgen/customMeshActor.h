@@ -11,6 +11,7 @@
 #include "Components/BoxComponent.h"
 #include "p2/gamestart/assetEnums/materialEnum.h"
 #include "p2/meshgen/MeshData.h"
+#include "p2/meshgen/foliage/ETerrainType.h"
 #include "p2/meshgen/customMeshActorBase.h"
 #include <map>
 #include "customMeshActor.generated.h"
@@ -50,12 +51,13 @@ public:
 
 	
 	void splitIntoAllTriangles();
-	void createNewMeshActors(std::vector<MeshData> &meshes, materialEnum material);
+	void createNewMeshActors(std::vector<MeshData> &meshes, materialEnum material, bool splitondeathin);
 
 
 	void createTerrainFrom2DMap(
 		std::vector<std::vector<FVector>> &map,
-		bool createTrees
+		bool createTrees,
+		ETerrainType typeIn
 	) override;
 
 	

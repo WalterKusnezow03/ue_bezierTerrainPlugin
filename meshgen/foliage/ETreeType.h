@@ -6,5 +6,6 @@ enum class ETreeType
 {
     Edefault,
     EPalmTree,
-    EPalmBush
+    EPalmBush,
+    ECactus //TODO
 };

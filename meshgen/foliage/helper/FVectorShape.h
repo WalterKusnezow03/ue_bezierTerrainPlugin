@@ -41,8 +41,15 @@ public:
 	int vertexCount();
 	void keepVertexCountFromFront(int countLimit);
 
-	
+
 	void makeCenterPivot();
+
+	void createRandomNewSmoothedShape(int sizeXYMax, int smoothStep);
+	void createRandomNewSmoothedShapeClamped(int sizeXYMax, int smoothStep);
+	void sortVerteciesOnXAxis();
+	void floorAllCoordinateValues();
+
+	std::vector<FVector> vectorCopy();
 
 private:
 	std::vector<FVector> vec;
@@ -50,4 +57,6 @@ private:
 	FVector calculateCenter();
 
 	std::vector<FVector2D> create2DverteciesXY();
+
+	void clampVector(FVector &pos, int minValue, int maxValue);
 };

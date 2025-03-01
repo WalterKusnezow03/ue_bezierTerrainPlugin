@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "terrainHillSetup.h"
+#include "p2/meshgen/foliage/ETerrainType.h"
 #include "p2/util/TVector.h"
 
 /**
@@ -27,7 +28,7 @@ public:
 	static const int MAXHEIGHT = 15000; //3000 is a good value, dont change
 
 	int chunkNum();
-	void createTerrain(UWorld *world, int meters);
+	
 	void createTerrainAndSpawnMeshActors(UWorld *world, int meters);
 	void setFlatArea(FVector &location, int sizeMetersX, int sizeMetersY);
 
@@ -43,6 +44,10 @@ public:
 	const int MINCHUNK_HILL = 5; //5x5 min hill size
 
 private:
+
+	void createTerrain(UWorld *world, int meters);
+
+
 	class chunk{
 		public:
 			chunk(int xPos, int yPos);
@@ -82,7 +87,12 @@ private:
 			void setTreesBlocked(bool b);
 			bool createTrees();
 
+			ETerrainType getTerrainType();
+			void updateTerraintype(ETerrainType typeIn);
+
 		private:
+			ETerrainType savedTerrainType = ETerrainType::ETropical;
+
 			std::vector<std::vector<FVector>> innerMap;
 			int x;
 			int y;
@@ -137,4 +147,13 @@ private:
 
 	terrainHillSetup createRandomHillData();
 	void applyHillData(terrainHillSetup &hillData);
+
+
+
+
+
+	//--- terrain type apply helpers ---
+	void randomizeTerrainTypes(UWorld *world);
+	void applyTerrainTypeBetween(FVector &a, FVector &b, ETerrainType typeIn);
+	terrainCreator::chunk *chunkAt(int x, int y);
 };
