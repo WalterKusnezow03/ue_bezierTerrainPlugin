@@ -32,6 +32,12 @@ AcustomMeshActorBase::AcustomMeshActorBase()
 
 void AcustomMeshActorBase::enableLodListening(){
     LISTEN_FOR_LOD_PLAYER = true;
+
+
+    /** 
+     * ---- DEBUG! ----
+     */
+    LISTEN_FOR_LOD_PLAYER = false; //DISABLE, CAUSES STUTTER ON MESH CHANGE 
 }
 
 // Called when the game starts or when spawned
@@ -486,7 +492,13 @@ void AcustomMeshActorBase::ReloadMeshAndApplyAllMaterials(){
 }
 
 
-//TESTED
+/// @brief replaces the mesh layer for an mesh component
+/// caution: mesh section is recreated because modifying the triangle buffer is not allowed
+/// when will to update an mesh!
+/// @param meshcomponent 
+/// @param otherMesh 
+/// @param layer 
+/// @param enableCollision 
 void AcustomMeshActorBase::updateMesh(
     UProceduralMeshComponent &meshcomponent,
     MeshData &otherMesh, //MUST BE SAVED IN A VALUE CLASS SCOPE SOMEWHERE!
@@ -496,7 +508,6 @@ void AcustomMeshActorBase::updateMesh(
     if(otherMesh.getVerteciesRef().Num() == 0){
         return;
     }
-
 
     /**
      * example: 

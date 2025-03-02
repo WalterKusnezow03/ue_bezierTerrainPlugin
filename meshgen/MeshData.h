@@ -154,9 +154,14 @@ private:
 	bool isValidNormalIndex(int index);
 	FVector createNormal(int v0, int v1, int v2);
 
+	//helper for removing triangles by vertex
+	void cutHole(FVector &vertex, int radius);
+	void removeVertex(int index);
+	void removeTrianglesInvolvedWith(int vertexIndex, std::vector<int> &connectedvertecies);
 
-	//helper for foliage:
+	// helper for foliage:
 public:
+
 	materialEnum targetMaterial();
 	void setTargetMaterial(materialEnum inMaterial);
 

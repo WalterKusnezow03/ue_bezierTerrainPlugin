@@ -13,16 +13,23 @@ public:
 	ripple(FVector &impactPoint);
 	~ripple();
 
+	ripple(const ripple &other);
+	ripple &operator=(const ripple &other);
+
 	void init(FVector &impactPoint);
-	void increaseRadius(float deltaTime);
+	void Tick(float deltaTime);
 	bool timeExceeded();
 
-	void changeHeightBasedOnDistance(FVector &vertex);
+	void changeHeightBasedOnDistance(FVector &vertex, FVector &offsetActor);
 
 private:
+	float waveHeightBasedOnTime();
+
 	float maxlifeTime = 10.0f;
 	float velocity = 100.0f;
 	float time = 0.0f;
 	float radius;
 	FVector impact;
+
+	int waveHeight = 50;
 };

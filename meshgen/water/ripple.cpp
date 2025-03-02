@@ -8,6 +8,24 @@ ripple::ripple(FVector &impactPoint)
     init(impactPoint);
 }
 
+ripple::ripple(const ripple &other){
+    *this = other;
+}
+
+ripple &ripple::operator=(const ripple &other){
+    if(this == &other){
+        return *this;
+    }
+    maxlifeTime = other.maxlifeTime;
+    velocity = other.velocity;
+    time = other.time;
+    radius = other.radius;
+    impact = other.impact;
+    waveHeight = other.waveHeight;
+
+    return *this;
+}
+
 ripple::~ripple()
 {
 }
@@ -16,9 +34,11 @@ void ripple::init(FVector &impactPoint){
     impact = impactPoint;
     time = 0.0f;
     radius = 0.0f;
+
+    maxlifeTime = 10.0f;
 }
 
-void ripple::increaseRadius(float deltaTime){
+void ripple::Tick(float deltaTime){
     time += deltaTime;
     radius += velocity * deltaTime; // x(t) = x0 + v0t + 1/2at^2
 }
@@ -27,20 +47,30 @@ bool ripple::timeExceeded(){
     return maxlifeTime < time;
 }
 
+/// @brief returns the wave height based on time (distance from initial center indirectly)
+/// @return wave height 
+float ripple::waveHeightBasedOnTime(){
+    float timeScalar = (maxlifeTime - time) / maxlifeTime; // distTarget / distAll
+    return timeScalar * waveHeight;
+}
 
-void ripple::changeHeightBasedOnDistance(FVector &vertex){
-    float toCenter = FVector::Dist(vertex, impact);
+void ripple::changeHeightBasedOnDistance(FVector &vertex, FVector &offsetActor){
+    float toCenter = FVector::Dist(vertex + offsetActor, impact);
     if(toCenter > 0.01f){
 
-        bool inside = toCenter < radius;
-
-        //float frac = toCenter / radius; // 2 / 2 = 1, 100%; 5 / 2 = 2,5
-        float frac = radius / toCenter; // 2 / 2 = 1, 100%; 2 / 5 = 0.4, 40%
-        float heightAdd = 100.0f * frac;
-        if(inside){
-            heightAdd *= -1; //remove added offset again
+        //range 50cm z.b.
+        float distFromRadius = std::abs(toCenter - radius);
+        if(distFromRadius < 1.0f){
+            distFromRadius = 1.0f;
         }
 
-        vertex.Z += heightAdd;
+        float radiusBound = 100.0f;
+        if (distFromRadius < radiusBound)
+        {
+            float frac = 1.0f;
+            float heightAdd = waveHeightBasedOnTime() * frac;
+            vertex.Z += heightAdd;
+        }
+
     }
 }

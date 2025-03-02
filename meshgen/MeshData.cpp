@@ -776,6 +776,72 @@ void MeshData::centerMesh(){
 
 /**
  * 
+ * -- mesh cutting helpers --
+ * 
+ */
+
+// not tested
+void MeshData::cutHole(FVector &vertex, int radius)
+{
+    int index = findClosestIndexTo(vertex);
+    if(isValidVertexIndex(index)){
+
+        //delete connected triangles, does change the triangle buffer but not the
+        //vertex buffer
+        std::vector<int> connectedvertecies;
+        removeTrianglesInvolvedWith(index, connectedvertecies);
+
+
+        //remove vertex by swapping with end and change the triangle buffer as needed
+        //(update the indices in the triangle buffer)
+        removeVertex(index);
+    }
+}
+
+//not tested
+void MeshData::removeVertex(int index){
+    if(isValidVertexIndex(index) && vertecies.Num() > 1){
+        //remove vertex by swapping with end and change the triangle buffer as needed
+        int oldEnd = vertecies.Num() - 1;
+        int replaceOldIndexWith = index; //new index for popback vertex
+        vertecies[index] = vertecies[oldEnd];
+        vertecies.Pop(); //pop back
+
+        //(update the indices in the triangle buffer because the vertex has changed)
+        for (int i = 0; i < triangles.Num(); i++){
+            if(triangles[i] == oldEnd){
+                triangles[i] = replaceOldIndexWith;
+            }
+        }
+    }
+}
+
+//not tested
+void MeshData::removeTrianglesInvolvedWith(int vertexIndex, std::vector<int> &connectedvertecies){
+    if(!isValidVertexIndex(vertexIndex)){
+        return;
+    }
+    TArray<int32> triangleBufferCopy;
+    for (int i = 0; i < triangles.Num() - 3; i += 3)
+    {
+        int32 v0 = triangles[i];
+        int32 v1 = triangles[i+1];
+        int32 v2 = triangles[i+2];
+        if(v0 != vertexIndex && v1 != vertexIndex && v2 != vertexIndex){
+            triangleBufferCopy.Add(v0);
+            triangleBufferCopy.Add(v1);
+            triangleBufferCopy.Add(v2);
+        }else{
+            connectedvertecies.push_back(v0);
+            connectedvertecies.push_back(v1);
+            connectedvertecies.push_back(v2);
+        }
+    }
+    triangles = triangleBufferCopy;
+}
+
+/**
+ * 
  * foliage helper
  * 
  */

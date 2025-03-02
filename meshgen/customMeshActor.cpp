@@ -78,16 +78,15 @@ void AcustomMeshActor::setMaterialAndHealthAndSplitOnDeath(materialEnum mat, int
 /// @brief will allow custom emsh actors such as destructables and terrain react to damage
 /// @param d 
 void AcustomMeshActor::takedamage(int d){
+    //damage owner as this could be a kimb of an actor
+    if(damagedOwner != nullptr){
+        damagedOwner->takedamage(d);
+    }
 
     debugThis();
 
     EntityManager *entityManager = worldLevel::entityManager();
-
     if(entityManager != nullptr){
-        //in any case create debree?
-
-        FVector originPoint = GetActorLocation();
-        entityManager->createDebree(GetWorld(), originPoint, materialtypeSet);
 
         // destroy if possible
         if (isDestructable())
@@ -109,27 +108,27 @@ void AcustomMeshActor::takedamage(int d){
                 //not really despawn for now
                 AActorUtil::showActor(*this, false);
                 AActorUtil::enableColliderOnActor(*this, false);
-            
-                if(entityManager != nullptr){
-                    entityManager->add(this);
-                }
+                entityManager->add(this);
+
             }
         }
     }
 
-    
-    if(damagedOwner != nullptr){
-        damagedOwner->takedamage(d);
-    }
 }
 
 /// @brief allows tha ctor to react to damage from a origin
 /// @param d 
-/// @param from 
-void AcustomMeshActor::takedamage(int d, FVector &from){
+/// @param hitpoint hitpoint from weapon  
+void AcustomMeshActor::takedamage(int d, FVector &hitpoint){
     takedamage(d);
 
-    //angle of debree might be calculated from angle to normal for example
+
+    EntityManager *entityManager = worldLevel::entityManager();
+    if(entityManager != nullptr){
+        //in any case create debree
+        FVector originPoint = GetActorLocation();
+        entityManager->createDebree(GetWorld(), hitpoint, materialtypeSet);
+    }
 
 }
 
@@ -343,7 +342,7 @@ void AcustomMeshActor::createTreeAndSaveToMesh(FVector &location){
     currentTreeStemMesh.offsetAllvertecies(location);
     currentLeafMesh.offsetAllvertecies(location);
 
-    materialEnum stemTargetMaterial = currentTreeStemMesh.targetMaterial();
+    materialEnum stemTargetMaterial = currentTreeStemMesh.targetMaterial(); //very important to have!
     materialEnum leafTargetMaterial = currentLeafMesh.targetMaterial();
 
     MeshData &meshDataStem = findMeshDataReference(stemTargetMaterial, ELod::lodNear, true);
