@@ -43,6 +43,10 @@ void MMatrix::resetRotation(){
 
 }
 
+MMatrix::MMatrix(FVector &other){
+    makeIdentity();
+    setTranslation(other);
+}
 
 MMatrix::MMatrix(FRotator &other){
     makeIdentity();
@@ -363,6 +367,8 @@ MMatrix MMatrix::createRotatorFromRad(float x, float y, float z){
     result.pitchRadAdd(y);
     result.yawRadAdd(z);
 
+    //M = RX * RY * RZ 
+
     return result;
 }
 
@@ -388,7 +394,97 @@ MMatrix MMatrix::createRotatorFrom(FRotator &other){
     float x = MMatrix::degToRadian(other.Roll);
     float y = MMatrix::degToRadian(other.Pitch);
     float z = MMatrix::degToRadian(other.Yaw);
+
+    /*
+    //unreal reihenfolge scheinbar z-y-x
+    MMatrix result;
+    
+    result.yawRadAdd(z);
+    result.pitchRadAdd(y);
+    result.rollRadAdd(x);
+
+    return result;*/
     return createRotatorFromRad(x, y, z);
+}
+
+
+/// @brief creates the rotator from a given vector in pitch and yaw rotation! caution: both relative axis of measurement
+/// are the x axis for yaw and pitch!! (1,0) (1,0)!!
+/// @param other vector (direction) - will be normalized internally.
+/// @return rotator matrix
+MMatrix MMatrix::createRotatorFrom(FVector &other){
+    FVector2D Xaxis(1.0f, 0); //default axis, x nach vorne schauend
+    return createRotatorFrom(other, Xaxis, Xaxis); 
+}
+
+
+/// @brief 
+/// @param other 
+/// @param XAxis axis to measure yaw agains
+/// @param ZAxis axis to measure pitch against
+/// @return 
+MMatrix MMatrix::createRotatorFrom(FVector &other, FVector2D XAxis, FVector2D ZAxis){
+    FVector normalized = other.GetSafeNormal();
+
+    //yaw angle
+    FVector2D xydir(normalized.X, normalized.Y);
+    float yawRad = signedAngleRadBetween(XAxis, xydir); //signiert voll umfänglich notwendig anders als pitch
+
+    //idee: yaw angle raus nehmen damit der pitch korrekt projeziert ist!
+    MMatrix removeYaw;
+    removeYaw.yawRadAdd(-yawRad);
+    normalized = removeYaw * normalized;
+    normalized = normalized.GetSafeNormal();
+
+    //pitch angle
+    FVector2D xzdir(normalized.X, normalized.Z);
+    float pitchRad = signedAngleRadBetween(ZAxis, xzdir) * -1.0f; //test 
+
+    
+
+
+    MMatrix rotationMat;
+    rotationMat.yawRadAdd(yawRad);
+    rotationMat.pitchRadAdd(pitchRad);
+
+    return rotationMat;
+}
+
+
+
+float MMatrix::unsignedAngleRadBetween(FVector2D &a, FVector2D &b){
+    a = a.GetSafeNormal();
+    b = b.GetSafeNormal();
+    float cosine = a.X * b.X + a.Y * b.Y;
+    //cosine = std::clamp(cosine, -1.0f, 1.0f);
+    float angle = std::acosf(cosine);
+    return angle;
+}
+
+float MMatrix::signedAngleRadBetween(FVector2D &a, FVector2D &b){
+    float angle = unsignedAngleRadBetween(a,b) * signForAngle(a, b);
+    return angle;
+}
+
+/// @brief returns the sign if a and b would be on clockwise order or not, -1 (clockwise angle): 1
+/// @param a 
+/// @param b 
+/// @return 
+float MMatrix::signForAngle(FVector2D &a, FVector2D &b){
+    /*
+    --------ax   bx
+    ay   by
+    az   bz
+    ax   bx
+    ay   by
+    --------az   bz
+
+    */
+    float normalComponentZ = a.X * b.Y - a.Y * b.X;
+    if(normalComponentZ < 0.0f){ //clockwise, normale zeigt nach unten
+        return -1.0f;
+    }
+    return 1.0f;
 }
 
 /// @brief multiply with another matrix ROTATION ONLY
@@ -446,6 +542,13 @@ void MMatrix::setRotation(MMatrix &other){
 }
 
 
+/// @brief will create a new rotation from a given vector. Translation not touched,
+/// rotation is resetted. Only can extract yaw and pitch rotation!
+/// @param other 
+void MMatrix::setRotation(FVector &other){
+    MMatrix rotatorMat = createRotatorFrom(other);
+    setRotation(rotatorMat);
+}
 
 MMatrix MMatrix::createInverse(){
     // -- using jordan inverse by default --
@@ -553,14 +656,15 @@ FRotator MMatrix::extractRotator(){
         _roll = 0.0f;
     }*/
 
-
+    
     //keep rotation like this
     //FRotator Constructor expects FRotator(Yin, Zin, Rin)
-    FRotator r(-1 * _pitch, _yaw, -1 * _roll); 
 
-
-
-
+    // fix, unreal is weird.
+    // IS TESTED, THIS IS CORRECT, DONT PLAY WITH IT!!
+    FRotator r(-1 * _pitch, _yaw, -1 * _roll);
+    //FRotator r(-1 * _pitch, _yaw, -1 * _roll);
+    //FRotator r(-1 * _pitch, _yaw, -1 * _roll);
 
 
     return r;
@@ -871,3 +975,6 @@ void MMatrix::rotateVectorRad2D(float angleRad, FVector2D &vector){
     vector.X = x;
     vector.Y = y;
 }
+
+
+

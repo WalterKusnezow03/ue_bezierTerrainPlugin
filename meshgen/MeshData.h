@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "p2/entities/customIk/MMatrix.h"
 
 
 /**
@@ -76,6 +77,7 @@ public:
 	TArray<FColor> &getVertexColorsRef();
 
 	void offsetAllvertecies(FVector &offset);
+	void transformAllVertecies(MMatrix &other);
 
 	void appendVertecies(std::vector<FVector> &vec);
 
@@ -150,6 +152,7 @@ private:
 	void join(TArray<FVector> &vertecies, TArray<int32> &triangles, TArray<FVector> &normalsin);
 
 	bool isValidVertexIndex(int i);
+	bool isValidVertexIndex(int i, int j, int n);
 	bool isValidTriangleIndex(int i);
 	bool isValidNormalIndex(int index);
 	FVector createNormal(int v0, int v1, int v2);
@@ -164,6 +167,8 @@ public:
 
 	materialEnum targetMaterial();
 	void setTargetMaterial(materialEnum inMaterial);
+
+	void generateMatricesPerFaceAndLookDirOfNormal(std::vector<MMatrix> &output);
 
 private:
 	materialEnum materialPreferred = materialEnum::wallMaterial;

@@ -39,7 +39,7 @@ void GrahamScan::ComputeConvexHull(std::vector<FVector> &points) {
         convexHull.push_back(point);
     }
 
-    // Calculate the upper hull
+    //Calculate the upper hull
     int lowerHullCount = convexHull.size();
     for (int i = points.size() - 2; i >= 0; --i) {
         FVector point = points[i];
@@ -66,7 +66,6 @@ void GrahamScan::ComputeConvexHull(std::vector<FVector> &points) {
 /// @param c 
 /// @return 
 bool GrahamScan::IsClockwise(const FVector& a, const FVector& b, const FVector& c) {
-    //return (b.X - a.X) * (c.Y - a.Y) - (b.Y - a.Y) * (c.Y - a.Y) < 0;
     return (b.X - a.X) * (c.Y - a.Y) - (b.Y - a.Y) * (c.X - a.X) < 0;
     // < 0 means, kolliniear vectors are kept and ignored.
 }

@@ -64,7 +64,7 @@ void FVectorShape::push_back(std::vector<FVector> &other){
 }
 
 
-/// @brief joins the previous vertecies added without bricking the illumnation / shading
+/// @brief Auto joins the previous vertecies added without bricking the illumnation / shading
 /// @param other mesh data to append smoothley to
 void FVectorShape::joinMeshData(MeshData &other){
     other.appendVertecies(vec);
@@ -231,25 +231,82 @@ std::vector<FVector> FVectorShape::vectorCopy(){
     return vec;
 }
 
-void FVectorShape::createRandomNewSmoothedShape(int sizeXYMax, int smoothStep){
-    int halfsize = sizeXYMax / 2;
+/// @brief adds a circle to the vector in CLOCKWISE ORDER (Important for mesh gen) PIVOT AT CENTER XY
+/// regardless of the 
+/// current vec, it gets pushed back
+/// @param radius of the circle
+/// @param detail detail of vertecies around the circle (4,8, 10 vertecies, etc) --> min: 4, is forced
+void FVectorShape::createCircleShape(int radius, int detail){
+    detail = std::abs(detail);
+    if(detail < 4){
+        detail = 4;
+    }
 
-    int detail = 8;
+    FVector baseVector(radius, 0, 0);
+    int part = (360 / detail) * -1; //CLOCK WISE FOR CORRECT TRIANGLE WINDING ORDER
     for (int i = 0; i < detail; i++)
     {
         MMatrix rot;
-        int part = 360 / detail;
         rot.yawRadAdd(MMatrix::degToRadian(part * i));
-        std::vector<FVector> newQuad = MeshData::create2DQuadVertecies(halfsize, halfsize);
-        for (int j = 0; j < newQuad.size(); j++){
-            FVector &current = newQuad[j];
-            current = rot * current;
-            vec.push_back(current);
-        }
+        FVector current = rot * baseVector;
+        vec.push_back(current);
     }
-    GrahamScan grahamscan;
-    grahamscan.ComputeConvexHull(vec);
 
+}
+
+/// @brief adds a circle to the vector in CLOCKWISE ORDER PIVOT AT CENTER XY
+/// (Important for mesh gen) regardless of the 
+/// current vec, it gets pushed back
+/// @param radius of the circle
+/// @param detail detail of vertecies around the circle (4,8, 10 vertecies, etc) --> min: 4, is forced
+void FVectorShape::createSpikedCircleShape(int radius, int radiusInner, int detail){
+    detail = std::abs(detail);
+    if(detail < 4){
+        detail = 4;
+    }
+
+    FVector baseVectorOuter(radius, 0, 0);
+    int part = (360 / detail) * -1; //CLOCK WISE FOR CORRECT TRIANGLE WINDING ORDER
+
+    MMatrix moveInner;
+    moveInner.yawRadAdd(MMatrix::degToRadian(part / 2)); //offset nach innen drehen sodass zacken entstehen
+    FVector baseVectorInner(radiusInner, 0, 0);
+    baseVectorInner = moveInner * baseVectorInner;
+
+    for (int i = 0; i < detail; i++)
+    {
+        MMatrix rot;
+        rot.yawRadAdd(MMatrix::degToRadian(part * i));
+        FVector currentOuter = rot * baseVectorOuter;
+        FVector currentInner = rot * baseVectorInner;
+        vec.push_back(currentOuter);
+        vec.push_back(currentInner);
+    }
+
+}
+
+/// @brief creates a quad and appends it to the vertecies vector, PIVOT AT CENTER XY
+/// @param sizeHalf size half of one side
+void FVectorShape::createQuadShape(int sizeTotal){
+    std::vector<FVector> vecQuad = MeshData::create2DQuadVertecies(sizeTotal, sizeTotal);
+    int sizehalf = sizeTotal / 2;
+    MMatrix tocenterMat;
+    tocenterMat.setTranslation(-sizehalf, -sizehalf, 0);
+    for (int i = 0; i < vecQuad.size(); i++)
+    {
+        FVector result = tocenterMat * vecQuad[i];
+        vec.push_back(result);
+    }
+}
+
+/// @brief creates a random shape from a circle base and smooths it with an bezier curve
+/// @param sizeXYMax size of shape initially
+/// @param smoothStep smooth step of curve 
+void FVectorShape::createRandomNewSmoothedShape(int sizeXYMax, int smoothStep){
+    vec.clear();
+
+    int radius = sizeXYMax / 2;
+    createCircleShape(radius, 10);
     randomizeVertecies(sizeXYMax / 10);
 
     smoothWithBezier(smoothStep);
@@ -268,6 +325,10 @@ void FVectorShape::createRandomNewSmoothedShapeClamped(int sizeXYMax, int smooth
     }*/
 }
 
+/// @brief clamps the x and y value to a given min and max value
+/// @param pos 
+/// @param minValue 
+/// @param maxValue 
 void FVectorShape::clampVector(FVector &pos, int minValue, int maxValue){
     if(pos.X < minValue){
         pos.X = minValue;
@@ -284,6 +345,7 @@ void FVectorShape::clampVector(FVector &pos, int minValue, int maxValue){
     }
 }
 
+/// @brief makes all coordinates have floored values (integer)
 void FVectorShape::floorAllCoordinateValues(){
     for (int i = 0; i < vec.size(); i++){
         FVector &current = vec[i];
@@ -294,7 +356,7 @@ void FVectorShape::floorAllCoordinateValues(){
 }
 
 
-
+/// @brief sorts the vertecies to be sorted in x direction, then y if needed
 void FVectorShape::sortVerteciesOnXAxis(){
     try {
         std::sort(vec.begin(), vec.end(), [](const FVector &a, const FVector &b) {
@@ -308,4 +370,15 @@ void FVectorShape::sortVerteciesOnXAxis(){
         DebugHelper::logMessage("error in sorting fvectorshape on xaxis");
     }
 }
+
+
+
+
+
+
+
+
+
+
+
 

@@ -9,6 +9,7 @@
 #include "p2/meshgen/generation/bezierCurve.h"
 #include "p2/meshgen/foliage/MatrixTree.h"
 #include "p2/meshgen/foliage/ETreeType.h"
+#include "p2/util/FVectorUtil.h"
 #include <set>
 #include "customMeshActor.h"
 

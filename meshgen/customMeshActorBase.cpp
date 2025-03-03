@@ -417,9 +417,9 @@ MeshData &AcustomMeshActorBase::findMeshDataReference(
 
 
 void AcustomMeshActorBase::changeLodBasedOnPlayerPosition(){
-    if(!LISTEN_FOR_LOD_PLAYER){
+    /*if(!LISTEN_FOR_LOD_PLAYER){
         return;
-    }
+    }*/
 
     referenceManager *manager = referenceManager::instance();
     if(manager != nullptr){
@@ -440,8 +440,13 @@ void AcustomMeshActorBase::changeLodBasedOnPlayerPosition(){
 
 
 
-
+/// @brief will update the mesh component(s) to a lower lod if the level has changed and
+/// the lod listener flag is set to true
+/// @param level 
 void AcustomMeshActorBase::updateLodLevelAndReloadMesh(ELod level){
+    if(!LISTEN_FOR_LOD_PLAYER){
+        return;
+    }
     if (level != currentLodLevel)
     {
         currentLodLevel = level;
@@ -704,7 +709,8 @@ std::vector<materialEnum> AcustomMeshActorBase::materialVector(){
         materialEnum::redsandMaterial,
         materialEnum::treeMaterial,
         materialEnum::palmLeafMaterial,
-        materialEnum::waterMaterial
+        materialEnum::waterMaterial,
+        materialEnum::snowMaterial
     };
     return types;
 }
@@ -715,6 +721,9 @@ materialEnum AcustomMeshActorBase::groundMaterialFor(ETerrainType terraintype){
     }
     if(terraintype == ETerrainType::EDesert){
         return materialEnum::redsandMaterial;
+    }
+    if(terraintype == ETerrainType::ESnowHill){
+        return materialEnum::snowMaterial;
     }
     return materialEnum::grassMaterial;
 }
@@ -730,7 +739,8 @@ std::vector<ETerrainType> AcustomMeshActorBase::terrainVector(){
         ETerrainType::EDesert,
         ETerrainType::EOcean,
         ETerrainType::EForest,
-        ETerrainType::ETropical
+        ETerrainType::ETropical,
+        ETerrainType::ESnowHill
     };
     return vector;
 }
@@ -754,6 +764,10 @@ std::vector<ELod> AcustomMeshActorBase::lodVector(){
     return types;
 }
 
+
+/// @brief will check the lod and disable the mesh component if the lod is lodFar
+/// @param locationOfPlayer 
+/// @return 
 ELod AcustomMeshActorBase::lodLevelByDistanceTo(FVector &locationOfPlayer){
     int oneMeter = 100; // 100; //WORKS GOOD WITH DISABLING ACTOR
     if (isInRange(locationOfPlayer, 100 * oneMeter))

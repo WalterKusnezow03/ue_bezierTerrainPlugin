@@ -16,7 +16,6 @@ public:
 	TreeProperties();
 	TreeProperties(const TreeProperties &other);
 	TreeProperties(
-		int heightIn, 
 		int detailstep, 
 		ETreeType typeIn, 
 		ETerrainType terrainTypeIn,
@@ -29,7 +28,6 @@ public:
 
 	~TreeProperties();
 
-	int getHeight();
 	int getDetailStep();
 	ETreeType getTreeType();
 	
@@ -50,7 +48,7 @@ private:
 	materialEnum leafMaterial = materialEnum::palmLeafMaterial;
 	materialEnum stemMaterial = materialEnum::treeMaterial;
 
-	int height;
+	
 	int detailStepCm;
 	ETreeType type;
 
@@ -61,5 +59,5 @@ private:
 
 	int partsPerSubtreeSaved;
 
-	void updateDetailStepAndHeight(int heightIn, int detailStepIn);
+	void updateDetailStep(int detailStepIn);
 };

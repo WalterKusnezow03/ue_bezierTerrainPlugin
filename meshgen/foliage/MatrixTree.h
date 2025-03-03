@@ -32,8 +32,9 @@ private:
 	void generateMesh();
 	void generateLeafs(TreeProperties &properties);
 	void generateLeaf(MMatrix &offset);
+	void generateCactusSpikes();
 
-	MeshData ownMeshData;
+	MeshData stemMeshData;
 	MeshData leafMeshData;
 
 	ETreeType treeType;

@@ -19,12 +19,18 @@ public:
 
 	FVectorShape &operator=(const FVectorShape &other);
 
+	/**
+	 * very important function to append this mesh to other data linearly
+	 */
+	void joinMeshData(MeshData &other);
+
+
 	void push_back(FVector other);
 	void push_back(FVectorShape &other);
 	void push_back(std::vector<FVector> &other);
 
 	void moveVerteciesWith(MMatrix &mat);
-	void joinMeshData(MeshData &other);
+	
 
 
 	MeshData createDoubleSidedMesh();
@@ -51,6 +57,10 @@ public:
 
 	std::vector<FVector> vectorCopy();
 
+	void createCircleShape(int radius, int detail);
+	void createSpikedCircleShape(int radius, int radiusInner, int detail);
+	void createQuadShape(int sizeTotal);
+
 private:
 	std::vector<FVector> vec;
 
@@ -59,4 +69,5 @@ private:
 	std::vector<FVector2D> create2DverteciesXY();
 
 	void clampVector(FVector &pos, int minValue, int maxValue);
+
 };

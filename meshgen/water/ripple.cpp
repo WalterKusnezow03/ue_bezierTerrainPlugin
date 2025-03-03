@@ -58,14 +58,13 @@ void ripple::changeHeightBasedOnDistance(FVector &vertex, FVector &offsetActor){
     float toCenter = FVector::Dist(vertex + offsetActor, impact);
     if(toCenter > 0.01f){
 
-        //range 50cm z.b.
+        
         float distFromRadius = std::abs(toCenter - radius);
         if(distFromRadius < 1.0f){
             distFromRadius = 1.0f;
         }
 
-        float radiusBound = 100.0f;
-        if (distFromRadius < radiusBound)
+        if (distFromRadius < rippleWidth)//range 50cm z.b.
         {
             float frac = 1.0f;
             float heightAdd = waveHeightBasedOnTime() * frac;

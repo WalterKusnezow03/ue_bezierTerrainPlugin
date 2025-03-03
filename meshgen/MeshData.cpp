@@ -2,6 +2,7 @@
 
 
 #include "p2/meshgen/MeshData.h"
+#include "p2/entities/customIk/MMatrix.h"
 #include <set>
 
 MeshData::MeshData()
@@ -270,6 +271,25 @@ void MeshData::offsetAllvertecies(FVector &offset){
         vertecies[i] += offset;
     }
 }
+
+/// @brief transforms all vertecies with a given matrix
+/// @param other 
+void MeshData::transformAllVertecies(MMatrix &other){
+
+    //matrix für vertecies: M
+    for (int i = 0; i < vertecies.Num(); i++){
+        vertecies[i] = other * vertecies[i];
+    }
+
+    //matrix für normalen: (M^-1)^T !!!! NICHT VERGESSEN!
+    MMatrix M_inverse = other.createInverse();
+    M_inverse.transpose();
+    for (int i = 0; i < normals.Num(); i++){
+        normals[i] = M_inverse * normals[i];
+    }
+}
+
+
 
 
 
@@ -620,6 +640,10 @@ bool MeshData::isValidVertexIndex(int i){
     return i >= 0 && i < vertecies.Num();
 }
 
+bool MeshData::isValidVertexIndex(int i, int j, int n){
+    return isValidVertexIndex(i) && isValidVertexIndex(j) && isValidVertexIndex(n);
+}
+
 bool MeshData::isValidTriangleIndex(int i){
     return i >= 0 && i < triangles.Num();
 }
@@ -687,9 +711,7 @@ void MeshData::seperateMeshIntoAllTrianglesDoubleSided(std::vector<MeshData> &me
         int32 Index2 = triangles[i + 2];
 
         if(
-            isValidVertexIndex(Index0) && 
-            isValidVertexIndex(Index1) &&
-            isValidVertexIndex(Index2)
+            isValidVertexIndex(Index0, Index1, Index2)
         ){
             FVector &v0 = vertecies[Index0];
             FVector &v1 = vertecies[Index1];
@@ -851,6 +873,55 @@ materialEnum MeshData::targetMaterial(){
 void MeshData::setTargetMaterial(materialEnum inMaterial){
     materialPreferred = inMaterial;
 }
+
+
+// NOT TESTED
+
+/// @brief generates the matricies to move an object to the vertex position
+/// and rotate in look dir of normal. CAUTION: X axis is forward! The rotation block is
+/// in yaw and pitch rotation relative to the XAxis! (1,0,0), orient your mesh accordingly
+/// if you are using this methods to place a mesh on a surface for example!
+/// @param output 
+void MeshData::generateMatricesPerFaceAndLookDirOfNormal(
+    std::vector<MMatrix> &output
+){
+    for (int i = 0; i < triangles.Num() - 3; i+= 3){
+        int v0 = triangles[i];
+        int v1 = triangles[i+1];
+        int v2 = triangles[i+2];
+        if(isValidVertexIndex(v0, v1, v2)){
+            FVector &vertex0 = vertecies[v0];
+            FVector &vertex1 = vertecies[v1];
+            FVector &vertex2 = vertecies[v2];
+
+            FVector v0v1 = vertex1 - vertex0; // AB = B - A;
+            FVector v0v2 = vertex2 - vertex0;
+            FVector normal = FVector::CrossProduct(v0v1, v0v2);
+            normal = normal.GetSafeNormal();
+
+
+            MMatrix rotator = MMatrix::createRotatorFrom(normal);
+            //debug
+            FVector axis(1, 0, 0);
+            axis = rotator * axis;
+            DebugHelper::logMessage("debug comparenormal", axis, normal);
+            // debug end
+
+            MMatrix translation;
+            FVector center = (vertex0 + vertex1 + vertex2) / 3;
+            translation.setTranslation(center);
+
+            translation.setTranslation(vertex0); //debug
+
+            MMatrix TR = translation * rotator; //<-- lese richtung --
+
+    
+            output.push_back(TR);
+        }
+    }
+}
+
+
 
 /**
  * 

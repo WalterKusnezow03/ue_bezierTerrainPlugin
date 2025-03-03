@@ -13,6 +13,7 @@ public:
 	MMatrix();
 	~MMatrix();
 
+	MMatrix(FVector &other);
 	MMatrix(FRotator &other);
 	MMatrix(const MMatrix &other);
 	MMatrix& operator=(const MMatrix &other);
@@ -50,12 +51,17 @@ public:
 	static MMatrix createRotatorFromRad(float x, float y, float z);
 	static MMatrix createRotatorFromDeg(float x, float y, float z);
 	static MMatrix createRotatorFrom(FRotator &other);
+	static MMatrix createRotatorFrom(FVector &other);
+	static MMatrix createRotatorFrom(FVector &other, FVector2D XAxis, FVector2D ZAxis);
+
+
 
 	void resetRotation();
 
 	void rotate(MMatrix &other);
 	void setRotation(FRotator &other);
 	void setRotation(MMatrix &other);
+	void setRotation(FVector &other);
 
 	MMatrix createInverse();
 
@@ -69,6 +75,11 @@ public:
 	static void rotateVectorDeg2D(float angleDeg, FVector2D &vector);
 	static void rotateVectorRad2D(float angleRad, FVector2D &vector);
 
+	static float unsignedAngleRadBetween(FVector2D &a, FVector2D &b);
+	static float signedAngleRadBetween(FVector2D &a, FVector2D &b);
+
+	void transpose();
+
 private:
 	//16 langes array für die 4x4 matrix
 	static constexpr int size = 16;
@@ -78,18 +89,10 @@ private:
 
 	void swapIndices(int a, int b);
 
-
-
-	
-
-	void transpose();
-
-
-
 	float det(std::vector<float> &matrix);
 	std::vector<float> collectExcept(int x, int y, std::vector<float> &matrix);
 
-
+	static float signForAngle(FVector2D &a, FVector2D &b);
 
 
 public:
@@ -98,6 +101,8 @@ public:
 	FVector lookDirXForward();
 
 	void makeIdentity();
+
+	FString toString();
 
 private:
 	void set(int i, int j, float value);

@@ -27,6 +27,8 @@ public:
 
 	static const int MAXHEIGHT = 15000; //3000 is a good value, dont change
 
+	
+
 	int chunkNum();
 	
 	void createTerrainAndSpawnMeshActors(UWorld *world, int meters);
@@ -44,6 +46,7 @@ public:
 	const int MINCHUNK_HILL = 5; //5x5 min hill size
 
 private:
+	static const int HEIGH_AVG_SNOWHILL_LOWERBOUND = 200000; //200 * 100cm
 
 	void createTerrain(UWorld *world, int meters);
 
@@ -89,6 +92,8 @@ private:
 
 			ETerrainType getTerrainType();
 			void updateTerraintype(ETerrainType typeIn);
+
+			float heightAverage();
 
 		private:
 			ETerrainType savedTerrainType = ETerrainType::ETropical;
@@ -156,4 +161,6 @@ private:
 	void randomizeTerrainTypes(UWorld *world);
 	void applyTerrainTypeBetween(FVector &a, FVector &b, ETerrainType typeIn);
 	terrainCreator::chunk *chunkAt(int x, int y);
+
+	void applySpecialTerrainTypesByHeight();
 };

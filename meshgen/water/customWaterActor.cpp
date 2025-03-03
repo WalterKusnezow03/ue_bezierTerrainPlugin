@@ -268,7 +268,7 @@ void AcustomWaterActor::addNewRipple(FVector &location){
     
     if(rippleVecSize < rippleVector.size()){
         int last = rippleVecSize;
-        rippleVector[last].init(location);
+        rippleVector[last].init(location); //reuse object
         rippleVecSize++;
     }
 

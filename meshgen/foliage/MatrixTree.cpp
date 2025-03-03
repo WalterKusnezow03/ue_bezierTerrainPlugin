@@ -29,7 +29,6 @@ void MatrixTree::loadProperties(){
     /*
     constructor:
     TreeProperties(
-		int heightIn, 
 		int detailstep, 
 		ETreeType typeIn, 
 		ETerrainType terrainTypeIn,
@@ -39,23 +38,23 @@ void MatrixTree::loadProperties(){
 	);
     
     */
-    TreeProperties palmProperty(1000, 100, ETreeType::EPalmTree, ETerrainType::ETropical, 8, 8, 3);
+    TreeProperties palmProperty(100, ETreeType::EPalmTree, ETerrainType::ETropical, 8, 8, 3);
     palmProperty.setTargetedMaterials(materialEnum::treeMaterial, materialEnum::palmLeafMaterial);
     palmProperty.addTerrainType(ETerrainType::EDesert); // additional types for more than one terrain
     addPropertyToMap(palmProperty);
 
-    TreeProperties oakProperty(1000, 100, ETreeType::Edefault, ETerrainType::ETropical, 30, 10, 3);
+    TreeProperties oakProperty(100, ETreeType::Edefault, ETerrainType::ETropical, 30, 10, 3);
     oakProperty.addTerrainType(ETerrainType::EForest);
     oakProperty.setTargetedMaterials(materialEnum::treeMaterial, materialEnum::palmLeafMaterial);
     defaultProperty = oakProperty;
     addPropertyToMap(oakProperty);
 
-    TreeProperties palmBush(100, 100, ETreeType::EPalmBush, ETerrainType::ETropical, 8, 2, 1);
+    TreeProperties palmBush(100, ETreeType::EPalmBush, ETerrainType::ETropical, 8, 2, 1);
     palmBush.setTargetedMaterials(materialEnum::treeMaterial, materialEnum::palmLeafMaterial);
     addPropertyToMap(palmBush);
 
 
-    TreeProperties cactus(700, 50, ETreeType::ECactus, ETerrainType::EDesert, 0, 3, 3);
+    TreeProperties cactus(100, ETreeType::ECactus, ETerrainType::EDesert, 0, 3, 3);
     cactus.setTargetedMaterials(materialEnum::palmLeafMaterial, materialEnum::palmLeafMaterial);
     addPropertyToMap(cactus);
 }
@@ -102,7 +101,7 @@ TreeProperties &MatrixTree::findProperty(ETerrainType typeOfTerrain){
 /// @brief cleans all leaf and mesh data
 void MatrixTree::clean(){
     leafMeshData.clearMesh();
-    ownMeshData.clearMesh();
+    stemMeshData.clearMesh();
 
     //matrices.clear();
     indexChains.clear();
@@ -112,7 +111,7 @@ void MatrixTree::clean(){
 /// @brief returns the mesh data for the "wood"
 /// @return mesh data by reference
 MeshData &MatrixTree::meshDataStemByReference(){
-    return ownMeshData;
+    return stemMeshData;
 }
 
 /// @brief returns the mesh data for the "leaf"
@@ -136,7 +135,7 @@ void MatrixTree::generate(ETerrainType terrainType){
 
 void MatrixTree::processAndGenerate(TreeProperties &properties){
     clean();
-    ownMeshData.setTargetMaterial(properties.targetMaterialForStem());
+    stemMeshData.setTargetMaterial(properties.targetMaterialForStem());
     leafMeshData.setTargetMaterial(properties.targetMaterialForLeaf());
 
 
@@ -161,8 +160,14 @@ void MatrixTree::processAndGenerate(TreeProperties &properties){
 
     createSubTrees(stemTop, properties);
 
+    //generate stem mesh
     generateMesh();
-    generateLeafs(properties);
+
+    if(properties.getTreeType() == ETreeType::ECactus){
+        generateCactusSpikes();
+    }else{
+        generateLeafs(properties);
+    }
 }
 
 
@@ -191,7 +196,7 @@ MMatrix &MatrixTree::matrixByIndex(int index){
 void MatrixTree::generateMesh(){
     for (int i = 0; i < indexChains.size(); i++){
         IndexChain &indexChain = indexChains[i];
-        wrapWithMesh(indexChain.matrixChain(), ownMeshData);
+        wrapWithMesh(indexChain.matrixChain(), stemMeshData);
     }
 }
 
@@ -377,6 +382,71 @@ void MatrixTree::generateLeaf(MMatrix &offset){
 }
 
 
+/**
+ * 
+ * --- other sepcial types: cactus ---
+ * 
+ * 
+ */
+
+/// @brief generates the cactus mesh inside the leaf mesh, requires the
+/// stem mesh to be builded
+void MatrixTree::generateCactusSpikes(){
+    /**
+     * 
+     * irgendwas funktioniert nicht...
+     * 
+     */
+
+    //only one spike per matrix now
+    //base shape:
+
+    int width = 4;
+    int height = 20;
+    FVectorShape lower;
+    lower.createQuadShape(width);
+
+    FVectorShape upper = lower;
+    MMatrix upMat;
+    upMat.setTranslation(0, 0, height);
+    MMatrix scaleMat;
+    scaleMat.scale(0.1f, 0.1f, -1.0f);
+    MMatrix combinedMat = upMat * scaleMat; //M = T * S <-- lese richtung --
+    upper.moveVerteciesWith(combinedMat);
+
+    MeshData sampleSpike;
+    lower.joinMeshData(sampleSpike);
+    upper.joinMeshData(sampleSpike); //same vertex count, join works fine here.
+
+    MeshData topClose = upper.closeMeshAtCenter(true); //clockwise closing top (face upwards)
+    sampleSpike.appendEfficent(topClose);
+    sampleSpike.calculateNormals();
+
+    // orient spike along axis for the placement with extracted rotations from normal
+    // to work correctly!
+    MMatrix rotToXAxis;
+    rotToXAxis.pitchRadAdd(MMatrix::degToRadian(-90)); //clock wise
+    sampleSpike.transformAllVertecies(rotToXAxis);
+
+
+    
+    // copy and move spike to position as wanted
+    std::vector<MMatrix> transformMatrices;
+    stemMeshData.generateMatricesPerFaceAndLookDirOfNormal(transformMatrices);
+
+    for (int i = 0; i < transformMatrices.size(); i++){
+        MMatrix &currentMatrix = transformMatrices[i];
+        MeshData copy = sampleSpike;
+        copy.transformAllVertecies(currentMatrix);
+        
+        leafMeshData.append(copy);
+    }
+
+
+    //debug
+    FString message = FString::Printf(TEXT("size of matrices: %d"), transformMatrices.size()); //500
+    DebugHelper::logMessage(message);
+}
 
 /**
  * 
@@ -386,14 +456,14 @@ void MatrixTree::generateLeaf(MMatrix &offset){
  * 
  */
 
-/// @brief 
+/// @brief creates a stem shape with the pivot at 0,0,0 and mesh reaching upwards
 /// @param type 
 /// @return 
 std::vector<FVectorShape> MatrixTree::StemShapeByEnum(ETreeType type){
     std::vector<FVectorShape> output;
 
     int size = 100;
-    if(type == ETreeType::Edefault || type == ETreeType::ECactus){
+    if(type == ETreeType::Edefault){
         size = 50;
         FVectorShape shape;
         shape.push_back(FVector(0, 0, 0));
@@ -435,13 +505,23 @@ std::vector<FVectorShape> MatrixTree::StemShapeByEnum(ETreeType type){
         output.push_back(shapeInner);
 
     }
+    if(type == ETreeType::ECactus){
+        size = 20;
+        int innerSize = 15;
+        int detail = 12;
+        FVectorShape shapeCircle;
+        //shapeCircle.createCircleShape(size, detail);
+        shapeCircle.createSpikedCircleShape(size, innerSize, detail);
+
+        output.push_back(shapeCircle);
+    }
 
     return output; //for vertecies sorroundign the shape
 }
 
 
 
-/// @brief generates a leaf shape by enum type
+/// @brief generates a leaf shape by enum type, with the pivot at 0,0,0 and mesh reaching upwards
 /// @param type 
 /// @return 
 FVectorShape MatrixTree::leafShapeByEnum(ETreeType type){
@@ -501,6 +581,7 @@ FVectorShape MatrixTree::leafShapeByEnum(ETreeType type){
         scaleUp.scaleUniform(4.0f);
         output.moveVerteciesWith(scaleUp);
     }
+    
 
     return output;
 }

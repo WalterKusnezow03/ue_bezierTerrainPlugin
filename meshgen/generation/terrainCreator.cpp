@@ -392,8 +392,22 @@ bool terrainCreator::chunk::isInBounds(FVector &a){
 }
 
 
+float terrainCreator::chunk::heightAverage(){
+    if(innerMap.size() == 0 || innerMap[0].size() == 0){
+        return 0.0f;
+    }
 
-
+    float sum = 0.0f;
+    for (int i = 0; i < innerMap.size(); i++)
+    {
+        for (int j = 0; j < innerMap[i].size(); j++){
+            sum += innerMap[i][j].Z;
+        }
+    }
+    int vertexCountAll = innerMap.size() * innerMap[0].size();
+    sum /= vertexCountAll;
+    return sum;
+}
 
 // --- chunk plotting functions ---
 
@@ -1013,15 +1027,21 @@ void terrainCreator::applyHillData(terrainHillSetup &hillData){
 
 
 
-
+/// @brief randomizes terrain types by enclosing bezier curves
+/// @param world 
 void terrainCreator::randomizeTerrainTypes(UWorld *world){
-    std::vector<ETerrainType> vector = AcustomMeshActorBase::terrainVector();
+    std::vector<ETerrainType> vector //= AcustomMeshActorBase::terrainVector();
+        = {
+            ETerrainType::EDesert,
+            ETerrainType::ETropical
+        };
 
     int sizeOfShape = 10; //Chunks
     int step = 1;
     FVectorShape shape;
 
-    int shapeCount = 10;
+    int shapeCount = map.size() / 3;
+
     for (int i = 0; i < shapeCount; i++){
 
 
@@ -1029,28 +1049,39 @@ void terrainCreator::randomizeTerrainTypes(UWorld *world){
         int randomIndex = FVectorUtil::randomNumber(0, vector.size());
         randomIndex %= vector.size();
         terraintypeRandom = vector[randomIndex];
-
-        if(true){
-            terraintypeRandom = ETerrainType::EDesert; //debug block tropical for now
-        }
+        
+        terraintypeRandom = ETerrainType::EDesert; //DEBUG!
 
         shape.createRandomNewSmoothedShapeClamped(sizeOfShape, step);
         shape.floorAllCoordinateValues();
-        
+
+        //random offset into map
+        MMatrix moveMatrix;
+        moveMatrix.setTranslation(
+            FVectorUtil::randomNumber(0, map.size() - sizeOfShape),
+            FVectorUtil::randomNumber(0, map.size() - sizeOfShape),
+            0
+        );
+        shape.moveVerteciesWith(moveMatrix);
+
         //DEBUG
-        std::vector<FVector> vertecies = shape.vectorCopy();
-        MMatrix m;
-        m.scale(-100, -100, 1);
-        for (int j = 0; j < vertecies.size(); j++)
-        {
-            vertecies[j] = m * vertecies[j];
-            vertecies[j].Z = 200.0f;
+        /*
+        if(true){
+            std::vector<FVector> vertecies = shape.vectorCopy();
+            MMatrix m;
+            m.scale(-100, -100, 1);
+            for (int j = 0; j < vertecies.size(); j++)
+            {
+                vertecies[j] = m * vertecies[j];
+                vertecies[j].Z = 200.0f;
+            }
+            DebugHelper::showLine(world, vertecies, FColor::Blue);
         }
-        DebugHelper::showLine(world, vertecies, FColor::Blue);
-        //DEBUG
+        */
+        //DEBUG END
 
         shape.sortVerteciesOnXAxis();
-        vertecies = shape.vectorCopy();
+        std::vector<FVector> vertecies = shape.vectorCopy();
        
         
 
@@ -1080,12 +1111,39 @@ void terrainCreator::applyTerrainTypeBetween(FVector &a, FVector &b, ETerrainTyp
     }
 }
 
+
+
+/// @brief returns a chunk by pointer or nullptr if the index was invalid
+/// @param x 
+/// @param y 
+/// @return 
 terrainCreator::chunk *terrainCreator::chunkAt(int x, int y){
     if(verifyIndex(x) && verifyIndex(y)){
         return &map[x][y];
     }
     return nullptr;
 }
+
+
+/// @brief applies the ESnowhill terrain type to chunks matching the minheight requirement
+void terrainCreator::applySpecialTerrainTypesByHeight(){
+    for (int i = 0; i < map.size(); i++){
+        for (int j = 0; j < map[i].size(); j++){
+            terrainCreator::chunk *currentChunkPointer = chunkAt(i, j);
+            if(currentChunkPointer != nullptr){
+                float currentHeightAverage = currentChunkPointer->heightAverage();
+                if(currentHeightAverage > HEIGH_AVG_SNOWHILL_LOWERBOUND){
+                    currentChunkPointer->updateTerraintype(ETerrainType::ESnowHill);
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
 
 /**
  * 
@@ -1128,6 +1186,7 @@ void terrainCreator::createTerrainAndSpawnMeshActors(UWorld *world, int meters){
         }
 
         randomizeTerrainTypes(world);
+        applySpecialTerrainTypesByHeight();
         applyTerrainDataToMeshActors(meshactors);
     }
 }

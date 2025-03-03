@@ -20,7 +20,6 @@ TreeProperties &TreeProperties::operator=(const TreeProperties &other){
     }
     terrainTypes = other.terrainTypes;
     type = other.type;
-    height = other.height;
     detailStepCm = other.detailStepCm;
     leafcountPerJointSaved = other.leafcountPerJointSaved;
     partsPerSubtreeSaved = other.partsPerSubtreeSaved;
@@ -38,7 +37,6 @@ TreeProperties::~TreeProperties()
 
 
 TreeProperties::TreeProperties(
-    int heightIn, 
     int detailStepIn, 
     ETreeType typeIn, 
     ETerrainType terrainTypeIn,
@@ -49,21 +47,16 @@ TreeProperties::TreeProperties(
     subTreeCountSaved = std::abs(subTreeCountIn);
     leafcountPerJointSaved = std::abs(leafcountPerJointIn);
     addTerrainType(terrainTypeIn);
-    updateDetailStepAndHeight(heightIn, detailStepIn);
+    updateDetailStep(detailStepIn);
 
     type = typeIn;
     partsPerSubtreeSaved = std::abs(partsPerSubtreeIn);
 }
 
-void TreeProperties::updateDetailStepAndHeight(int heightIn, int detailStepIn){
-    height = std::abs(heightIn);
+void TreeProperties::updateDetailStep(int detailStepIn){
     detailStepIn = std::abs(detailStepIn);
-    if (height == 0)
-    {
-        height = 1;
-    }
-    if(detailStepIn > height){
-        detailStepIn = height;
+    if(detailStepIn < 1){
+        detailStepIn = 1;
     }
     detailStepCm = std::abs(detailStepIn);
 }
@@ -93,11 +86,6 @@ std::vector<ETerrainType> &TreeProperties::getTerrainTypes(){
     return terrainTypes;
 }
 
-/// @brief returns the desired height for this tree
-/// @return 
-int TreeProperties::getHeight(){
-    return height;
-}
 
 /// @brief returns the detail step between matrices
 /// @return 

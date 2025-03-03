@@ -32,4 +32,6 @@ private:
 	FVector impact;
 
 	int waveHeight = 50;
+
+	int rippleWidth = 50;
 };
