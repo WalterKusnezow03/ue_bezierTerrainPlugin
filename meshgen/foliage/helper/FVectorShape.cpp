@@ -254,6 +254,24 @@ void FVectorShape::createCircleShape(int radius, int detail){
 
 }
 
+void FVectorShape::createHalfCircleShape(int radius, int detail){
+    detail = std::abs(detail);
+    if(detail < 4){
+        detail = 4;
+    }
+
+    FVector baseVector(radius, 0, 0);
+    int part = ((180 / detail) * -1); //CLOCK WISE FOR CORRECT TRIANGLE WINDING ORDER
+    for (int i = 0; i < detail; i++)
+    {
+        MMatrix rot;
+        rot.yawRadAdd(MMatrix::degToRadian(part * i));
+        FVector current = rot * baseVector;
+        vec.push_back(current);
+    }
+}
+
+
 /// @brief adds a circle to the vector in CLOCKWISE ORDER PIVOT AT CENTER XY
 /// (Important for mesh gen) regardless of the 
 /// current vec, it gets pushed back
@@ -373,12 +391,30 @@ void FVectorShape::sortVerteciesOnXAxis(){
 
 
 
+MeshData FVectorShape::createSphere(int radius, int detail, bool outsideOut){
+    MeshData outMeshData;
+    detail = std::abs(detail);
+    if(detail < 8){
+        detail = 8;
+    }
 
+    int part = (360 / detail);
+    if(outsideOut){
+        part *= -1;
+    }
 
+    FVectorShape newShape;
+    newShape.createCircleShape(radius, detail);
+    for (int i = 0; i < detail; i++)
+    {
+        MMatrix rotatorMat;
+        rotatorMat.pitchRadAdd(MMatrix::degToRadian(part * i));
 
+        FVectorShape copy(newShape, rotatorMat);
+        copy.joinMeshData(outMeshData);
+    }
 
+    outMeshData.calculateNormals();
 
-
-
-
-
+    return outMeshData;
+}
