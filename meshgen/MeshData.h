@@ -81,6 +81,7 @@ public:
 	void transformAllVertecies(MMatrix &other);
 
 	void appendVertecies(std::vector<FVector> &vec);
+	
 
 	void closeMeshAtCenter(FVector &center, std::vector<FVector> &vec, bool clockWise);
 	void closeMeshAtCenter(FVector &center, int bufferSizeToConnect, bool clockWise);
@@ -166,11 +167,14 @@ private:
 public:
 	//helper for removing triangles by vertex
 	void cutHole(FVector &vertex, int radius);
+	void cutHoleWithInnerExtensionOfMesh(FVector &vertex, int radius);
 
 	materialEnum targetMaterial();
 	void setTargetMaterial(materialEnum inMaterial);
 
 	void generateMatricesPerFaceAndLookDirOfNormal(std::vector<MMatrix> &output);
+
+	void flipAllFaces();
 
 private:
 	materialEnum materialPreferred = materialEnum::wallMaterial;

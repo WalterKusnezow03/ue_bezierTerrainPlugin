@@ -471,6 +471,8 @@ void AcustomMeshActor::debugThis(FVector &hitpoint){
     FVector localHit = inverseRotation.RotateVector(meshHit);
 
     MeshData &meshdata = findMeshDataReference(materialEnum::stoneMaterial, ELod::lodNear, true);
-    meshdata.cutHole(localHit, 200);
+
+    meshdata.cutHoleWithInnerExtensionOfMesh(localHit, 200);
+    // meshdata.cutHole(localHit, 200);
     ReloadMeshAndApplyAllMaterials();
 }

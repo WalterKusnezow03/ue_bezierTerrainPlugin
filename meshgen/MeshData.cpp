@@ -4,6 +4,7 @@
 #include "p2/meshgen/MeshData.h"
 #include "p2/entities/customIk/MMatrix.h"
 #include "p2/DebugHelper.h"
+#include "p2/meshgen/foliage/helper/FVectorShape.h"
 #include <set>
 
 MeshData::MeshData()
@@ -96,7 +97,7 @@ void MeshData::clearNormals(){
 /// @brief calculates the normals and applies it to the vertecies
 void MeshData::calculateNormals(){
     
-    // Iteriere über die Dreiecke und berechne Normalen
+    
     clearNormals();
     normals.SetNum(vertecies.Num());
     for (int i = 0; i < triangles.Num() - 3; i += 3) {
@@ -301,6 +302,7 @@ void MeshData::transformAllVertecies(MMatrix &other){
 /// this mesh data vertexcount is 0
 /// will connect to the latest vec.size() vertecies, gaps cannot be detected
 /// @param vec vector to connect, expected in some correct order 
+
 void MeshData::appendVertecies(std::vector<FVector> &vec){
     if(vec.size() <= 0){
         return;
@@ -339,21 +341,28 @@ void MeshData::appendVertecies(std::vector<FVector> &vec){
         0 3
         */
         // 1 triangle
+        if(true){
+            //das hier sieht eher nicht aus wie die 012 023 winding order, aber sie ist korrekt
+            //nach aussen gedreht
+            int next = (i + 1) % vec.size();
+            triangles.Add(startingIndex + i); //lower(0)
+            triangles.Add(startingIndex + next); //lower(3)
+            triangles.Add(offset + i); //upper(1)
+            
+            //2 triangle
+            triangles.Add(startingIndex + next); //lower (3)
+            triangles.Add(offset + next); //upper(2)
+            triangles.Add(offset + i); //upper (1)
+        }
         
-        int next = (i + 1) % vec.size();
-        triangles.Add(startingIndex + i); //lower(0)
-        triangles.Add(startingIndex + next); //lower(3)
-        triangles.Add(offset + i); //upper(1)
-        
-        //2 triangle
-        triangles.Add(startingIndex + next); //lower (3)
-        triangles.Add(offset + next); //upper(2)
-        triangles.Add(offset + i); //upper (1)
-        
-
     }
 
 }
+
+
+
+
+
 
 
 /**
@@ -362,6 +371,9 @@ void MeshData::appendVertecies(std::vector<FVector> &vec){
 /// @brief will fill up vertecies between the last two ones
 /// @param count 
 void MeshData::fillUpMissingVertecies(int count){
+    if(count <= 0){
+        return;
+    }
     int sizeOfVertexbuffer = vertecies.Num();
     count = std::abs(count);
     if(sizeOfVertexbuffer == 1){
@@ -388,9 +400,11 @@ void MeshData::fillUpMissingVertecies(int count){
     vertecies.Add(last);
 
     //fix triangle buffer offset because of insert
-    for (int i = 0; i < triangles.Num(); i++){
-        if(triangles[i] == sizeOfVertexbuffer - 1){
-            triangles[i] = triangles.Num() - 1;
+    int vertexIndexTargeted = sizeOfVertexbuffer - 1;
+    for (int i = 0; i < triangles.Num(); i++)
+    {
+        if(triangles[i] == vertexIndexTargeted){
+            triangles[i] = vertecies.Num() - 1;
         }
     }
 }
@@ -803,7 +817,22 @@ void MeshData::centerMesh(){
  * 
  */
 
-// not tested
+//not tested
+void MeshData::cutHoleWithInnerExtensionOfMesh(
+    FVector &vertex, int radius
+){
+    //create outside in sphere and append at target point
+    MeshData sphere = FVectorShape::createSphere(radius, 30, false);
+    MMatrix moveSpehere(vertex); // move to vertex pos
+    sphere.transformAllVertecies(moveSpehere);
+
+    appendEfficent(sphere);
+
+    //cut
+    cutHole(vertex, radius);
+}
+
+// tested
 void MeshData::cutHole(FVector &vertex, int radius)
 {
     radius = std::abs(radius);
@@ -837,7 +866,7 @@ void MeshData::cutHole(FVector &vertex, int radius)
     }
 }
 
-//not tested --> triangles must be removed before that!
+//tested 
 void MeshData::removeVertex(int index, std::vector<int>& connectedvertecies){
     removeTrianglesInvolvedWith(index, connectedvertecies);
 
@@ -870,7 +899,7 @@ void MeshData::removeVertex(int index, std::vector<int>& connectedvertecies){
     }
 }
 
-//not tested
+//tested
 void MeshData::removeTrianglesInvolvedWith(int vertexIndex, std::vector<int> &connectedvertecies){
     if(!isValidVertexIndex(vertexIndex)){
         return;
@@ -916,6 +945,14 @@ bool MeshData::contains(std::vector<int> &ref, int index){
     }
     return false;
 }
+
+
+void MeshData::flipAllFaces(){
+    for (int i = 0; i < triangles.Num()- 3; i+= 3){  
+        std::swap(triangles[i+1], triangles[i + 2]); // Tausche v1 und v2
+    }
+}
+
 
 /**
  * 

@@ -467,14 +467,6 @@ void AcustomMeshActorBase::ReloadMeshAndApplyAllMaterials(){
         for (int i = 0; i < materials.size(); i++){
             int layer = layerByMaterialEnum(materials[i]);
             MeshData &meshData = findMeshDataReference(materials[i], currentLodLevel, raycastOn);
-            /*
-            updateMesh(
-                UProceduralMeshComponent &meshcomponent,
-                MeshData &otherMesh, //must be a reference which is in class scope, safe
-                int layer,
-                bool enableCollision
-            )
-            */
             updateMesh(*Mesh, meshData, layer, raycastOn);
             ApplyMaterial(materials[i]);
         }

@@ -62,7 +62,7 @@ public:
 	void createSpikedCircleShape(int radius, int radiusInner, int detail);
 	void createQuadShape(int sizeTotal);
 
-	static MeshData createSphere(int radius, int detail, bool outsideOut);
+	static MeshData createSphere(int radius, int detail, bool faceOutside);
 
 private:
 	std::vector<FVector> vec;
