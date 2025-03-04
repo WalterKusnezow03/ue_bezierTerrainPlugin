@@ -84,7 +84,6 @@ void AcustomMeshActor::takedamage(int d){
         damagedOwner->takedamage(d);
     }
 
-    debugThis();
 
     EntityManager *entityManager = worldLevel::entityManager();
     if(entityManager != nullptr){
@@ -122,6 +121,8 @@ void AcustomMeshActor::takedamage(int d){
 /// @param hitpoint hitpoint from weapon  
 void AcustomMeshActor::takedamage(int d, FVector &hitpoint){
     takedamage(d);
+
+    debugThis(hitpoint);
 
 
     EntityManager *entityManager = worldLevel::entityManager();
@@ -459,10 +460,17 @@ void AcustomMeshActor::enableDebug(){
     DEBUG_enabled = true;
 }
 
-void AcustomMeshActor::debugThis(){
+void AcustomMeshActor::debugThis(FVector &hitpoint){
     if(!DEBUG_enabled){
         return;
     }
 
-    
+    //world hit to local
+    FVector meshHit = hitpoint - GetActorLocation();
+    FQuat inverseRotation = GetActorQuat().Inverse();
+    FVector localHit = inverseRotation.RotateVector(meshHit);
+
+    MeshData &meshdata = findMeshDataReference(materialEnum::stoneMaterial, ELod::lodNear, true);
+    meshdata.cutHole(localHit, 200);
+    ReloadMeshAndApplyAllMaterials();
 }

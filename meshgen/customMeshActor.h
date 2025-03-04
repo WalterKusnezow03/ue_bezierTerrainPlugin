@@ -104,7 +104,7 @@ public:
 
 protected:
 	bool DEBUG_enabled = false;
-	void debugThis();
+	void debugThis(FVector &hitpoint);
 
 	int health = 100;
 	bool destructableBool = false;

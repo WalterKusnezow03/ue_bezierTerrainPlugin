@@ -3,6 +3,7 @@
 
 #include "p2/meshgen/MeshData.h"
 #include "p2/entities/customIk/MMatrix.h"
+#include "p2/DebugHelper.h"
 #include <set>
 
 MeshData::MeshData()
@@ -805,34 +806,65 @@ void MeshData::centerMesh(){
 // not tested
 void MeshData::cutHole(FVector &vertex, int radius)
 {
+    radius = std::abs(radius);
     int index = findClosestIndexTo(vertex);
     if(isValidVertexIndex(index)){
 
         //delete connected triangles, does change the triangle buffer but not the
         //vertex buffer
-        std::vector<int> connectedvertecies;
-        removeTrianglesInvolvedWith(index, connectedvertecies);
-
-
         //remove vertex by swapping with end and change the triangle buffer as needed
         //(update the indices in the triangle buffer)
-        removeVertex(index);
+        std::vector<int> connectedvertecies;
+        removeVertex(index, connectedvertecies);
+
+
+        int i = 0;
+        int size = connectedvertecies.size();
+        while(i < size){
+            int currentVertexIndex = connectedvertecies[i];
+            if(isValidVertexIndex(currentVertexIndex) && currentVertexIndex != index){
+                FVector &currentVertex = vertecies[currentVertexIndex];
+                float dist = FVector::Dist(currentVertex, vertex);
+                if(dist < radius){
+                    removeVertex(currentVertexIndex, connectedvertecies);
+
+                    //update size
+                    size = connectedvertecies.size();
+                }
+            }
+            i++;
+        }
     }
 }
 
-//not tested
-void MeshData::removeVertex(int index){
+//not tested --> triangles must be removed before that!
+void MeshData::removeVertex(int index, std::vector<int>& connectedvertecies){
+    removeTrianglesInvolvedWith(index, connectedvertecies);
+
     if(isValidVertexIndex(index) && vertecies.Num() > 1){
         //remove vertex by swapping with end and change the triangle buffer as needed
         int oldEnd = vertecies.Num() - 1;
         int replaceOldIndexWith = index; //new index for popback vertex
         vertecies[index] = vertecies[oldEnd];
-        vertecies.Pop(); //pop back
+        if(isValidNormalIndex(index) && isValidNormalIndex(oldEnd)){
+            normals[index] = normals[oldEnd];
+            normals.Pop();
+        }
+
+        vertecies.Pop(); // pop back
 
         //(update the indices in the triangle buffer because the vertex has changed)
         for (int i = 0; i < triangles.Num(); i++){
             if(triangles[i] == oldEnd){
                 triangles[i] = replaceOldIndexWith;
+            }
+        }
+
+        //find old end in connected vertecies and replace the index
+        for (int i = 0; i < connectedvertecies.size(); i++){
+            int &vertexIndexNow = connectedvertecies[i];
+            if(oldEnd == vertexIndexNow){
+                vertexIndexNow = index;
             }
         }
     }
@@ -849,17 +881,40 @@ void MeshData::removeTrianglesInvolvedWith(int vertexIndex, std::vector<int> &co
         int32 v0 = triangles[i];
         int32 v1 = triangles[i+1];
         int32 v2 = triangles[i+2];
-        if(v0 != vertexIndex && v1 != vertexIndex && v2 != vertexIndex){
+
+        bool v0ok = (v0 != vertexIndex);
+        bool v1ok = (v1 != vertexIndex);
+        bool v2ok = (v2 != vertexIndex);
+
+        if(v0ok && v1ok && v2ok){
             triangleBufferCopy.Add(v0);
             triangleBufferCopy.Add(v1);
             triangleBufferCopy.Add(v2);
         }else{
-            connectedvertecies.push_back(v0);
-            connectedvertecies.push_back(v1);
-            connectedvertecies.push_back(v2);
+            //dont copy the vertex which is removed
+            if(!v0ok && !contains(connectedvertecies, v0)){
+                connectedvertecies.push_back(v0);
+            }
+            if(!v1ok && !contains(connectedvertecies, v1)){
+                connectedvertecies.push_back(v1);
+            }
+            if(!v2ok && !contains(connectedvertecies, v2)){
+                connectedvertecies.push_back(v2);
+            }
+            
         }
     }
     triangles = triangleBufferCopy;
+}
+
+
+bool MeshData::contains(std::vector<int> &ref, int index){
+    for (int i = 0; i < ref.size(); i++){
+        if(ref[i] == index){
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
@@ -902,9 +957,12 @@ void MeshData::generateMatricesPerFaceAndLookDirOfNormal(
 
             MMatrix rotator = MMatrix::createRotatorFrom(normal);
             //debug
-            FVector axis(1, 0, 0);
-            axis = rotator * axis;
-            DebugHelper::logMessage("debug comparenormal", axis, normal);
+            if(false){
+                FVector axis(1, 0, 0);
+                axis = rotator * axis;
+                DebugHelper::logMessage("debug comparenormal", axis, normal); //works correct!
+            }
+            
             // debug end
 
             MMatrix translation;
@@ -914,7 +972,6 @@ void MeshData::generateMatricesPerFaceAndLookDirOfNormal(
             translation.setTranslation(vertex0); //debug
 
             MMatrix TR = translation * rotator; //<-- lese richtung --
-
     
             output.push_back(TR);
         }
