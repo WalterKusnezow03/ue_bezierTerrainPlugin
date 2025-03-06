@@ -4,7 +4,12 @@
 #include "p2/meshgen/MeshData.h"
 #include "p2/entities/customIk/MMatrix.h"
 #include "p2/DebugHelper.h"
+#include "p2/meshgen/foliage/helper/GrahamScan.h"
 #include "p2/meshgen/foliage/helper/FVectorShape.h"
+#include "p2/meshgen/foliage/helper/ParallellShapeMerger.h"
+#include "p2/DebugHelper.h"
+
+#include <algorithm>
 #include <set>
 
 MeshData::MeshData()
@@ -230,6 +235,24 @@ void MeshData::appendDoublesided(
 }
 
 
+void MeshData::appendDoubleSidedTriangleBuffer(
+    std::vector<FVector> &buffer
+){  
+    if(buffer.size() < 3){
+        return;
+    }
+
+    for (int i = 0; i < buffer.size() - 3; i += 3)
+    {
+        appendDoublesided(
+            buffer[i],
+            buffer[i + 1],
+            buffer[i + 2]
+        );
+    }
+}
+
+
 
 
 void MeshData::buildTriangle(
@@ -419,33 +442,6 @@ void MeshData::closeMeshAtCenter(FVector &center, std::vector<FVector> &vec, boo
     closeMeshAtCenter(center, vec.size(), clockWise);
     return;
 
-    //old
-    /*
-    int32 offset = vertecies.Num();
-    vertecies.Add(center); //jetzt offset index valid 
-    for (int i = 0; i < vec.size(); i++){
-        vertecies.Add(vec[i]);
-    }
-    for (int i = 0; i < vec.size(); i++){
-        int next = (i + 1) % vec.size();
-        if(clockWise){
-            / *
-            1 2
-            0
-            * /
-            triangles.Add(offset); //0
-            triangles.Add(offset + i); //1
-            triangles.Add(offset + next); //2
-        }else{
-            / *
-            2 1
-            0
-            * /
-           triangles.Add(offset); //0
-           triangles.Add(offset + next); //2
-           triangles.Add(offset + i); //1
-        }
-    }*/
 }
 
 void MeshData::closeMeshAtCenter(FVector &center, int bufferSizeToConnect, bool clockWise){
@@ -508,7 +504,7 @@ int MeshData::findClosestIndexTo(FVector &vertex){
 
     for (int i = 1; i < vertecies.Num(); i++){
         float newDist = FVector::Dist(vertex, vertecies[i]);
-        if(newDist < dist){
+        if(newDist < dist){ //debug keep distance
             dist = newDist;
             closestIndex = i;
         }
@@ -821,23 +817,70 @@ void MeshData::centerMesh(){
 void MeshData::cutHoleWithInnerExtensionOfMesh(
     FVector &vertex, int radius
 ){
-    //create outside in sphere and append at target point
-    MeshData sphere = FVectorShape::createSphere(radius, 30, false);
-    MMatrix moveSpehere(vertex); // move to vertex pos
-    sphere.transformAllVertecies(moveSpehere);
 
-    appendEfficent(sphere);
+    //ERST cut, dann append(?)
+    std::vector<FVector> outOfRangeVertecies;
+    cutHole(vertex, radius, outOfRangeVertecies);
+    if(outOfRangeVertecies.size() == 0){
+        return;
+    }
 
-    //cut
-    cutHole(vertex, radius);
+    //achtung: vertecies müssen durch 2 teilbar sein sodass der helbkreis korrekt
+    //gespaltet wird (?)
+    if(outOfRangeVertecies.size() % 2 != 0){
+        FVector &ownBack = outOfRangeVertecies.back();
+        outOfRangeVertecies.push_back(ownBack);
+    }
+
+    //find rotation of direction to rotate the halfsphere as needed
+    FVector centerOfMesh = center();
+    FVector connect = centerOfMesh - vertex;
+
+    std::vector<FVector> outlineOfHalfSphere; //online of open side!
+    int detailPerCircle = outOfRangeVertecies.size();
+    MeshData sphere = FVectorShape::createHalfSphereCuttedOff(
+        radius,
+        detailPerCircle, //detail per full circle
+        false, //false for face inside
+        connect, // normal inwards to rotate half sphere / align with it
+        outlineOfHalfSphere,
+        MMatrix(vertex) // move to vertex pos
+    );
+
+
+
+    //mergen und anhängen den kreis
+    ParallellShapeMerger merger;
+    merger.createParallelSortedShape(
+        outlineOfHalfSphere,
+        outOfRangeVertecies
+    );
+
+
+    std::vector<FVector> &bufferReference = merger.triangleBufferReference();
+    appendDoubleSidedTriangleBuffer(bufferReference);
+
+    
+
+    //append sphere
+    //appendEfficent(sphere);
+    append(sphere);
+
+    calculateNormals();
+    
+    
 }
 
+
+
 // tested
-void MeshData::cutHole(FVector &vertex, int radius)
+void MeshData::cutHole(FVector &vertex, int radius, std::vector<FVector> &outOfRangeVertecies) //connected out of range
 {
     radius = std::abs(radius);
     int index = findClosestIndexTo(vertex);
-    if(isValidVertexIndex(index)){
+    if (isValidVertexIndex(index))
+    {
+        FVector removedVertex = vertecies[index];
 
         //delete connected triangles, does change the triangle buffer but not the
         //vertex buffer
@@ -846,54 +889,68 @@ void MeshData::cutHole(FVector &vertex, int radius)
         std::vector<int> connectedvertecies;
         removeVertex(index, connectedvertecies);
 
+        int debugCount = 1;
 
+        
         int i = 0;
         int size = connectedvertecies.size();
         while(i < size){
             int currentVertexIndex = connectedvertecies[i];
-            if(isValidVertexIndex(currentVertexIndex) && currentVertexIndex != index){
+            if(isValidVertexIndex(currentVertexIndex)){
                 FVector &currentVertex = vertecies[currentVertexIndex];
-                float dist = FVector::Dist(currentVertex, vertex);
+                float dist = FVector::Dist(currentVertex, removedVertex);
+
                 if(dist < radius){
                     removeVertex(currentVertexIndex, connectedvertecies);
+                    debugCount++;
 
                     //update size
                     size = connectedvertecies.size();
+                }else{
+                    //for appending some shape
+                    outOfRangeVertecies.push_back(currentVertex);
                 }
             }
             i++;
         }
+
+        FString message = FString::Printf(TEXT("debugremoved vertecies %d"), debugCount);
+        DebugHelper::logMessage(message);
     }
 }
 
 //tested 
-void MeshData::removeVertex(int index, std::vector<int>& connectedvertecies){
-    removeTrianglesInvolvedWith(index, connectedvertecies);
+void MeshData::removeVertex(int index){
+    std::vector<int> ignored;
+    removeVertex(index, ignored);
+}
 
-    if(isValidVertexIndex(index) && vertecies.Num() > 1){
+void MeshData::removeVertex(int index, std::vector<int>& connectedvertecies){
+
+    if(isValidVertexIndex(index) && vertecies.Num() > 0){
+        removeTrianglesInvolvedWith(index, connectedvertecies);
+
         //remove vertex by swapping with end and change the triangle buffer as needed
         int oldEnd = vertecies.Num() - 1;
-        int replaceOldIndexWith = index; //new index for popback vertex
-        vertecies[index] = vertecies[oldEnd];
+        vertecies[index] = vertecies[oldEnd]; //index der removed wird nach hinten tauschen
+        vertecies.Pop(); // pop back end which is in new pos now
         if(isValidNormalIndex(index) && isValidNormalIndex(oldEnd)){
             normals[index] = normals[oldEnd];
             normals.Pop();
         }
 
-        vertecies.Pop(); // pop back
-
         //(update the indices in the triangle buffer because the vertex has changed)
         for (int i = 0; i < triangles.Num(); i++){
             if(triangles[i] == oldEnd){
-                triangles[i] = replaceOldIndexWith;
+                triangles[i] = index; //update weil swap
             }
         }
 
         //find old end in connected vertecies and replace the index
         for (int i = 0; i < connectedvertecies.size(); i++){
-            int &vertexIndexNow = connectedvertecies[i];
+            int vertexIndexNow = connectedvertecies[i];
             if(oldEnd == vertexIndexNow){
-                vertexIndexNow = index;
+                connectedvertecies[i] = index; //update weil swap
             }
         }
     }
@@ -921,13 +978,13 @@ void MeshData::removeTrianglesInvolvedWith(int vertexIndex, std::vector<int> &co
             triangleBufferCopy.Add(v2);
         }else{
             //dont copy the vertex which is removed
-            if(!v0ok && !contains(connectedvertecies, v0)){
+            if(v0ok && !contains(connectedvertecies, v0)){
                 connectedvertecies.push_back(v0);
             }
-            if(!v1ok && !contains(connectedvertecies, v1)){
+            if(v1ok && !contains(connectedvertecies, v1)){
                 connectedvertecies.push_back(v1);
             }
-            if(!v2ok && !contains(connectedvertecies, v2)){
+            if(v2ok && !contains(connectedvertecies, v2)){
                 connectedvertecies.push_back(v2);
             }
             

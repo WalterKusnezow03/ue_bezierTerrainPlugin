@@ -254,7 +254,28 @@ void FVectorShape::createCircleShape(int radius, int detail){
 
 }
 
-void FVectorShape::createHalfCircleShape(int radius, int detail){
+
+
+
+void FVectorShape::createCircleShapeOnPitchRotation(int radius, int detail){
+    detail = std::abs(detail);
+    if(detail < 4){
+        detail = 4;
+    }
+
+    FVector baseVector(0, 0, radius);
+    float part = -360.0f / detail; 
+    for (int i = 0; i < detail; i++)
+    {
+        MMatrix rot;
+        rot.pitchRadAdd(MMatrix::degToRadian(part * i));
+        FVector current = rot * baseVector;
+        vec.push_back(current);
+    }
+
+}
+
+void FVectorShape::createHalfCircleShapeOnPitchRotation(int radius, int detail){
     detail = std::abs(detail);
     if(detail < 4){
         detail = 4;
@@ -405,7 +426,7 @@ MeshData FVectorShape::createSphere(int radius, int detail, bool faceOutside){
     }
 
     FVectorShape newShape;
-    newShape.createHalfCircleShape(radius, detail); //around pitch
+    newShape.createHalfCircleShapeOnPitchRotation(radius, detail); //around pitch
     for (int i = 0; i < detail; i++)
     {
         MMatrix rotatorMat;
@@ -422,4 +443,72 @@ MeshData FVectorShape::createSphere(int radius, int detail, bool faceOutside){
 
 
     return outMeshData;
+}
+
+
+
+///@brief creates a half circle shape, open in the opposite direction of the passed normal
+/// and aligned its rotation to it
+/// extraOffset - create an extra vertex offset for example
+/// pass in the fullCircleDetail to set the number of vertecies on the outer circle
+/// which is speratly saved in the outlineshape vector passed in
+MeshData FVectorShape::createHalfSphereCuttedOff(
+    int radius, 
+    int fullCircleDetail, 
+    bool faceOutside,
+    FVector normalDir,
+    std::vector<FVector> &outlineShape,
+    MMatrix extraOffset
+){
+
+    int halfDetail = fullCircleDetail / 2;
+    MeshData outMeshData;
+    halfDetail = std::abs(halfDetail);
+    if(halfDetail < 8){
+        halfDetail = 8;
+    }
+    
+    MMatrix rotateHalfSphere = MMatrix::createRotatorFrom(normalDir); //eindrehen der punkte
+    //MMatrix translateAndRotate = extraOffset * rotateHalfSphere; //M = T * R <-- lese richtung
+
+    float part = ((180.0f) / halfDetail);
+    if(faceOutside){
+        part *= -1.0f;
+    }
+
+    FVectorShape newShape;
+    newShape.createHalfCircleShapeOnPitchRotation(radius, halfDetail); //around pitch
+    for (int i = 0; i < halfDetail; i++)
+    {
+        MMatrix rotatorMat;
+        rotatorMat.yawRadAdd(MMatrix::degToRadian(90)); //create proper x axis alignment because pitch rot is 90 off!
+        rotatorMat.yawRadAdd(MMatrix::degToRadian(part * i));
+
+        FVectorShape copy(newShape, rotatorMat);
+        outMeshData.appendVertecies(copy.vec); // face inside
+
+    }
+
+
+    //rotate half sphere
+    outMeshData.transformAllVertecies(rotateHalfSphere);
+    outMeshData.transformAllVertecies(extraOffset);
+    outMeshData.calculateNormals(); //checkup needed
+
+
+
+    //create outline rotated as needed in dir of normal
+    FVectorShape circleOutliner;
+    circleOutliner.createCircleShapeOnPitchRotation(radius, fullCircleDetail);
+
+    MMatrix turn90;
+    turn90.yawRadAdd(MMatrix::degToRadian(90)); // create proper x axis alignment because pitch rot is 90 off!
+
+    circleOutliner.moveVerteciesWith(turn90);
+    circleOutliner.moveVerteciesWith(rotateHalfSphere);
+    circleOutliner.moveVerteciesWith(extraOffset);
+    outlineShape = circleOutliner.vec;
+
+    return outMeshData;
+
 }

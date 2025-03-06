@@ -472,7 +472,7 @@ void AcustomMeshActor::debugThis(FVector &hitpoint){
 
     MeshData &meshdata = findMeshDataReference(materialEnum::stoneMaterial, ELod::lodNear, true);
 
-    meshdata.cutHoleWithInnerExtensionOfMesh(localHit, 200);
-    // meshdata.cutHole(localHit, 200);
+    int sizeHole = 50;
+    meshdata.cutHoleWithInnerExtensionOfMesh(localHit, sizeHole);
     ReloadMeshAndApplyAllMaterials();
 }

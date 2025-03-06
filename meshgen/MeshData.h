@@ -61,6 +61,10 @@ public:
 		FVector &d
 	);
 
+	void appendDoubleSidedTriangleBuffer(
+		std::vector<FVector> &buffer
+	);
+
 	void rebuild(TArray<FVector> &&verteciesIn, TArray<int> &&trianglesIn);
 
 	void clearMesh();
@@ -160,13 +164,16 @@ private:
 	FVector createNormal(int v0, int v1, int v2);
 
 	//helper for removing triangles by vertex
+	void removeVertex(int index);
 	void removeVertex(int index, std::vector<int> &connectedvertecies);
 	void removeTrianglesInvolvedWith(int vertexIndex, std::vector<int> &connectedvertecies);
 	bool contains(std::vector<int> &ref, int index);
 
+	
+
 public:
 	//helper for removing triangles by vertex
-	void cutHole(FVector &vertex, int radius);
+	void cutHole(FVector &vertex, int radius, std::vector<FVector> &outOfRangeVertecies);
 	void cutHoleWithInnerExtensionOfMesh(FVector &vertex, int radius);
 
 	materialEnum targetMaterial();

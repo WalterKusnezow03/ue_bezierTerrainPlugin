@@ -58,11 +58,20 @@ public:
 	std::vector<FVector> vectorCopy();
 
 	void createCircleShape(int radius, int detail);
-	void createHalfCircleShape(int radius, int detail);
+	void createCircleShapeOnPitchRotation(int radius, int detail);
+	void createHalfCircleShapeOnPitchRotation(int radius, int detail);
 	void createSpikedCircleShape(int radius, int radiusInner, int detail);
 	void createQuadShape(int sizeTotal);
 
 	static MeshData createSphere(int radius, int detail, bool faceOutside);
+	static MeshData createHalfSphereCuttedOff(
+		int radius,
+		int fullCircleDetail,
+		bool faceOutside,
+		FVector normalDir,
+		std::vector<FVector> &outlineShape,
+		MMatrix extraOffset
+	);
 
 private:
 	std::vector<FVector> vec;
