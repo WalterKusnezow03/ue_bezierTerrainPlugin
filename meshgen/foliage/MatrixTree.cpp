@@ -432,16 +432,22 @@ void MatrixTree::generateCactusSpikes(){
     
     // copy and move spike to position as wanted
     std::vector<MMatrix> transformMatrices;
-    stemMeshData.generateMatricesPerFaceAndLookDirOfNormal(transformMatrices);
+    //stemMeshData.generateMatricesPerFaceAndLookDirOfNormal(transformMatrices);
 
-    for (int i = 0; i < transformMatrices.size(); i++){
+    int stepSizeBetweenVertecies = height * 3;
+    stemMeshData.generateMatricesPerFaceAndLookDirOfNormalInterpolated(
+        transformMatrices,
+        stepSizeBetweenVertecies
+    );
+
+    for (int i = 0; i < transformMatrices.size(); i++)
+    {
         MMatrix &currentMatrix = transformMatrices[i];
         MeshData copy = sampleSpike;
         copy.transformAllVertecies(currentMatrix);
         
         leafMeshData.append(copy);
     }
-
 
     //debug
     FString message = FString::Printf(TEXT("size of matrices: %d"), transformMatrices.size()); //500

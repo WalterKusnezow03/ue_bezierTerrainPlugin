@@ -313,16 +313,14 @@ bool AcustomWaterActor::TickBasedOnPlayerDistance(){
         FVector ownLocation = GetActorLocation();
 
         FVector connect = ownLocation - locationOfPlayer;
-        FVector playerLook = manager->playerLookDir();
-        if(connect.X * playerLook.X + connect.Y * playerLook.Y > 0.0f){ //in blickrichtung auf 180 grad ebene
-            ELod lodResult = lodLevelByDistanceTo(locationOfPlayer);
+        
+        ELod lodResult = lodLevelByDistanceTo(locationOfPlayer);
             
-            //only lod near allowed
-            if(lodResult == ELod::lodFar){
-                return false;
-            }
-            return true;
+        //only lod near allowed
+        if(lodResult != ELod::lodNear){
+            return false;
         }
+        return true;
     }
     return false;
 }

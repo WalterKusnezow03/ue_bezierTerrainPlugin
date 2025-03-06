@@ -27,17 +27,14 @@ public:
 private:
 
 	void fillMissingAlignedVertecies(std::vector<FVector> &other);
-	void sortIn(std::vector<FVector> &vectorToAlginAndSort);
-	void findClosestIndexToAndSave(FVector &vertex);
-	void fillAlignedBufferGaps();
+	
+	
 	void generateTriangleBuffer();
-	bool positionLocked(int index);
-
-	int findClosestIndex(FVector &vertex, bool listenForLock);
+	
 
 	std::vector<FVector> baseVector;
 	std::vector<FVector> vectorAligned;
-	std::vector<bool> sortedInFlag;
+
 
 	std::vector<FVector> triangleBuffer;
 

@@ -191,6 +191,7 @@ void AcustomMeshActor::createTerrainFrom2DMap(
         createFoliage(touples);
     }
 
+    Super::addRandomNodesToNavmesh(touples);
 
 }
 
@@ -271,26 +272,6 @@ void AcustomMeshActor::createCube(
 
 
 
-void AcustomMeshActor::filterTouplesForVerticalVectors(
-    TArray<FVectorTouple> &touples,
-    std::vector<FVector> &potentialLocations
-){
-    // iterate over touples
-    // determine normal angle and apply foliage, rocks, trees accordingly
-    if (touples.Num() < 1){
-        return;
-    }
-
-    //if normal faces towards up: flat area, create something
-    for(FVectorTouple &t : touples){
-        FVector &location = t.first();
-        FVector &normal = t.second();
-        bool facingUpwards = FVectorUtil::directionIsVertical(normal);
-        if(facingUpwards){
-            potentialLocations.push_back(location); 
-        }
-    }
-}
 
 /// @brief create foliage and append it to the output mesh data, the output mesh data will
 /// get its position from the actor. The touples expected to be in local coordinate system
@@ -307,7 +288,7 @@ void AcustomMeshActor::createFoliage(TArray<FVectorTouple> &touples){
 
     //saves the vertical locations to later choose random once and remove from list
     std::vector<FVector> potentialLocations;
-    filterTouplesForVerticalVectors(
+    Super::filterTouplesForVerticalVectors(
         touples,
         potentialLocations
     );

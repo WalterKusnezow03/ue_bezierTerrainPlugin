@@ -181,7 +181,10 @@ public:
 
 	void generateMatricesPerFaceAndLookDirOfNormal(std::vector<MMatrix> &output);
 
-	void flipAllFaces();
+	void generateMatricesPerFaceAndLookDirOfNormalInterpolated(
+		std::vector<MMatrix> &output,
+		int stepSize
+	);
 
 private:
 	materialEnum materialPreferred = materialEnum::wallMaterial;

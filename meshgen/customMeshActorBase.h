@@ -86,6 +86,12 @@ public:
 	);
 	
 protected:
+	void addRandomNodesToNavmesh(TArray<FVectorTouple> &touples);
+	void filterTouplesForVerticalVectors(
+		TArray<FVectorTouple> &touples,
+		std::vector<FVector> &potentialLocations
+	);
+
 	void appendLodTerrain(
 		std::vector<std::vector<FVector>> &map,
 		TArray<FVectorTouple> &touples, // MUST BE KEPT FOR SUBCLASS FOLIAGE CREATION!

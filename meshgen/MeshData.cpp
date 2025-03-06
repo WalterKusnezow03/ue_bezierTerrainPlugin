@@ -7,6 +7,7 @@
 #include "p2/meshgen/foliage/helper/GrahamScan.h"
 #include "p2/meshgen/foliage/helper/FVectorShape.h"
 #include "p2/meshgen/foliage/helper/ParallellShapeMerger.h"
+#include "p2/meshgen/foliage/helper/baryCentricInterpolator.h"
 #include "p2/DebugHelper.h"
 
 #include <algorithm>
@@ -807,6 +808,8 @@ void MeshData::centerMesh(){
     }
 }
 
+
+
 /**
  * 
  * -- mesh cutting helpers --
@@ -849,18 +852,16 @@ void MeshData::cutHoleWithInnerExtensionOfMesh(
 
 
 
-    //mergen und anhängen den kreis
+    //mergen und anhängen den gefüllten kreis
     ParallellShapeMerger merger;
     merger.createParallelSortedShape(
         outlineOfHalfSphere,
         outOfRangeVertecies
     );
-
-
     std::vector<FVector> &bufferReference = merger.triangleBufferReference();
     appendDoubleSidedTriangleBuffer(bufferReference);
 
-    
+
 
     //append sphere
     //appendEfficent(sphere);
@@ -873,7 +874,9 @@ void MeshData::cutHoleWithInnerExtensionOfMesh(
 
 
 
-// tested
+///@brief will cut a hole in a radius at a vertex position
+///@param outOfRangeVertecies will save vertecies which were not cutted out
+///but were connected to the cutted out vertecies
 void MeshData::cutHole(FVector &vertex, int radius, std::vector<FVector> &outOfRangeVertecies) //connected out of range
 {
     radius = std::abs(radius);
@@ -891,7 +894,7 @@ void MeshData::cutHole(FVector &vertex, int radius, std::vector<FVector> &outOfR
 
         int debugCount = 1;
 
-        
+        //cut recursivly until distance reached
         int i = 0;
         int size = connectedvertecies.size();
         while(i < size){
@@ -914,17 +917,19 @@ void MeshData::cutHole(FVector &vertex, int radius, std::vector<FVector> &outOfR
             i++;
         }
 
-        FString message = FString::Printf(TEXT("debugremoved vertecies %d"), debugCount);
-        DebugHelper::logMessage(message);
+        //FString message = FString::Printf(TEXT("debugremoved vertecies %d"), debugCount);
+        //DebugHelper::logMessage(message);
     }
 }
 
-//tested 
+///@brief removes out a vertex from the mesh
 void MeshData::removeVertex(int index){
     std::vector<int> ignored;
     removeVertex(index, ignored);
 }
 
+///@brief removes out a vertex from the mesh data by index and:
+///@param connectedvertecies saves the connected vertecies defined by the triangle buffer
 void MeshData::removeVertex(int index, std::vector<int>& connectedvertecies){
 
     if(isValidVertexIndex(index) && vertecies.Num() > 0){
@@ -956,7 +961,8 @@ void MeshData::removeVertex(int index, std::vector<int>& connectedvertecies){
     }
 }
 
-//tested
+///@brief removes all triangles from the triangle buffer by vertex index and
+///@param connectedvertecies saves the connected vertecies for processing
 void MeshData::removeTrianglesInvolvedWith(int vertexIndex, std::vector<int> &connectedvertecies){
     if(!isValidVertexIndex(vertexIndex)){
         return;
@@ -1004,11 +1010,6 @@ bool MeshData::contains(std::vector<int> &ref, int index){
 }
 
 
-void MeshData::flipAllFaces(){
-    for (int i = 0; i < triangles.Num()- 3; i+= 3){  
-        std::swap(triangles[i+1], triangles[i + 2]); // Tausche v1 und v2
-    }
-}
 
 
 /**
@@ -1024,7 +1025,6 @@ void MeshData::setTargetMaterial(materialEnum inMaterial){
 }
 
 
-// NOT TESTED
 
 /// @brief generates the matricies to move an object to the vertex position
 /// and rotate in look dir of normal. CAUTION: X axis is forward! The rotation block is
@@ -1071,6 +1071,42 @@ void MeshData::generateMatricesPerFaceAndLookDirOfNormal(
         }
     }
 }
+
+
+
+void MeshData::generateMatricesPerFaceAndLookDirOfNormalInterpolated(
+    std::vector<MMatrix> &output,
+    int stepSize
+){
+
+
+    baryCentricInterpolator interpolator;
+    for (int i = 0; i < triangles.Num() - 3; i+= 3){
+        int v0 = triangles[i];
+        int v1 = triangles[i+1];
+        int v2 = triangles[i+2];
+        if(isValidVertexIndex(v0, v1, v2)){
+            FVector &vertex0 = vertecies[v0];
+            FVector &vertex1 = vertecies[v1];
+            FVector &vertex2 = vertecies[v2];
+
+            
+            interpolator.setup(vertex0, vertex1, vertex2);
+            std::vector<MMatrix> newMatrices;
+            interpolator.interpolateAllAsMatrixTransformToVertexAndLookOfNormal(
+                stepSize,
+                newMatrices
+            );
+
+            for (int j = 0; j < newMatrices.size(); j++){
+                output.push_back(newMatrices[j]);
+            }
+        }
+    }
+
+}
+
+
 
 
 

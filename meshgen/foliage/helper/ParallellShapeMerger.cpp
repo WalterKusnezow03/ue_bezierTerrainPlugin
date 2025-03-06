@@ -25,71 +25,17 @@ void ParallellShapeMerger::createParallelSortedShape(
     } 
     
     baseVector = baseVectorIn;
-    sortedInFlag = std::vector<bool>(baseVectorIn.size(), false);
     vectorAligned = vectorToAlginAndSort;
 
     sortPointsByDistance(baseVector); //scheint zu funktionieren
-    sortPointsByDistance(vectorAligned, baseVector[0], baseVector[1]); //sortieren nach erster pos von base[0]
 
-    //sortIn(vectorToAlginAndSort); //might be DEPRCATED since is sorted previously
+    //sortieren nach erster richtung von base[0 udn 1]
+    //da der vector jetzt in einer richtung sortiert ist
+    sortPointsByDistance(vectorAligned, baseVector[0], baseVector[1]); 
+
     generateTriangleBuffer();
 }
 
-void ParallellShapeMerger::sortIn(std::vector<FVector> &vectorToAlginAndSort){
-    for (int i = 0; i < vectorToAlginAndSort.size(); i++){
-        FVector &currentVertex = vectorToAlginAndSort[i];
-        findClosestIndexToAndSave(currentVertex);
-    }
-}
-
-void ParallellShapeMerger::findClosestIndexToAndSave(FVector &vertex){
-    bool listenForLock = true;
-    int closestIndex = findClosestIndex(vertex, listenForLock);
-
-    // lock index and save
-    if (
-        closestIndex != errorValue &&
-        closestIndex >= 0 &&
-        closestIndex < vectorAligned.size() &&
-        closestIndex < sortedInFlag.size())
-    {
-        sortedInFlag[closestIndex] = true;
-        vectorAligned[closestIndex] = vertex;
-    }
-}
-
-///@brief finds the closest index in the baseVector and listens for the locked flag if needed
-int ParallellShapeMerger::findClosestIndex(FVector &vertex, bool listenForLock){
-    int closestIndex = errorValue;
-    float closestDist = std::numeric_limits<float>::max();
-    for (int i = 0; i < baseVector.size(); i++)
-    {
-        //find closest index which is not locked!
-        if(listenForLock && !positionLocked(i)){
-            float newDistCheckup = FVector::Dist(baseVector[i], vertex);
-            if(newDistCheckup < closestDist){
-                closestDist = newDistCheckup;
-                closestIndex = i;
-            }
-        }
-        if(!listenForLock){
-            float newDistCheckup = FVector::Dist(baseVector[i], vertex);
-            if(newDistCheckup < closestDist){
-                closestDist = newDistCheckup;
-                closestIndex = i;
-            }
-        }
-        
-    }
-    return closestIndex;
-}
-
-bool ParallellShapeMerger::positionLocked(int index){
-    if(index < 0 || index >= sortedInFlag.size()){
-        return false;
-    }
-    return sortedInFlag[index];
-}
 
 void ParallellShapeMerger::fillMissingAlignedVertecies(std::vector<FVector> &other){
     if(other.size() < baseVector.size()){
@@ -126,10 +72,11 @@ std::vector<FVector> &ParallellShapeMerger::alignedVectorReference(){
     return vectorAligned;
 }
 
-
-
-
-
+///@brief will return a triangle buffer where the face look dir is not defined,
+/// use "appendDoubleSided" in the meshdata class
+std::vector<FVector> &ParallellShapeMerger::triangleBufferReference(){
+    return triangleBuffer;
+}
 
 
 
@@ -170,15 +117,10 @@ void ParallellShapeMerger::generateTriangleBuffer(){
 }
 
 
-///will return a unsorted triangle buffer where the faces are not consistent (for now)
-/// create a double sided mesh if needed
-std::vector<FVector> &ParallellShapeMerger::triangleBufferReference(){
-    return triangleBuffer;
-}
 
 
 
-
+///@brief sorts a set of points beginning from points[0]
 void ParallellShapeMerger::sortPointsByDistance(
     std::vector<FVector> &points
 ){
@@ -188,11 +130,18 @@ void ParallellShapeMerger::sortPointsByDistance(
     sortPointsByDistance(
         points,
         points[0],
-        points[0] //Erstmal so lassen
+        points[0] //will ignore any direction
     );
 }
 
-
+///@brief sorts a point set in order of an specific direction 
+/// (to align the shape in same clock direction to the other shape, to generate a proper non
+/// overlapping triangle buffer)
+///@param points set to sort
+///@param startingPoint point to have the point set to start from sorting by distance
+///@param nextToStartingPoint can be the same as starting point, or other to define a starting
+/// direction to look for to have clockwise or counter clockwise sorting (in case of aligning 2 circles for
+/// example)
 void ParallellShapeMerger::sortPointsByDistance(
     std::vector<FVector> &points,
     FVector startingPoint,

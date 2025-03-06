@@ -8,6 +8,7 @@
 #include "KismetProceduralMeshLibrary.h"
 #include "p2/meshgen/generation/bezierCurve.h"
 #include "ELod.h"
+#include "p2/util/FVectorUtil.h"
 #include "p2/meshgen/customMeshActorBase.h"
 
 // Sets default values
@@ -68,8 +69,9 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
     thisTerrainType = typeIn;
     TArray<FVectorTouple> touples;
     createTerrainFrom2DMap(map, touples, typeIn);
-}
 
+    addRandomNodesToNavmesh(touples);
+}
 
 void AcustomMeshActorBase::createTerrainFrom2DMap(
     std::vector<std::vector<FVector>> &map,
@@ -209,24 +211,6 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
     stoneLayer.calculateNormals();*/
     ReloadMeshAndApplyAllMaterials();
 
-    /**
-     * ADD NODES TO NAVMESH
-     */
-
-    bool addToNavMesh = true;
-    if(addToNavMesh){
-        double StartTime = FPlatformTime::Seconds();
-        //add all normal centers to navmesh to allow the bots to move over the terrain
-        if(PathFinder *f = PathFinder::instance(GetWorld())){
-            FVector offset(0, 0, 70);
-            f->addNewNodeVector(navMeshAdd, offset);
-        }
-        double EndTime = FPlatformTime::Seconds();
-        double ElapsedTime = EndTime - StartTime;
-        DebugHelper::addTime(ElapsedTime);
-        DebugHelper::logTime("nav mesh added");
-    }
-
     enableLodListening();
 }
 
@@ -353,9 +337,72 @@ void AcustomMeshActorBase::appendLodTerrain(
 
 
 
+void AcustomMeshActorBase::addRandomNodesToNavmesh(TArray<FVectorTouple> &touples){
+    /**
+     * ADD NODES TO NAVMESH
+     */
+    int size = touples.Num();
+    if(size <= 0){
+        return;
+    }
+
+    //find vertical normals
+    //second is normal, first is vertex
+    std::vector<FVector> positionsPotential;
+    filterTouplesForVerticalVectors(
+        touples,
+        positionsPotential
+    );
+
+    int count = touples.Num();
+    std::set<int> indices;
+    for (int i = 0; i < count; i++){
+        int newIndex = FVectorUtil::randomNumber(0, positionsPotential.size()) % positionsPotential.size();
+        indices.insert(newIndex);
+    }
+
+    int limit = 20;
+    std::vector<FVector> picked;
+    for (auto &ref : indices)
+    {
+        picked.push_back(positionsPotential[ref]);
+        limit--;
+        if(limit <= 0){
+            break;
+        }
+    }
+
+    // add all normal centers to navmesh to allow the bots to move over the terrain
+    if (PathFinder *f = PathFinder::instance(GetWorld()))
+    {
+        FVector offset(0, 0, 70);
+        f->addNewNodeVector(picked, offset);
+    }
+}
 
 
 
+
+void AcustomMeshActorBase::filterTouplesForVerticalVectors(
+    TArray<FVectorTouple> &touples,
+    std::vector<FVector> &potentialLocations
+){
+    // iterate over touples
+    // determine normal angle and apply foliage, rocks, trees accordingly
+    if (touples.Num() < 1){
+        return;
+    }
+
+    //if normal faces towards up: flat area, create something
+    for(FVectorTouple &t : touples){
+        FVector &location = t.first();
+        FVector &normal = t.second();
+        bool facingUpwards = FVectorUtil::directionIsVertical(normal);
+        if(facingUpwards){
+            potentialLocations.push_back(location); 
+        }
+    }
+}
 
 
 
