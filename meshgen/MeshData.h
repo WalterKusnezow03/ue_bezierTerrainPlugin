@@ -186,6 +186,8 @@ public:
 		int stepSize
 	);
 
+	int verteciesNum();
+
 private:
 	materialEnum materialPreferred = materialEnum::wallMaterial;
 };

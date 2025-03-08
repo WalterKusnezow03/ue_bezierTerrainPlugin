@@ -35,7 +35,6 @@ void AcustomMeshActor::BeginPlay()
 void AcustomMeshActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void AcustomMeshActor::setDamagedOwner(IDamageinterface *damagedOwnerIn){
@@ -184,14 +183,16 @@ void AcustomMeshActor::createTerrainFrom2DMap(
 
     //must be called here.
     setMaterialBehaiviour(materialEnum::grassMaterial, false); //no split
+
+    
     
     //DebugHelper::logMessage("debugCreateFoliage_terrain!");
     if(createTrees){ //debug test
         //DebugHelper::logMessage("debugCreateFoliage");
-        createFoliage(touples);
+        createFoliageAndPushNodesAroundFoliageToNavMesh(touples);
+    }else{
+        Super::addRandomNodesToNavmesh(touples);
     }
-
-    Super::addRandomNodesToNavmesh(touples);
 
 }
 
@@ -277,7 +278,9 @@ void AcustomMeshActor::createCube(
 /// get its position from the actor. The touples expected to be in local coordinate system
 /// @param touples lcoation and normal in a touple
 /// @param outputAppend for example a terrain mesh to create trees on
-void AcustomMeshActor::createFoliage(TArray<FVectorTouple> &touples){
+void AcustomMeshActor::createFoliageAndPushNodesAroundFoliageToNavMesh(
+    TArray<FVectorTouple> &touples
+){
     
 
     // iterate over touples
@@ -294,18 +297,39 @@ void AcustomMeshActor::createFoliage(TArray<FVectorTouple> &touples){
     );
 
     //create trees at random valid locations
-    int limit = 3; //tree count
+    std::vector<FVector> pickedLocationsForNavmesh;
+
+    int limit = 3; // tree count
     for (int i = 0; i < limit; i++){
 
         int index = FVectorUtil::randomNumber(0, potentialLocations.size() - 1);
         if (index < potentialLocations.size() && index >= 0)
         {
-            createTreeAndSaveToMesh(potentialLocations[index]);
+            FVector vertex = potentialLocations[index];
+            pickedLocationsForNavmesh.push_back(vertex);
+            createTreeAndSaveToMesh(vertex);
             potentialLocations.erase(potentialLocations.begin() + index);
+            
         }
     }
 
 
+    //add all points around foliage to navmesh to allow the bots to move over the terrain better
+    if (PathFinder *f = PathFinder::instance(GetWorld()))
+    {
+        //um um 90 grad zu drehen, x und y tauschen, einen negieren
+        //(a,b) (-b,a) (-a,-b) (b, -a)
+        std::vector<FVector> offsets = {
+            FVector(100, 100, 70),
+            FVector(-100, 100, 70),
+            FVector(100, -100, 70),
+            FVector(-100, -100, 70),
+        };
+    
+        f->addNewNodeVector(pickedLocationsForNavmesh, offsets);
+    }
+    
+    
     ReloadMeshAndApplyAllMaterials();
 
 }
@@ -456,4 +480,25 @@ void AcustomMeshActor::debugThis(FVector &hitpoint){
     int sizeHole = 50;
     meshdata.cutHoleWithInnerExtensionOfMesh(localHit, sizeHole);
     ReloadMeshAndApplyAllMaterials();
+}
+
+
+
+
+
+
+
+
+/**
+ * 
+ * 
+ * ----- shading function for foliage ------s
+ * 
+ * 
+ */
+std::vector<materialEnum> AcustomMeshActor::foliageMaterials(){
+    std::vector<materialEnum> output = {
+        materialEnum::palmLeafMaterial
+    };
+    return output;
 }

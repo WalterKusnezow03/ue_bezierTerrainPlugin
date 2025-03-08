@@ -2,7 +2,9 @@
 
 
 #include "customWaterActor.h"
+#include "p2/gamestart/assetManager.h"
 #include "ripple.h"
+
 
 
 AcustomWaterActor::AcustomWaterActor() : AcustomMeshActorBase()
@@ -22,10 +24,10 @@ void AcustomWaterActor::BeginPlay(){
 
 void AcustomWaterActor::Tick(float DeltaTime){
     Super::Tick(DeltaTime);
-    if(meshInited){
+    if(meshInited && playerIsInBounds()){
         if(TickBasedOnPlayerDistance()){
-            updateRunningTime(DeltaTime);
-            TickRipples(DeltaTime);
+            //updateRunningTime(DeltaTime);
+            TickRipples(DeltaTime); //tick ripples before vertex shader to already modify
             vertexShader();
         }
 
@@ -34,12 +36,13 @@ void AcustomWaterActor::Tick(float DeltaTime){
     
 }
 
+/*
 void AcustomWaterActor::updateRunningTime(float deltaTime){
     runningTime += deltaTime;
     if(runningTime > 2 * M_PI){
         runningTime = 0.0f;
     }
-}
+}*/
 
 
 
@@ -47,19 +50,23 @@ void AcustomWaterActor::updateRunningTime(float deltaTime){
 /// @param sizeX in vertecies
 /// @param sizeY in vertecies
 /// @param detail detail between vertecies (in cm)
-void AcustomWaterActor::createWaterPane(int vertexCountXIn, int vertexCountYIn, int detail){
+void AcustomWaterActor::createWaterPane(int vertexCountIn, int detail){
     if(meshInited){
         return;
     }
 
-    vertexcountX = std::abs(vertexCountXIn);
-    vertexcountY = std::abs(vertexCountYIn);
-    if(vertexcountX <= 2){
-        vertexcountX = 3;
+    vertexCountIn = std::abs(vertexCountIn);
+    if(vertexCountIn <= 2){
+        vertexCountIn = 3;
     }
-    if(vertexcountY <= 2){
-        vertexcountY = 3;
-    }
+    vertexcountX = vertexCountIn;
+    vertexcountY = vertexCountIn;
+
+    BottomLeft = FVector(0,0,0);
+	TopLeft = FVector(0, vertexCountIn * detail, 0);
+	BottomRight = FVector(vertexCountIn * detail,0,0);
+	TopRight = FVector(vertexCountIn * detail,vertexCountIn * detail,0);
+
 
     MeshData &waterMesh = findMeshDataReference(
         materialEnum::waterMaterial,
@@ -102,7 +109,9 @@ void AcustomWaterActor::createWaterPane(int vertexCountXIn, int vertexCountYIn, 
         thisMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
         thisMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
         thisMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+
     }
+    
 }
 
 MeshData& AcustomWaterActor::findMeshDataReference(
@@ -131,17 +140,63 @@ void AcustomWaterActor::vertexShader(){
 
     int layer = layerByMaterialEnum(materialEnum::waterMaterial);
 
+    FVector locationOfPlayer = playerLocation();
+
     //raycast is not blocked by water
     UProceduralMeshComponent *thisMesh = meshComponentPointer();
     if(thisMesh){
         TArray<FVector> &vertecies = waterMesh.getVerteciesRef();
 
+        //old working, linear: bad
+        
         FVector actorLocation = GetActorLocation();
         for (int i = 0; i < vertecies.Num(); i++)
         {
-            FVector &vertex = vertecies[i];
-            applyCurve(vertex);
-            applyWaterRippleOffset(vertex, actorLocation);
+            if(i >= 0 && i < vertecies.Num()){
+                FVector &vertex = vertecies[i];
+                /*
+                if(isInRangeForTick(vertex, locationOfPlayer)){
+                    applyShaderToVertex(vertex);
+                    applyWaterRippleOffset(vertex, actorLocation);
+                }*/
+
+                //is testet, skips vertecies if out of range based on direction
+                
+                bool wasTicked = false;
+                int dirX = isInRangeForTickOnX(vertex, locationOfPlayer);
+                if (dirX == 0)
+                {
+                    int dirY = isInRangeForTickOnY(vertex, locationOfPlayer);
+                    if(dirY == 0){
+                        applyShaderToVertex(vertex);
+                        applyWaterRippleOffset(vertex, actorLocation);
+                        wasTicked = true;
+                    }
+                    if(dirY < 0){
+                        //nichts, i++
+                    }
+                    if(dirY > 0){
+                        //goto next start of x
+                        int column = i / vertexcountX;
+                        i = (column + 1) * vertexcountX;
+                    }
+                }
+                if(dirX < 0){
+                    //skip to next column
+                    i += vertexcountX;
+                }
+
+                if(!wasTicked){
+                    vertex.Z = 0.0f;
+                }
+
+                if(dirX > 0){
+                    //skip all
+                    break;
+                }
+
+            }
+            
         }
 
         refreshMesh(*thisMesh, waterMesh, layer);
@@ -149,9 +204,11 @@ void AcustomWaterActor::vertexShader(){
 }
 
 
+
+
 /// @brief apply vertex shader to the given vertex
 /// @param vertex vertex to move
-void AcustomWaterActor::applyCurve(FVector &vertex){
+void AcustomWaterActor::applyShaderToVertex(FVector &vertex){
     FVector actorLocation = GetActorLocation();
     float distXAll = vertex.X + actorLocation.X;
     float distYAll = vertex.Y + actorLocation.Y;
@@ -159,7 +216,8 @@ void AcustomWaterActor::applyCurve(FVector &vertex){
     float frequency = 0.01f; // Wellenbreite
     float amplitude = 10.0f; // Wellenhöhe
     float speed = 1.0f; // Wellengeschwindigkeit //1.0;
-    float wave = sin(distXAll * frequency + runningTime * speed) + cos(distYAll * frequency + runningTime * speed);
+    float wave = sin(distXAll * frequency + shaderRunningTime * speed) + 
+                 cos(distYAll * frequency + shaderRunningTime * speed);
 
     vertex.Z = wave * amplitude;
 
@@ -174,8 +232,9 @@ void AcustomWaterActor::refreshMesh(
 ){
     if(meshInited){
 
-        double startTime = FPlatformTime::Seconds();
+        Super::refreshMesh(meshComponent, other, layer);
 
+        /*
         meshComponent.UpdateMeshSection(
             layer, 
             other.getVerteciesRef(), 
@@ -185,18 +244,13 @@ void AcustomWaterActor::refreshMesh(
             other.getTangentsRef()
         );
 
-        // Berechne die verstrichene Zeit
-        double endTime = FPlatformTime::Seconds();
-        double deltaTime = endTime - startTime;
-
         if(false){
             DebugHelper::showScreenMessage("update time ", (float) deltaTime);
-        }
 
-        meshComponent.SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-        meshComponent.SetCollisionResponseToAllChannels(ECR_Ignore);
-        meshComponent.SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-        
+            meshComponent.SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+            meshComponent.SetCollisionResponseToAllChannels(ECR_Ignore);
+            meshComponent.SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+        }*/
     }
 }
 
@@ -309,11 +363,8 @@ void AcustomWaterActor::removeRippleAtIndex(int index){
 bool AcustomWaterActor::TickBasedOnPlayerDistance(){
     referenceManager *manager = referenceManager::instance();
     if(manager != nullptr){
-        FVector locationOfPlayer = manager->playerLocation();
-        FVector ownLocation = GetActorLocation();
+        FVector locationOfPlayer = playerLocation();
 
-        FVector connect = ownLocation - locationOfPlayer;
-        
         ELod lodResult = lodLevelByDistanceTo(locationOfPlayer);
             
         //only lod near allowed
@@ -324,3 +375,83 @@ bool AcustomWaterActor::TickBasedOnPlayerDistance(){
     }
     return false;
 }
+
+
+
+
+bool AcustomWaterActor::isInRangeForTick(FVector &vertex, FVector &locationOfPlayer){
+    FVector offset = GetActorLocation();
+    int xdist = std::abs(offset.X + vertex.X - locationOfPlayer.X);
+    if(xdist > MAX_DISTANCE){
+        return false;
+    }
+
+    int ydist = std::abs(offset.Y + vertex.Y - locationOfPlayer.Y);
+    if(ydist > MAX_DISTANCE){
+        return false;
+    }
+    return true;
+}
+
+
+int AcustomWaterActor::isInRangeForTickOnX(
+    FVector &vertex, 
+    FVector &locationOfPlayer
+){
+    FVector vertexWorld = GetActorLocation();
+    vertexWorld += vertex;
+    int xdist = vertexWorld.X - locationOfPlayer.X;
+    if (std::abs(xdist) > MAX_DISTANCE)
+    {
+        if(vertexWorld.X > locationOfPlayer.X){
+            return 1;
+        }
+        return -1;
+    }
+    return 0;
+}
+
+int AcustomWaterActor::isInRangeForTickOnY(
+    FVector &vertex, 
+    FVector &locationOfPlayer
+){
+    FVector vertexWorld = GetActorLocation();
+    vertexWorld += vertex;
+    int ydist = vertexWorld.Y - locationOfPlayer.Y;
+    if (std::abs(ydist) > MAX_DISTANCE)
+    {
+        if(vertexWorld.Y > locationOfPlayer.Y){
+            return 1;
+        }
+        return -1;
+    }
+    return 0;
+}
+
+
+
+
+FVector AcustomWaterActor::playerLocation(){
+    referenceManager *manager = referenceManager::instance();
+    if(manager != nullptr){
+        return manager->playerLocation();
+    }
+
+    return FVector(0, 0, 0);
+}
+
+bool AcustomWaterActor::playerIsInBounds(){
+    FVector location = playerLocation();
+    return inBoundsOfPane(location);
+}
+
+bool AcustomWaterActor::inBoundsOfPane(FVector &vec){
+    FVector ownOffset = GetActorLocation();
+    FVector bl = BottomLeft + ownOffset;
+    FVector tr = TopRight + ownOffset;
+
+    return (vec.X >= bl.X && vec.X < tr.X) && (vec.Y >= bl.Y && vec.Y < tr.Y);
+}
+
+
+

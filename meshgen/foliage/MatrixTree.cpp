@@ -434,7 +434,7 @@ void MatrixTree::generateCactusSpikes(){
     std::vector<MMatrix> transformMatrices;
     //stemMeshData.generateMatricesPerFaceAndLookDirOfNormal(transformMatrices);
 
-    int stepSizeBetweenVertecies = height * 3;
+    int stepSizeBetweenVertecies = height * 4; //is random...
     stemMeshData.generateMatricesPerFaceAndLookDirOfNormalInterpolated(
         transformMatrices,
         stepSizeBetweenVertecies

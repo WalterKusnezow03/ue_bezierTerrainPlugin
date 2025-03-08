@@ -32,7 +32,7 @@ void baryCentricInterpolator::interpolateAll(int stepdistance, std::vector<FVect
 
     //B(x) = A + beta(B-A) + gamma(C-A)
     //heisst einmal A + beta(B-A) == M1
-    //und einmal C + gamma(C-A) interpolieren ==M2
+    //und einmal A + gamma(C-A) interpolieren ==M2
     //dann M1 x M2
     std::vector<FVector> M1;
     interpolateLinear(v0, v1, M1, stepdistance);

@@ -5,7 +5,8 @@
 #include "CoreMinimal.h"
 
 /**
- * 
+ * can merge 2 circular shapes for example and create all triangles between the shapes
+ * while having them in a logical and sorted order
  */
 class P2_API ParallellShapeMerger
 {

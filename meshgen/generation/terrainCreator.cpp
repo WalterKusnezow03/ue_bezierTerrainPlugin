@@ -1171,7 +1171,9 @@ void terrainCreator::createTerrainAndSpawnMeshActors(UWorld *world, int meters){
         int numberCreated = chunkNum();
         std::vector<AcustomMeshActor *> meshactors;// = e->requestMeshActors(world, numberCreated);
 
-        for (int i = 0; i < numberCreated; i++){
+        
+        for (int i = 0; i < numberCreated; i++)
+        {
             FRotator rotation;
             FActorSpawnParameters params;
             AcustomMeshActor *SpawnedActor = world->SpawnActor<AcustomMeshActor>(

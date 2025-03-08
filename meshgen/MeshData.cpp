@@ -1056,14 +1056,13 @@ void MeshData::generateMatricesPerFaceAndLookDirOfNormal(
                 axis = rotator * axis;
                 DebugHelper::logMessage("debug comparenormal", axis, normal); //works correct!
             }
-            
             // debug end
 
             MMatrix translation;
             FVector center = (vertex0 + vertex1 + vertex2) / 3;
             translation.setTranslation(center);
 
-            translation.setTranslation(vertex0); //debug
+            //translation.setTranslation(vertex0); //debug
 
             MMatrix TR = translation * rotator; //<-- lese richtung --
     
@@ -1147,4 +1146,10 @@ void MeshData::appendCube(
     FVector c1 = c + orthogonalDir;
     FVector d1 = d + orthogonalDir;
     appendCube(a, b, c, d, a1, b1, c1, d1);
+}
+
+
+
+int MeshData::verteciesNum(){
+    return vertecies.Num();
 }
