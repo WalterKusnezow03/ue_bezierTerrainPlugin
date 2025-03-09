@@ -125,7 +125,7 @@ private:
 	float MIN_SPLITDISTANCE = 50.0f;
 	bool canSplit(FVector &a, FVector &b, FVector &c);
 
-	float EPSILON = 0.5f;
+	float EPSILON = 5.0f;
 	bool isCloseSame(FVector &a, FVector &b);
 	bool isCloseSame(FVector &a, int index);
 	
@@ -154,6 +154,8 @@ private:
 	TArray<FVector2D> UV0;
 
 	int findClosestIndexTo(FVector &vertex);
+	int findClosestIndexToAndAvoid(FVector &vertex, int indexAvoid);
+	int findClosestIndexToAndAvoid(FVector &vertex, std::vector<int> &avoid);
 
 	void join(TArray<FVector> &vertecies, TArray<int32> &triangles, TArray<FVector> &normalsin);
 
@@ -188,6 +190,11 @@ public:
 
 	int verteciesNum();
 
+
+	//helper for displacement
+	void pushInwards(FVector &location, int radius, FVector scaleddirection);
 private:
+	void findConnectedVerteciesTo(int index, std::vector<int> &output);
+
 	materialEnum materialPreferred = materialEnum::wallMaterial;
 };

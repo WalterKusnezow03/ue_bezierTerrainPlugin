@@ -582,8 +582,8 @@ void AcustomMeshActorBase::updateMesh(
         true
     );
 
-    //set for spehere overlap
-    meshcomponent.SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    
+    //meshcomponent.SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     meshcomponent.SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
     meshcomponent.SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 

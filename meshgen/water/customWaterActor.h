@@ -28,9 +28,17 @@ public:
 
 	void createWaterPane(int vertexcountXIn, int detail);
 
-	bool inBoundsOfPane(FVector &vec);
+	static void createWaterPane(
+		UWorld *world,
+		int vertexCount
+	);
 
 protected:
+	bool inBoundsOfPane(FVector &vec);	
+	bool doTick();
+
+	static const int MAX_VERTEXCOUNT = 50;
+	static const int DEFAULT_DISTANCE_BETWEEN_VERTECIES = 100;
 	int MAX_DISTANCE = 10000; // 10000; // 100000;
 
 	teamEnum teamSaved = teamEnum::none;

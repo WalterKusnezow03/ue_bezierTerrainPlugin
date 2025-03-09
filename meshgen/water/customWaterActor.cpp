@@ -6,7 +6,6 @@
 #include "ripple.h"
 
 
-
 AcustomWaterActor::AcustomWaterActor() : AcustomMeshActorBase()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -18,31 +17,60 @@ AcustomWaterActor::AcustomWaterActor() : AcustomMeshActorBase()
 
 void AcustomWaterActor::BeginPlay(){
     Super::BeginPlay();
+    meshInited = false;
     setTeam(teamEnum::neutralTeam);
 }
 
 
 void AcustomWaterActor::Tick(float DeltaTime){
     Super::Tick(DeltaTime);
-    if(meshInited && playerIsInBounds()){
-        if(TickBasedOnPlayerDistance()){
-            //updateRunningTime(DeltaTime);
-            TickRipples(DeltaTime); //tick ripples before vertex shader to already modify
-            vertexShader();
-        }
-
-        
+    if(doTick()){
+        //updateRunningTime(DeltaTime);
+        TickRipples(DeltaTime); //tick ripples before vertex shader to already modify mesh
+        vertexShader();
+        SetActorHiddenInGame(false);
+    }else{
+        SetActorHiddenInGame(true);
     }
     
 }
 
-/*
-void AcustomWaterActor::updateRunningTime(float deltaTime){
-    runningTime += deltaTime;
-    if(runningTime > 2 * M_PI){
-        runningTime = 0.0f;
+
+void AcustomWaterActor::createWaterPane(
+    UWorld *world, 
+    int vertexCount
+){
+    if(world == nullptr){
+        return;
     }
-}*/
+
+    int distanceBetweenVertecies = DEFAULT_DISTANCE_BETWEEN_VERTECIES;
+    int paneCount = vertexCount / MAX_VERTEXCOUNT;
+    int offsetOnAxis = MAX_VERTEXCOUNT * distanceBetweenVertecies;
+    FVector offsetVector(-2000, -2000, 100);
+
+    for (int i = 0; i < paneCount; i++){
+        for (int j = 0; j < paneCount; j++){
+
+            FVector finalLocation = offsetVector;
+            offsetVector.X += offsetOnAxis * i;
+            offsetVector.Y += offsetOnAxis * j;
+
+            FRotator rotation;
+            FActorSpawnParameters params;
+            AcustomWaterActor *SpawnedActor = world->SpawnActor<AcustomWaterActor>(
+                AcustomWaterActor::StaticClass(),
+                finalLocation,
+                FRotator::ZeroRotator,
+                params
+            );
+            if(SpawnedActor != nullptr){
+                SpawnedActor->createWaterPane(MAX_VERTEXCOUNT, distanceBetweenVertecies);
+            }
+        }
+    }
+}
+
 
 
 
@@ -59,6 +87,10 @@ void AcustomWaterActor::createWaterPane(int vertexCountIn, int detail){
     if(vertexCountIn <= 2){
         vertexCountIn = 3;
     }
+    if(vertexCountIn > MAX_VERTEXCOUNT){
+        vertexCountIn = MAX_VERTEXCOUNT;
+    }
+
     vertexcountX = vertexCountIn;
     vertexcountY = vertexCountIn;
 
@@ -231,26 +263,7 @@ void AcustomWaterActor::refreshMesh(
     int layer
 ){
     if(meshInited){
-
         Super::refreshMesh(meshComponent, other, layer);
-
-        /*
-        meshComponent.UpdateMeshSection(
-            layer, 
-            other.getVerteciesRef(), 
-            other.getNormalsRef(), 
-            other.getUV0Ref(),
-            other.getVertexColorsRef(), 
-            other.getTangentsRef()
-        );
-
-        if(false){
-            DebugHelper::showScreenMessage("update time ", (float) deltaTime);
-
-            meshComponent.SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-            meshComponent.SetCollisionResponseToAllChannels(ECR_Ignore);
-            meshComponent.SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-        }*/
     }
 }
 
@@ -360,6 +373,10 @@ void AcustomWaterActor::removeRippleAtIndex(int index){
 /**
  * helper player distance
  */
+bool AcustomWaterActor::doTick(){
+    return meshInited && playerIsInBounds() && TickBasedOnPlayerDistance();
+}
+
 bool AcustomWaterActor::TickBasedOnPlayerDistance(){
     referenceManager *manager = referenceManager::instance();
     if(manager != nullptr){

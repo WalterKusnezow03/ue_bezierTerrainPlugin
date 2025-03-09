@@ -434,10 +434,10 @@ void MatrixTree::generateCactusSpikes(){
     std::vector<MMatrix> transformMatrices;
     //stemMeshData.generateMatricesPerFaceAndLookDirOfNormal(transformMatrices);
 
-    int stepSizeBetweenVertecies = height * 4; //is random...
-    stemMeshData.generateMatricesPerFaceAndLookDirOfNormalInterpolated(
-        transformMatrices,
-        stepSizeBetweenVertecies
+    int stepSizeBetweenVertecies = height; //is random...
+    stemMeshData.generateMatricesPerFaceAndLookDirOfNormal(
+        transformMatrices
+        //,stepSizeBetweenVertecies
     );
 
     for (int i = 0; i < transformMatrices.size(); i++)
@@ -450,8 +450,8 @@ void MatrixTree::generateCactusSpikes(){
     }
 
     //debug
-    FString message = FString::Printf(TEXT("size of matrices: %d"), transformMatrices.size()); //500
-    DebugHelper::logMessage(message);
+    //FString message = FString::Printf(TEXT("size of matrices: %d"), transformMatrices.size()); //500
+    //DebugHelper::logMessage(message);
 }
 
 /**

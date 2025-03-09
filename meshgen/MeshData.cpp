@@ -409,7 +409,7 @@ void MeshData::fillUpMissingVertecies(int count){
         return;
     }
 
-    DebugHelper::logMessage("meshData_debug inserted vertecies");
+    //DebugHelper::logMessage("meshData_debug inserted vertecies");
 
     FVector last = vertecies[sizeOfVertexbuffer - 1];
     FVector prev = vertecies[sizeOfVertexbuffer - 2];
@@ -521,9 +521,36 @@ bool MeshData::isCloseSame(FVector &a, int index){
 }
 
 bool MeshData::isCloseSame(FVector &a, FVector &b){
-    return std::abs(a.X - b.X) < EPSILON &&
-           std::abs(a.Y - b.Z) < EPSILON &&
-           std::abs(a.Z - b.Z) < EPSILON;
+    return std::abs(a.X - b.X) <= EPSILON &&
+           std::abs(a.Y - b.Y) <= EPSILON &&
+           std::abs(a.Z - b.Z) <= EPSILON;
+}
+
+
+
+int MeshData::findClosestIndexToAndAvoid(FVector &vertex, int indexAvoid){
+    std::vector<int> vec = {indexAvoid};
+    return findClosestIndexToAndAvoid(vertex, vec);
+}
+
+int MeshData::findClosestIndexToAndAvoid(FVector &vertex, std::vector<int> &avoid){
+    if(vertecies.Num() == 0){
+        return -1;
+    }
+    int closestIndex = 0;
+    float dist = FVector::Dist(vertex, vertecies[0]);
+
+    for (int i = 1; i < vertecies.Num(); i++){
+
+        if(!contains(avoid, i)){
+            float newDist = FVector::Dist(vertex, vertecies[i]);
+            if(newDist < dist){ //debug keep distance
+                dist = newDist;
+                closestIndex = i;
+            }
+        }
+    }
+    return closestIndex;
 }
 
 
@@ -765,7 +792,7 @@ void MeshData::splitAllTrianglesInHalfAndSeperateMeshIntoAllTrianglesDoubleSided
             newTriangleMeshB.calculateNormals();
             meshDataVectorOutput.push_back(newTriangleMeshB);
         }else{
-            DebugHelper::logMessage("DEBUGSPLIT could not split");
+            //DebugHelper::logMessage("DEBUGSPLIT could not split");
         }
     }
 
@@ -837,10 +864,43 @@ void MeshData::cutHoleWithInnerExtensionOfMesh(
 
     //find rotation of direction to rotate the halfsphere as needed
     FVector centerOfMesh = center();
-    FVector connect = centerOfMesh - vertex;
+    //FVector connect = centerOfMesh - vertex; //AB = B - A ---> vertex to center inside
+    FVector connect(0, 0, 1);
+    int indexClose = findClosestIndexTo(vertex);
+    if (isValidNormalIndex(indexClose))
+    {
+        connect = normals[indexClose] * -1; //inward
+    }
 
     std::vector<FVector> outlineOfHalfSphere; //online of open side!
     int detailPerCircle = outOfRangeVertecies.size();
+
+    //fill missing detial (temporary solution)
+    if(detailPerCircle < 8){
+        int missing = 8 - detailPerCircle;
+        int betweenExtra = missing / detailPerCircle;
+        if(betweenExtra == 0){
+            betweenExtra = 1;
+        }
+        betweenExtra += 1; //dass bei 1 extra, auch einer dazukommt.
+
+        std::vector<FVector> modifiedOutOfRange;
+        for (int i = 0; i < outOfRangeVertecies.size(); i++)
+        {
+            FVector &start = outOfRangeVertecies[i];
+            FVector &end = outOfRangeVertecies[(i+1) % outOfRangeVertecies.size()];
+            FVector connectScaled = end - start;
+            connectScaled /= betweenExtra;
+            for (int j = 0; j < betweenExtra; j++){
+                FVector interpolated = start + connectScaled * j;
+                modifiedOutOfRange.push_back(interpolated);
+            }
+        }
+        outOfRangeVertecies = modifiedOutOfRange;
+    }
+    //fill missing detial (temporary solution) end
+
+
     MeshData sphere = FVectorShape::createHalfSphereCuttedOff(
         radius,
         detailPerCircle, //detail per full circle
@@ -1007,6 +1067,104 @@ bool MeshData::contains(std::vector<int> &ref, int index){
         }
     }
     return false;
+}
+
+
+
+/**
+ * 
+ * 
+ * mesh deform no remove helper
+ * 
+ * 
+ */
+void MeshData::pushInwards(FVector &location, int radius, FVector scaleddirection){
+    if(vertecies.Num() == 0){
+        return;
+    }
+
+    radius = std::abs(radius);
+
+    std::vector<int> connected;
+    int index = findClosestIndexTo(location);
+    if(!isValidVertexIndex(index)){
+        return;
+    }
+    FVector foundLocation = vertecies[index];
+
+    findConnectedVerteciesTo(index, connected);
+
+    //recursivly find all connected vertecies from the triangle buffer
+    int i = 0;
+    int size = connected.size();
+    while(i < size){
+        if(i < connected.size()){
+            int currentIndex = connected[i];
+            if(isValidVertexIndex(currentIndex)){
+                FVector &currentVertex = vertecies[currentIndex];
+                float dist = FVector::Dist(currentVertex, foundLocation);
+                if(dist < radius){
+                    findConnectedVerteciesTo(currentIndex, connected);
+                    size = connected.size();
+                }
+            }
+        }
+
+        i++;
+    }
+
+    /*
+    //add new triangles because of weird issues <3
+    for (int j = 1; j < connected.size(); j++)
+    {
+        int prev = connected[j-1];
+        int next = connected[j];
+
+        int closePrev = findClosestIndexToAndAvoid(vertecies[prev], connected);
+        int closeNext = findClosestIndexToAndAvoid(vertecies[next], connected);
+
+        if(isValidVertexIndex(closePrev) && isValidVertexIndex(closeNext)){
+            triangles.Add(prev); //v0
+            triangles.Add(closePrev); //v1
+            triangles.Add(closeNext); //v2
+
+            triangles.Add(prev); //v0
+            triangles.Add(closeNext); //v2
+            triangles.Add(next); //v3
+        }
+    }*/
+
+    // apply scaled offset direction
+    for (int j = 0; j < connected.size(); j++)
+    {
+        int currentIndex = connected[j];
+        if (isValidVertexIndex(currentIndex))
+        {
+            vertecies[currentIndex] += scaleddirection;
+        }
+    }
+
+}
+
+void MeshData::findConnectedVerteciesTo(int index, std::vector<int> &output){
+    
+    for (int i = 0; i < triangles.Num() - 3; i += 3)
+    {
+        int v0 = triangles[i];
+        int v1 = triangles[i+1];
+        int v2 = triangles[i+2];
+        if(v0 == index || v1 == index || v2 == index){
+            if (!contains(output, v0)){
+                output.push_back(v0);
+            }
+            if (!contains(output, v1)){
+                output.push_back(v1);
+            }
+            if (!contains(output, v2)){
+                output.push_back(v2);
+            }
+        }
+    }
 }
 
 

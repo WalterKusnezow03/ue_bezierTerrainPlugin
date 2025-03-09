@@ -194,6 +194,7 @@ void AcustomMeshActor::createTerrainFrom2DMap(
         Super::addRandomNodesToNavmesh(touples);
     }
 
+    enableDebug(); //DEBUG WISE FOR MESH DESTRUCTION!
 }
 
 
@@ -475,10 +476,31 @@ void AcustomMeshActor::debugThis(FVector &hitpoint){
     FQuat inverseRotation = GetActorQuat().Inverse();
     FVector localHit = inverseRotation.RotateVector(meshHit);
 
+    std::vector<materialEnum> hitMaterials = {
+        materialEnum::grassMaterial,
+        materialEnum::redsandMaterial
+    };
+    for (int i = 0; i < hitMaterials.size(); i++){
+        MeshData &meshdata = findMeshDataReference(hitMaterials[i], ELod::lodNear, true);
+        int sizeHole = 100;
+
+        //cut push in
+        FVector direction(0, 0, -25);
+        meshdata.pushInwards(meshHit, sizeHole, direction); //error prone!
+
+        //meshdata.cutHoleWithInnerExtensionOfMesh(localHit, sizeHole); //cut sphere
+    }
+
+    /*
     MeshData &meshdata = findMeshDataReference(materialEnum::stoneMaterial, ELod::lodNear, true);
 
     int sizeHole = 50;
-    meshdata.cutHoleWithInnerExtensionOfMesh(localHit, sizeHole);
+    //meshdata.cutHoleWithInnerExtensionOfMesh(localHit, sizeHole); //cut sphere
+
+    //cut push in
+    FVector direction(0, 0, -100);
+    meshdata.pushInwards(meshHit, sizeHole, direction);*/
+
     ReloadMeshAndApplyAllMaterials();
 }
 
