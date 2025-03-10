@@ -7,6 +7,7 @@
 #include "p2/meshgen/foliage/helper/GrahamScan.h"
 #include "p2/meshgen/foliage/helper/FVectorShape.h"
 #include "p2/meshgen/foliage/helper/ParallellShapeMerger.h"
+#include "p2/gameStart/assetEnums/materialEnum.h"
 #include "p2/meshgen/foliage/helper/baryCentricInterpolator.h"
 #include "p2/DebugHelper.h"
 
@@ -147,6 +148,8 @@ void MeshData::append(MeshData &other)
     TArray<int32> &trianglesRef = other.getTrianglesRef();
     TArray<FVector> &normalsRef = other.getNormalsRef();
     join(verteciesRef, trianglesRef, normalsRef);
+
+    updateBoundsIfNeeded();
 }
 
 void MeshData::join(TArray<FVector> &verteciesRef, TArray<int32> &trianglesRef, TArray<FVector> &normalsin){
@@ -296,6 +299,8 @@ void MeshData::offsetAllvertecies(FVector &offset){
     for (int i = 0; i < vertecies.Num(); i++){
         vertecies[i] += offset;
     }
+
+    updateBoundsIfNeeded();
 }
 
 /// @brief transforms all vertecies with a given matrix
@@ -313,6 +318,8 @@ void MeshData::transformAllVertecies(MMatrix &other){
     for (int i = 0; i < normals.Num(); i++){
         normals[i] = M_inverse * normals[i];
     }
+
+    updateBoundsIfNeeded();
 }
 
 
@@ -381,13 +388,8 @@ void MeshData::appendVertecies(std::vector<FVector> &vec){
         
     }
 
+    updateBoundsIfNeeded();
 }
-
-
-
-
-
-
 
 /**
  * caution: this function is not tested
@@ -614,6 +616,8 @@ void MeshData::appendEfficent(
         FString message = FString::Printf(TEXT("meshdata efficentAdded %d"), debugEfficentAdded);
         DebugHelper::logMessage(message);
     }
+
+    updateBoundsIfNeeded();
 }
 
 
@@ -1113,26 +1117,6 @@ void MeshData::pushInwards(FVector &location, int radius, FVector scaleddirectio
         i++;
     }
 
-    /*
-    //add new triangles because of weird issues <3
-    for (int j = 1; j < connected.size(); j++)
-    {
-        int prev = connected[j-1];
-        int next = connected[j];
-
-        int closePrev = findClosestIndexToAndAvoid(vertecies[prev], connected);
-        int closeNext = findClosestIndexToAndAvoid(vertecies[next], connected);
-
-        if(isValidVertexIndex(closePrev) && isValidVertexIndex(closeNext)){
-            triangles.Add(prev); //v0
-            triangles.Add(closePrev); //v1
-            triangles.Add(closeNext); //v2
-
-            triangles.Add(prev); //v0
-            triangles.Add(closeNext); //v2
-            triangles.Add(next); //v3
-        }
-    }*/
 
     // apply scaled offset direction
     for (int j = 0; j < connected.size(); j++)
@@ -1140,7 +1124,11 @@ void MeshData::pushInwards(FVector &location, int radius, FVector scaleddirectio
         int currentIndex = connected[j];
         if (isValidVertexIndex(currentIndex))
         {
-            vertecies[currentIndex] += scaleddirection;
+            FVector &vertex = vertecies[currentIndex];
+            if(isInsideBoundingbox(vertex)){
+                vertex += scaleddirection;
+            }
+            
         }
     }
 
@@ -1310,4 +1298,46 @@ void MeshData::appendCube(
 
 int MeshData::verteciesNum(){
     return vertecies.Num();
+}
+
+void MeshData::updateBoundsIfNeeded(){
+    bottomLeftBound = FVector(0, 0, 0);
+    topRightBound = FVector(0, 0, 0);
+    for (int i = 0; i < vertecies.Num(); i++)
+    {
+        updateBoundsIfNeeded(vertecies[i]);
+    }
+}
+
+
+void MeshData::updateBoundsIfNeeded(FVector &other){
+    if(other.X < bottomLeftBound.X){
+        bottomLeftBound.X = other.X;
+    }
+    if(other.Y < bottomLeftBound.Y){
+        bottomLeftBound.Y = other.Y;
+    }
+    if(other.Z < bottomLeftBound.Z){
+        bottomLeftBound.Z = other.Z;
+    }
+
+    if(other.X > topRightBound.X){
+        topRightBound.X = other.X;
+    }
+    if(other.Y > topRightBound.Y){
+        topRightBound.Y = other.Y;
+    }
+    if(other.Z > topRightBound.Z){
+        topRightBound.Z = other.Z;
+    }
+}
+
+///@brief checks if a vertex is inside the bounding box, NOT allowing edge cases!
+bool MeshData::isInsideBoundingbox(FVector &other){
+    return other.X > bottomLeftBound.X &&
+           other.Y > bottomLeftBound.Y &&
+           other.Z > bottomLeftBound.Z &&
+           other.X < topRightBound.X &&
+           other.Y < topRightBound.Y &&
+           other.Z < topRightBound.Z;
 }

@@ -8,6 +8,7 @@
 #include "KismetProceduralMeshLibrary.h"
 #include "p2/meshgen/generation/bezierCurve.h"
 #include "ELod.h"
+#include "p2/meshgen/foliage/ETerrainType.h"
 #include "p2/util/FVectorUtil.h"
 #include "p2/meshgen/customMeshActorBase.h"
 

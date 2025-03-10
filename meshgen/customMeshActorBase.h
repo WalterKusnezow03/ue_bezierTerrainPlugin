@@ -8,6 +8,8 @@
 #include <map>
 #include "MeshDataLod.h"
 #include "ELod.h"
+#include "p2/util/FVectorTouple.h"
+#include "p2/meshgen/foliage/ETerrainType.h"
 #include "customMeshActorBase.generated.h"
 
 UCLASS()

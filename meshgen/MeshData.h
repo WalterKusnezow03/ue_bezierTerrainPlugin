@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include <set>
+#include "p2/gameStart/assetEnums/materialEnum.h"
 #include "p2/entities/customIk/MMatrix.h"
 
 
@@ -15,7 +16,7 @@ class P2_API MeshData
 {
 public:
 	MeshData();
-	~MeshData();
+	virtual ~MeshData(); //automatischer aufruf aus subklasse
 
 	MeshData(TArray<FVector> &&verteciesIn, TArray<int> &&trianglesIn);
 	MeshData(const MeshData &other);
@@ -121,7 +122,7 @@ public:
 		FVector orthogonalDir
 	);
 
-private:
+protected:
 	float MIN_SPLITDISTANCE = 50.0f;
 	bool canSplit(FVector &a, FVector &b, FVector &c);
 
@@ -193,8 +194,21 @@ public:
 
 	//helper for displacement
 	void pushInwards(FVector &location, int radius, FVector scaleddirection);
-private:
+
+	
+
+protected:
 	void findConnectedVerteciesTo(int index, std::vector<int> &output);
 
 	materialEnum materialPreferred = materialEnum::wallMaterial;
+
+
+
+	//bound
+	void updateBoundsIfNeeded();
+	void updateBoundsIfNeeded(FVector &other);
+	FVector bottomLeftBound;
+	FVector topRightBound;
+
+	bool isInsideBoundingbox(FVector &other);
 };
