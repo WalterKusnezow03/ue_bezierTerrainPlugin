@@ -14,8 +14,7 @@ public:
     void checkLod(FVector &a, FVector &b);
 
     void modifyUpperDistanceLimitFor(ELod lod, int newMaxDistance);
-    bool lodWasEdgeCaseToELodFar();
-    bool lodWasEdgeCaseToELodMiddle();
+    bool lodWasEdgeCaseToNextLod();
     bool hideActorByLod();
     ELod lod();
 
@@ -30,11 +29,10 @@ private:
     FVector playerLocation;
 
     ELod lodFound = ELod::lodFar;
-    bool wasLodFarEdgeCase = false;
-    bool wasLodMiddleEdgeCase = false;
+    bool lodWasEdgeCase = false;
 
     void checkLod();
     ELod lodLevelByDistanceTo(bool &isEdgeCase);
-    bool isInRange(FVector &a, int maxDistance, int &smallestEdge);
+    bool isInRange(int maxDistance, bool &isEdgeCase);
     int maxDistanceForLod(ELod lodLevel);
 };

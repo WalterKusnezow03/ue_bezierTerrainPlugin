@@ -60,25 +60,41 @@ protected:
 	FVector TopRight;
 	FVector TopLeft;
 
+	//axis locking for edge chunks
+	bool topAxisLocked = false;
+	bool bottomAxisLocked = false;
+	bool leftAxisLocked = false;
+	bool rightAxisLocked = false;
+	void unlockAllAxis();
+	bool isAtLockedAxis(FVector &other);
+	void lockOuterAxisBasedOn(
+		FVector &playerLocation,
+		FVector &playerLookDir
+	);
+
 	//only update if mesh was inited
 	virtual void refreshMesh(
 		UProceduralMeshComponent &meshComponent,
 		MeshData &other,
-		int layer) override;
+		int layer
+	) override;
 
 	void updateRunningTime(float deltaTime);
 	void vertexShader();
 	virtual void applyShaderToVertex(FVector &vertex) override;
 	void resetAllShaderOffsets();
+	void resetVertexShadignFor(FVector &other);
 
 	FVector playerLocation();
 	bool playerIsInBounds();
 
 	bool meshInited = false;
-	float runningTime = 0.0f;
+	
 
 	
 	//ripple section
+	float ownHalfSize = 100.0f;
+
 	int rippleVecSize = 0;
 	std::vector<ripple> rippleVector;
 	void TickRipples(float DeltaTime);

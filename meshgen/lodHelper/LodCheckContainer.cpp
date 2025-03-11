@@ -28,8 +28,7 @@ LodCheckContainer::~LodCheckContainer(){
 void LodCheckContainer::checkLod(FVector &a, FVector &b){
     thisLocation = a;
     playerLocation = b;
-    wasLodMiddleEdgeCase = false;
-    wasLodFarEdgeCase = false;
+    lodWasEdgeCase = false;
 
     checkLod();
 }
@@ -46,13 +45,10 @@ bool LodCheckContainer::hideActorByLod(){
     return hideActorFlag;
 }
 
-bool LodCheckContainer::lodWasEdgeCaseToELodFar(){
-    return wasLodFarEdgeCase;
+bool LodCheckContainer::lodWasEdgeCaseToNextLod(){
+    return lodWasEdgeCase;
 }
 
-bool LodCheckContainer::lodWasEdgeCaseToELodMiddle(){
-    return wasLodMiddleEdgeCase;
-}
 
 
 //private
@@ -62,11 +58,9 @@ void LodCheckContainer::checkLod(){
     lodFound = lodLevelByDistanceTo(edgeCase);
     if(lodFound == ELod::lodFar){
         hideActorFlag = true;
-        wasLodFarEdgeCase = edgeCase;
     }
-    if(lodFound == ELod::lodNear){
-        wasLodMiddleEdgeCase = edgeCase;
-    }
+
+    lodWasEdgeCase = edgeCase;
 }
 
 ELod LodCheckContainer::lodLevelByDistanceTo(bool &isEdgeCase){
@@ -77,13 +71,11 @@ ELod LodCheckContainer::lodLevelByDistanceTo(bool &isEdgeCase){
         int smallestEdgeDistance = -1;
         for (int i = 0; i < vec.size(); i++)
         {
-            if(isInRange(playerLocation, maxDistanceForLod(vec[i]), smallestEdgeDistance)){
+            if(isInRange(maxDistanceForLod(vec[i]), isEdgeCase)){
                 outLod = vec[i];
+
                 break;
             }
-        }
-        if(smallestEdgeDistance <= edgeDistanceFrom){
-            isEdgeCase = true;
         }
     }
 
@@ -92,14 +84,20 @@ ELod LodCheckContainer::lodLevelByDistanceTo(bool &isEdgeCase){
 
 
 
-bool LodCheckContainer::isInRange(FVector &a, int maxDistance, int &smallestEdge){
-    int distOnX = (maxDistance - std::abs(a.X - thisLocation.X));
-    int distOnY = (maxDistance - std::abs(a.Y - thisLocation.Y));
-    //int distOnZ = (maxDistance - std::abs(a.Z - thisLocation.Z));
+bool LodCheckContainer::isInRange(int maxDistance, bool &isEdgeCase){
+    
+    int distOnX = std::abs(playerLocation.X - thisLocation.X);
+    int distOnY = std::abs(playerLocation.Y - thisLocation.Y);
 
-    smallestEdge = distOnX < distOnY ? distOnX : distOnY;
-
-    return distOnX > 0 && distOnY > 0;
+    bool isInRangeCurrent = (distOnX < maxDistance) && (distOnY < maxDistance);
+    if(isInRangeCurrent){
+        int edgeDistance = distOnX > distOnY ? distOnX : distOnY;
+        if(edgeDistance > maxDistance * 0.9f){ //in top 90 percent
+            isEdgeCase = true;
+        }
+    }
+    
+    return isInRangeCurrent;
     //&&distOnZ > 0;
 }
 

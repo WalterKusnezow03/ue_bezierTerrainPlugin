@@ -2,10 +2,16 @@
 
 
 #include "ripple.h"
+#include <limits>
 
 ripple::ripple(FVector &impactPoint)
 {
-    init(impactPoint);
+    init(impactPoint, std::numeric_limits<float>::max());
+}
+
+ripple::ripple(FVector &impactPoint, float newMaxRadius)
+{
+    init(impactPoint, newMaxRadius);
 }
 
 ripple::ripple(const ripple &other){
@@ -30,12 +36,18 @@ ripple::~ripple()
 {
 }
 
-void ripple::init(FVector &impactPoint){
+void ripple::init(FVector &impactPoint, float maxRadiusIn){
+    setMaxRadius(maxRadiusIn);
     impact = impactPoint;
     time = 0.0f;
     radius = 0.0f;
 
     maxlifeTime = 10.0f;
+}
+
+///@brief changes the max radius which is with time the factor for the ripple to dissappear
+void ripple::setMaxRadius(float radiusIn){
+    maxRadius = std::abs(radiusIn);
 }
 
 void ripple::Tick(float deltaTime){
@@ -44,7 +56,7 @@ void ripple::Tick(float deltaTime){
 }
 
 bool ripple::timeExceeded(){
-    return maxlifeTime < time;
+    return (maxlifeTime < time) || (radius > maxRadius);
 }
 
 /// @brief returns the wave height based on time (distance from initial center indirectly)
@@ -74,3 +86,5 @@ void ripple::changeHeightBasedOnDistance(FVector &vertex, FVector &offsetActor){
 
     }
 }
+
+

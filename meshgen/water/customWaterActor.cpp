@@ -4,6 +4,7 @@
 #include "customWaterActor.h"
 #include "p2/gamestart/assetManager.h"
 #include "p2/meshgen/lodHelper/LodCheckContainer.h"
+#include "p2/entities/customIk/MMatrix.h"
 #include "ripple.h"
 
 
@@ -113,11 +114,13 @@ void AcustomWaterActor::createWaterPane(int vertexCountIn, int detail){
     vertexcountX = vertexCountIn;
     vertexcountY = vertexCountIn;
 
+    //VERY IMPORTANT
     BottomLeft = FVector(0,0,0);
 	TopLeft = FVector(0, vertexCountIn * detail, 0);
 	BottomRight = FVector(vertexCountIn * detail,0,0);
 	TopRight = FVector(vertexCountIn * detail,vertexCountIn * detail,0);
 
+    ownHalfSize = (vertexCountIn * detail) / 2.0f;
 
     MeshData &waterMesh = findMeshDataReference(
         materialEnum::waterMaterial,
@@ -205,11 +208,17 @@ void AcustomWaterActor::vertexShader(){
         {
             if(i >= 0 && i < vertecies.Num()){
                 FVector &vertex = vertecies[i];
+
+                //COMMENTED OUT PART IS OPTIONAL, since
+                //the complete vertex buffer gets copied over to the gpu
+                //its better to have the whole water pane to be split up
+                //in seperate parts and not tick those!
                 /*
+                //old simpler skip
                 if(isInRangeForTick(vertex, locationOfPlayer)){
                     applyShaderToVertex(vertex);
                     applyWaterRippleOffset(vertex, actorLocation);
-                }*/
+                }
 
                 //is testet, skips vertecies if out of range based on direction
                 
@@ -244,8 +253,22 @@ void AcustomWaterActor::vertexShader(){
                 if(dirX > 0){
                     //skip all
                     break;
+                }*/
+                if(!isAtLockedAxis(vertex)){
+                    applyShaderToVertex(vertex);
+                    applyWaterRippleOffset(vertex, actorLocation);
+                }else{
+                    //debug draw shows it should be fine, somewhere the flag gets resettet
+                    
+                    DebugHelper::showLineBetween(
+                        GetWorld(),
+                        GetActorLocation() + vertex,
+                        GetActorLocation() + vertex + FVector(0, 0, 1000),
+                        FColor::Orange,
+                        0.1f
+                    );
+                    resetVertexShadignFor(vertex);
                 }
-
             }
             
         }
@@ -254,7 +277,33 @@ void AcustomWaterActor::vertexShader(){
     }
 }
 
-
+///@brief will tell whether a vertex should be moved or not
+bool AcustomWaterActor::isAtLockedAxis(FVector &other){
+    //check for axis
+    int buffer = 100;
+    if (topAxisLocked)
+    {
+        if(other.Y + buffer >= TopRight.Y){
+            return true;
+        }
+    }
+    if(bottomAxisLocked){
+        if(other.Y - buffer <= BottomRight.Y){
+            return true;
+        }
+    }
+    if(rightAxisLocked){
+        if(other.X + buffer >= BottomRight.X){
+            return true;
+        }
+    }
+    if(leftAxisLocked){
+        if(other.X - buffer <= BottomLeft.X){
+            return true;
+        }
+    }
+    return false;
+}
 
 
 /// @brief apply vertex shader to the given vertex
@@ -288,14 +337,16 @@ void AcustomWaterActor::resetAllShaderOffsets(){
     
         TArray<FVector> &verteciesReference = waterMesh.getVerteciesRef();
         for (int i = 0; i < verteciesReference.Num(); i++){
-            verteciesReference[i].Z = 0.0f;
+            resetVertexShadignFor(verteciesReference[i]);
         }
 
         refreshMesh(*thisMesh, waterMesh, layer);
     }
 }
 
-
+void AcustomWaterActor::resetVertexShadignFor(FVector &other){
+    other.Z = 0.0f;
+}
 
 void AcustomWaterActor::refreshMesh(
     UProceduralMeshComponent& meshComponent,
@@ -369,13 +420,13 @@ void AcustomWaterActor::applyWaterRippleOffset(FVector &vertex, FVector &actorLo
 
 void AcustomWaterActor::addNewRipple(FVector &location){
     if(rippleVector.size() == 0 || rippleVecSize >= rippleVector.size()){
-        rippleVector.push_back(ripple(location));
+        rippleVector.push_back(ripple(location, ownHalfSize * 0.5f)); //ownHalfSize for max radius
         rippleVecSize = rippleVector.size();
     }
     
     if(rippleVecSize < rippleVector.size()){
         int last = rippleVecSize;
-        rippleVector[last].init(location); //reuse object
+        rippleVector[last].init(location, ownHalfSize * 0.5f); //reuse object
         rippleVecSize++;
     }
 
@@ -421,32 +472,43 @@ bool AcustomWaterActor::playerIsInRenderRange(){
 
         FVector locationOfPlayer = playerLocation();
 
-        FVector a = GetActorLocation();
+        FVector actorLocation = GetActorLocation();
         LodCheckContainer checkContainer;
-        checkContainer.modifyUpperDistanceLimitFor(ELod::lodNear, 50*100);
+        checkContainer.modifyUpperDistanceLimitFor(ELod::lodNear, 50*100); //50
         checkContainer.modifyUpperDistanceLimitFor(ELod::lodMiddle, 200*100);
-        checkContainer.checkLod(a, locationOfPlayer);
-
-
+        checkContainer.checkLod(actorLocation, locationOfPlayer);
         SetActorHiddenInGame(checkContainer.hideActorByLod()); //if far, hide
+
 
         //remove vertex displacement if changed to middle
         ELod lodResult = checkContainer.lod();
-        if(lodResult == ELod::lodMiddle && latestLodMeasured != lodResult){
-            resetAllShaderOffsets(); //remove vertex displacement ONCE
+        ELod prevLod = latestLodMeasured;
+        latestLodMeasured = lodResult;
+
+        if(lodResult == ELod::lodMiddle || lodResult == ELod::lodFar){
+            if(prevLod != lodResult){
+                resetAllShaderOffsets(); //remove vertex displacement ONCE
+            }
             return false;
         }
-        latestLodMeasured = lodResult;
 
         //check for edge case near to middle
         if(lodResult == ELod::lodNear){
             
-            if(checkContainer.lodWasEdgeCaseToELodMiddle()){ //lodWasEdgeCaseToELodFar
+            if(checkContainer.lodWasEdgeCaseToNextLod()){ //was very near to middle case
 
                 //do vertex alignment at end to have none
-
+                FVector playerLook = manager->playerLookDir();
+                playerLook = playerLook.GetSafeNormal();
+                
+                //lock according rows to player look to actor location
+                lockOuterAxisBasedOn(
+                    locationOfPlayer,
+                    playerLook
+                );
+            }else{
+                unlockAllAxis();
             }
-
 
             return true;   
         }
@@ -456,8 +518,59 @@ bool AcustomWaterActor::playerIsInRenderRange(){
 }
 
 
+/**
+ * locking axis
+ */
+
+void AcustomWaterActor::unlockAllAxis(){
+    topAxisLocked = false;
+	bottomAxisLocked = false;
+	leftAxisLocked = false;
+	rightAxisLocked = false;
+}
+
+void AcustomWaterActor::lockOuterAxisBasedOn(
+    FVector &playerLocation,
+    FVector &playerLookDir
+){
+    unlockAllAxis();
+    FVector playerInLocalSpace = playerLocation - GetActorLocation();
+
+    FVector actorLocation = GetActorLocation();
+    playerLookDir = playerLookDir.GetSafeNormal();
+    playerLookDir.Z = 0.0f;
 
 
+    //koordinaten eindrehen, dann messen
+    MMatrix playerRotator = MMatrix::createRotatorFrom(playerLookDir);
+    FVector topRightRotated = playerRotator * TopRight;
+    FVector bottomRightRotated = playerRotator * BottomRight;
+    FVector topLeftRotated = playerRotator * TopLeft;
+    
+
+    //kleineres skalarprodukt ist näher am orthogonalen winkel
+
+    //chunk ist wie normal ausgerichtet
+    float distToTop = FVector::Dist(topRightRotated, playerInLocalSpace);
+    float distToBottom = FVector::Dist(bottomRightRotated, playerInLocalSpace);
+    topAxisLocked = distToTop > distToBottom; //weiter weg: lock axis
+    bottomAxisLocked = !topAxisLocked;
+    
+    //spieler ist zum chunk seitlich ausgerichtet
+    float distToLeft = FVector::Dist(topLeftRotated, playerInLocalSpace);
+    float distToRight = FVector::Dist(topRightRotated, playerInLocalSpace);
+    leftAxisLocked = distToLeft > distToRight; //weiter weg: lock axis
+    rightAxisLocked = !leftAxisLocked;
+
+    FString message = FString::Printf(
+        TEXT("DEBUGLOCKAXIS top %d, bottom %d, left %d, right %d"),
+        topAxisLocked ? 1 : 0,
+        bottomAxisLocked ? 1 : 0,
+        leftAxisLocked ? 1 : 0,
+        rightAxisLocked ? 1 : 0
+    );
+    DebugHelper::logMessage(message);
+}
 
 // DEPRECATED WILL BE REFACTURED
 

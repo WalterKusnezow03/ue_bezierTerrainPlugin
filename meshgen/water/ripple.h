@@ -11,12 +11,15 @@ class P2_API ripple
 {
 public:
 	ripple(FVector &impactPoint);
+	ripple(FVector &impactPoint, float newMaxRadius);
 	~ripple();
 
 	ripple(const ripple &other);
 	ripple &operator=(const ripple &other);
 
-	void init(FVector &impactPoint);
+	void setMaxRadius(float rad);
+
+	void init(FVector &impactPoint, float maxRadiusIn);
 	void Tick(float deltaTime);
 	bool timeExceeded();
 
@@ -29,6 +32,7 @@ private:
 	float velocity = 100.0f;
 	float time = 0.0f;
 	float radius;
+	float maxRadius = 100.0f;
 	FVector impact;
 
 	int waveHeight = 50;
