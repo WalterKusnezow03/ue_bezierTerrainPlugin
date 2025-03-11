@@ -185,10 +185,7 @@ void AcustomMeshActor::createTerrainFrom2DMap(
     setMaterialBehaiviour(materialEnum::grassMaterial, false); //no split
 
     
-    
-    //DebugHelper::logMessage("debugCreateFoliage_terrain!");
-    if(createTrees){ //debug test
-        //DebugHelper::logMessage("debugCreateFoliage");
+    if(createTrees && (typeIn != ETerrainType::EOcean)){ 
         createFoliageAndPushNodesAroundFoliageToNavMesh(touples);
     }else{
         Super::addRandomNodesToNavmesh(touples);

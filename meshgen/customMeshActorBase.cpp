@@ -348,39 +348,35 @@ void AcustomMeshActorBase::addRandomNodesToNavmesh(TArray<FVectorTouple> &touple
         return;
     }
 
-    //find vertical normals
-    //second is normal, first is vertex
-    std::vector<FVector> positionsPotential;
     
-    /*
-    filterTouplesForVerticalVectors(
-        touples,
-        positionsPotential
-    );*/
-
     int count = touples.Num();
     std::set<int> indices;
     for (int i = 0; i < count; i++){
-        int newIndex = FVectorUtil::randomNumber(0, positionsPotential.size()) % positionsPotential.size();
+        int newIndex = FVectorUtil::randomNumber(0, size) % size;
         indices.insert(newIndex);
     }
 
     int limit = 30;
+    
     std::vector<FVector> picked;
     for (auto &ref : indices)
     {
-        picked.push_back(positionsPotential[ref]);
-        limit--;
-        if(limit <= 0){
-            break;
+        if(ref >= 0 && ref < size){
+            picked.push_back(touples[ref].first()); //first is location
+            limit--;
+            if(limit <= 0){
+                break;
+            }
         }
     }
 
-    // add all normal centers to navmesh to allow the bots to move over the terrain
-    if (PathFinder *f = PathFinder::instance(GetWorld()))
-    {
-        FVector offset(0, 0, 70);
-        f->addNewNodeVector(picked, offset);
+    if(picked.size() > 0){
+        // add all normal centers to navmesh to allow the bots to move over the terrain
+        if (PathFinder *f = PathFinder::instance(GetWorld()))
+        {
+            FVector offset(0, 0, 70);
+            f->addNewNodeVector(picked, offset);
+        }
     }
 }
 
@@ -480,9 +476,16 @@ void AcustomMeshActorBase::changeLodBasedOnPlayerPosition(){
         FVector connect = ownLocation - locationOfPlayer;
         FVector playerLook = manager->playerLookDir();
         if(connect.X * playerLook.X + connect.Y * playerLook.Y > 0.0f){ //in blickrichtung auf 180 grad ebene
-            updateLodLevelAndReloadMesh(
-                lodLevelByDistanceTo(locationOfPlayer)
-            );
+            ELod lod = lodLevelByDistanceTo(locationOfPlayer);
+            if(lod == ELod::lodFar){
+                SetActorHiddenInGame(true);
+                return;
+            }
+            else
+            {
+                SetActorHiddenInGame(false);
+                updateLodLevelAndReloadMesh(lod);
+            }
         }
         
     }

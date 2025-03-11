@@ -27,7 +27,7 @@ public:
 
 	static const int MAXHEIGHT = 15000; //3000 is a good value, dont change
 
-	
+	void Tick(FVector &playerLocation);
 
 	int chunkNum();
 	
@@ -35,8 +35,7 @@ public:
 	void setFlatArea(FVector &location, int sizeMetersX, int sizeMetersY);
 
 	//apply terrain
-	void applyTerrainDataToMeshActors(std::vector<AcustomMeshActor *> &actors);
-	void applyTerrainDataToMeshActors(std::vector<AcustomMeshActorBase *> &actors);
+	void applyTerrainDataToMeshActors();
 
 	//raycast
 	int getHeightFor(FVector &position);
@@ -45,8 +44,18 @@ public:
 
 	const int MINCHUNK_HILL = 5; //5x5 min hill size
 
+	const int CHUNKSTOCREATEATONCE = 10;
+
 private:
+	void applyTerrainDataToMeshActors(
+		int lowerX,
+		int xLimit,
+		int lowerY,
+		int yLimit
+	);
+
 	static const int HEIGH_AVG_SNOWHILL_LOWERBOUND = 200000; //200 * 100cm
+	static const int HEIGHT_MAX_OCEAN = 300; //10 * 100 meter
 
 	void createTerrain(UWorld *world, int meters);
 
@@ -95,7 +104,13 @@ private:
 
 			float heightAverage();
 
+			void setWasCreatedTrue();
+			bool wasAlreadyCreated();
+
+			void updateTerrainTypeBySpecialHeights();
+
 		private:
+			bool wasCreated = false;
 			ETerrainType savedTerrainType = ETerrainType::ETropical;
 
 			std::vector<std::vector<FVector>> innerMap;
@@ -119,7 +134,7 @@ private:
 			FVector readBottomLeftCorner();
 	};
 
-	class UWorld *worldPointer;
+	class UWorld *worldPointer = nullptr;
 
 	std::vector<std::vector<terrainCreator::chunk>> map;
 
@@ -155,12 +170,13 @@ private:
 
 
 
-
+	void createChunkAtIfNotCreatedYet(int x, int y);
 
 	//--- terrain type apply helpers ---
 	void randomizeTerrainTypes(UWorld *world);
 	void applyTerrainTypeBetween(FVector &a, FVector &b, ETerrainType typeIn);
 	terrainCreator::chunk *chunkAt(int x, int y);
+	ETerrainType selectTerrainTypeExcluding(ETerrainType typeToExclude);
 
 	void applySpecialTerrainTypesByHeight();
 };
