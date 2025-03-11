@@ -145,7 +145,7 @@ protected:
 		int layer
 	);
 
-	bool isInRange(FVector &a, int maxDistance);
+	bool isInRange(FVector &a, int maxDistance, int &smallestEdge);
 
 	ETerrainType thisTerrainType = ETerrainType::ETropical;
 
@@ -159,6 +159,8 @@ protected:
 	void TickShaderRunningTime(float time);
 	void vertexShaderFor(MeshData &data);
 	virtual void applyShaderToVertex(FVector &vertex);
+
+	int maxDistanceForLod(ELod lodLevel);
 
 public:
 	static int layerByMaterialEnum(materialEnum type);

@@ -35,9 +35,16 @@ public:
 	);
 
 protected:
+	ELod latestLodMeasured = ELod::lodNear;
+
+	bool playerIsInRenderRange();//new
+
 	bool inBoundsOfPane(FVector &vec);
+
+	//depracted 
 	bool playerIsInRenderRangeWithoutShader();
 	bool doTick();
+	//depracted end
 
 	static const int MAX_VERTEXCOUNT = 50;
 	static const int DEFAULT_DISTANCE_BETWEEN_VERTECIES = 100;
@@ -62,6 +69,7 @@ protected:
 	void updateRunningTime(float deltaTime);
 	void vertexShader();
 	virtual void applyShaderToVertex(FVector &vertex) override;
+	void resetAllShaderOffsets();
 
 	FVector playerLocation();
 	bool playerIsInBounds();

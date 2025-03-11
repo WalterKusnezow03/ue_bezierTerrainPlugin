@@ -3,6 +3,7 @@
 
 #include "customWaterActor.h"
 #include "p2/gamestart/assetManager.h"
+#include "p2/meshgen/lodHelper/LodCheckContainer.h"
 #include "ripple.h"
 
 
@@ -24,17 +25,16 @@ void AcustomWaterActor::BeginPlay(){
 
 void AcustomWaterActor::Tick(float DeltaTime){
     Super::Tick(DeltaTime);
-    if(playerIsInRenderRangeWithoutShader()){
-        SetActorHiddenInGame(false);
-        if(doTick()){
-            //updateRunningTime(DeltaTime);
-            TickRipples(DeltaTime); //tick ripples before vertex shader to already modify mesh
-            vertexShader();
-        }
-    }else{
-        SetActorHiddenInGame(true);
+
+    if(!meshInited){
+        return;
     }
-    
+
+    if (playerIsInRenderRange()){
+        //updateRunningTime(DeltaTime);
+        TickRipples(DeltaTime); //tick ripples before vertex shader to already modify mesh
+        vertexShader();
+    }
 }
 
 
@@ -275,6 +275,27 @@ void AcustomWaterActor::applyShaderToVertex(FVector &vertex){
 }
 
 
+void AcustomWaterActor::resetAllShaderOffsets(){
+    UProceduralMeshComponent *thisMesh = meshComponentPointer();
+    if(thisMesh){
+
+        MeshData &waterMesh = findMeshDataReference(
+            materialEnum::waterMaterial,
+            ELod::lodNear
+        );
+    
+        int layer = layerByMaterialEnum(materialEnum::waterMaterial);
+    
+        TArray<FVector> &verteciesReference = waterMesh.getVerteciesRef();
+        for (int i = 0; i < verteciesReference.Num(); i++){
+            verteciesReference[i].Z = 0.0f;
+        }
+
+        refreshMesh(*thisMesh, waterMesh, layer);
+    }
+}
+
+
 
 void AcustomWaterActor::refreshMesh(
     UProceduralMeshComponent& meshComponent,
@@ -392,37 +413,56 @@ void AcustomWaterActor::removeRippleAtIndex(int index){
 /**
  * helper player distance
  */
-bool AcustomWaterActor::playerIsInRenderRangeWithoutShader(){
+
+bool AcustomWaterActor::playerIsInRenderRange(){
+
     referenceManager *manager = referenceManager::instance();
     if(manager != nullptr){
-        FVector locationOfPlayer = playerLocation();
-        ELod lodResult = lodLevelByDistanceTo(locationOfPlayer);
-        if(lodResult != ELod::lodFar){
-            return true;
-        }
-    }
-    return false;
-}
 
-
-bool AcustomWaterActor::doTick(){
-    return meshInited && playerIsInBounds() && TickBasedOnPlayerDistance();
-}
-
-bool AcustomWaterActor::TickBasedOnPlayerDistance(){
-    referenceManager *manager = referenceManager::instance();
-    if(manager != nullptr){
         FVector locationOfPlayer = playerLocation();
 
-        ELod lodResult = lodLevelByDistanceTo(locationOfPlayer);
-            
-        //only lod near allowed
-        if(lodResult != ELod::lodNear){
+        FVector a = GetActorLocation();
+        LodCheckContainer checkContainer;
+        checkContainer.modifyUpperDistanceLimitFor(ELod::lodNear, 50*100);
+        checkContainer.modifyUpperDistanceLimitFor(ELod::lodMiddle, 200*100);
+        checkContainer.checkLod(a, locationOfPlayer);
+
+
+        SetActorHiddenInGame(checkContainer.hideActorByLod()); //if far, hide
+
+        //remove vertex displacement if changed to middle
+        ELod lodResult = checkContainer.lod();
+        if(lodResult == ELod::lodMiddle && latestLodMeasured != lodResult){
+            resetAllShaderOffsets(); //remove vertex displacement ONCE
             return false;
         }
-        return true;
+        latestLodMeasured = lodResult;
+
+        //check for edge case near to middle
+        if(lodResult == ELod::lodNear){
+            
+            if(checkContainer.lodWasEdgeCaseToELodMiddle()){ //lodWasEdgeCaseToELodFar
+
+                //do vertex alignment at end to have none
+
+            }
+
+
+            return true;   
+        }
+
     }
     return false;
+}
+
+
+
+
+
+// DEPRECATED WILL BE REFACTURED
+
+bool AcustomWaterActor::doTick(){
+    return meshInited && playerIsInBounds();
 }
 
 

@@ -8,6 +8,7 @@
 #include "KismetProceduralMeshLibrary.h"
 #include "p2/meshgen/generation/bezierCurve.h"
 #include "ELod.h"
+#include "p2/meshgen/lodHelper/LodCheckContainer.h"
 #include "p2/meshgen/foliage/ETerrainType.h"
 #include "p2/util/FVectorUtil.h"
 #include "p2/meshgen/customMeshActorBase.h"
@@ -478,12 +479,8 @@ void AcustomMeshActorBase::changeLodBasedOnPlayerPosition(){
         if(connect.X * playerLook.X + connect.Y * playerLook.Y > 0.0f){ //in blickrichtung auf 180 grad ebene
             ELod lod = lodLevelByDistanceTo(locationOfPlayer);
             if(lod == ELod::lodFar){
-                SetActorHiddenInGame(true);
                 return;
-            }
-            else
-            {
-                SetActorHiddenInGame(false);
+            }else{
                 updateLodLevelAndReloadMesh(lod);
             }
         }
@@ -814,36 +811,15 @@ std::vector<ELod> AcustomMeshActorBase::lodVector(){
 }
 
 
-/// @brief will check the lod and disable the mesh component if the lod is lodFar
-/// @param locationOfPlayer 
-/// @return 
+///@brief will find the LOD distance to the given position and disable the actor if lod is far
 ELod AcustomMeshActorBase::lodLevelByDistanceTo(FVector &locationOfPlayer){
-    int oneMeter = 100; // 100; //WORKS GOOD WITH DISABLING ACTOR
-    if (isInRange(locationOfPlayer, 100 * oneMeter))
-    {
-        AActorUtil::showActor(*this, true);
-        return ELod::lodNear;
-    }
-    if(isInRange(locationOfPlayer, 200 * oneMeter)){
-        AActorUtil::showActor(*this, true);
-        return ELod::lodMiddle;
-    }
 
-    AActorUtil::showActor(*this, false);
-    return ELod::lodFar;
+    FVector a = GetActorLocation();
+    LodCheckContainer checkContainer(a, locationOfPlayer);
+    SetActorHiddenInGame(checkContainer.hideActorByLod());
+
+    return checkContainer.lod();
 }
-
-
-bool AcustomMeshActorBase::isInRange(FVector &a, int maxDistance){
-    FVector thisLocation = GetActorLocation();
-    return (std::abs(a.X - thisLocation.X) < maxDistance) &&
-           (std::abs(a.Y - thisLocation.Y) < maxDistance) &&
-           (std::abs(a.Z - thisLocation.Z) < maxDistance);
-}
-
-
-
-
 
 /**
  * 
