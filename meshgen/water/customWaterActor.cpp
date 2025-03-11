@@ -24,11 +24,13 @@ void AcustomWaterActor::BeginPlay(){
 
 void AcustomWaterActor::Tick(float DeltaTime){
     Super::Tick(DeltaTime);
-    if(doTick()){
-        //updateRunningTime(DeltaTime);
-        TickRipples(DeltaTime); //tick ripples before vertex shader to already modify mesh
-        vertexShader();
+    if(playerIsInRenderRangeWithoutShader()){
         SetActorHiddenInGame(false);
+        if(doTick()){
+            //updateRunningTime(DeltaTime);
+            TickRipples(DeltaTime); //tick ripples before vertex shader to already modify mesh
+            vertexShader();
+        }
     }else{
         SetActorHiddenInGame(true);
     }
@@ -38,16 +40,30 @@ void AcustomWaterActor::Tick(float DeltaTime){
 
 void AcustomWaterActor::createWaterPane(
     UWorld *world, 
-    int vertexCount
+    FVector location,
+    int scaleMeters
 ){
     if(world == nullptr){
         return;
     }
+    if(scaleMeters < 1){
+        return;
+    }
 
-    int distanceBetweenVertecies = DEFAULT_DISTANCE_BETWEEN_VERTECIES;
+    int vertexCount = scaleMeters / DEFAULT_DISTANCE_BETWEEN_VERTECIES;
+
     int paneCount = vertexCount / MAX_VERTEXCOUNT;
-    int offsetOnAxis = MAX_VERTEXCOUNT * distanceBetweenVertecies;
-    FVector offsetVector(-2000, -2000, 100);
+    if(paneCount == 0){ //below max size, do 1
+        paneCount = 1;
+    }
+
+    int offsetOnAxis = MAX_VERTEXCOUNT * DEFAULT_DISTANCE_BETWEEN_VERTECIES;
+
+    DebugHelper::logMessage("DEBUGSIZE OF WATER VERTEXCOUNT", vertexCount);
+    DebugHelper::logMessage("DEBUGSIZE OF WATER PANECOUNT", paneCount);
+
+    FVector offsetVector(0,0,100);
+    offsetVector += location;
 
     for (int i = 0; i < paneCount; i++){
         for (int j = 0; j < paneCount; j++){
@@ -65,7 +81,10 @@ void AcustomWaterActor::createWaterPane(
                 params
             );
             if(SpawnedActor != nullptr){
-                SpawnedActor->createWaterPane(MAX_VERTEXCOUNT, distanceBetweenVertecies);
+                SpawnedActor->createWaterPane(
+                    vertexCount, 
+                    DEFAULT_DISTANCE_BETWEEN_VERTECIES
+                );
             }
         }
     }
@@ -373,6 +392,19 @@ void AcustomWaterActor::removeRippleAtIndex(int index){
 /**
  * helper player distance
  */
+bool AcustomWaterActor::playerIsInRenderRangeWithoutShader(){
+    referenceManager *manager = referenceManager::instance();
+    if(manager != nullptr){
+        FVector locationOfPlayer = playerLocation();
+        ELod lodResult = lodLevelByDistanceTo(locationOfPlayer);
+        if(lodResult != ELod::lodFar){
+            return true;
+        }
+    }
+    return false;
+}
+
+
 bool AcustomWaterActor::doTick(){
     return meshInited && playerIsInBounds() && TickBasedOnPlayerDistance();
 }

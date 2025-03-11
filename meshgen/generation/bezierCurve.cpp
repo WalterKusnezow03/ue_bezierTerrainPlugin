@@ -2,6 +2,9 @@
 
 
 #include "bezierCurve.h"
+#include "p2/util/TVector.h"
+
+template class TVector<FVector2D>;
 
 bezierCurve::bezierCurve()
 {

@@ -30,11 +30,13 @@ public:
 
 	static void createWaterPane(
 		UWorld *world,
-		int vertexCount
+		FVector location,
+		int scaleMeters
 	);
 
 protected:
-	bool inBoundsOfPane(FVector &vec);	
+	bool inBoundsOfPane(FVector &vec);
+	bool playerIsInRenderRangeWithoutShader();
 	bool doTick();
 
 	static const int MAX_VERTEXCOUNT = 50;

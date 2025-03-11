@@ -11,6 +11,7 @@
 #include "p2/entities/customIk/MMatrix.h"
 #include "p2/entityManager/EntityManager.h"
 #include "p2/_world/worldLevel.h"
+#include "p2/meshgen/water/customWaterActor.h"
 #include "p2/meshgen/foliage/helper/FVectorShape.h"
 #include "terrainCreator.h"
 
@@ -230,6 +231,7 @@ std::vector<FVector> terrainCreator::chunk::readFirstYRow(){
 FVector terrainCreator::chunk::readBottomLeftCorner(){
     return innerMap.at(0).at(0);
 }
+
 
 
 
@@ -1007,6 +1009,25 @@ void terrainCreator::createChunkAtIfNotCreatedYet(int x, int y){
         ETerrainType terrainType = currentChunk->getTerrainType();
         currentActor->createTerrainFrom2DMap(mapReference, createTrees, terrainType);
 
+
+
+        if(terrainType == ETerrainType::EOcean){
+            newPos.Z = HEIGHT_MAX_OCEAN * 0.8f;
+            createWaterPaneAt(newPos);
+        }
+    }
+}
+
+
+void terrainCreator::createWaterPaneAt(FVector &location){
+    if(worldPointer != nullptr){
+        int scaleCm = CHUNKSIZE * ONEMETER;
+
+        AcustomWaterActor::createWaterPane(
+            worldPointer,
+            location,
+            scaleCm
+        );
     }
 }
 

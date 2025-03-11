@@ -53,6 +53,7 @@ private:
 		int lowerY,
 		int yLimit
 	);
+	void createWaterPaneAt(FVector &location);
 
 	static const int HEIGH_AVG_SNOWHILL_LOWERBOUND = 200000; //200 * 100cm
 	static const int HEIGHT_MAX_OCEAN = 300; //10 * 100 meter
@@ -108,6 +109,7 @@ private:
 			bool wasAlreadyCreated();
 
 			void updateTerrainTypeBySpecialHeights();
+
 
 		private:
 			bool wasCreated = false;
