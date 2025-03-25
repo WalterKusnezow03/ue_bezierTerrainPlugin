@@ -41,10 +41,7 @@ protected:
 
 	bool inBoundsOfPane(FVector &vec);
 
-	//depracted 
-	bool playerIsInRenderRangeWithoutShader();
-	bool doTick();
-	//depracted end
+	
 
 	static const int MAX_VERTEXCOUNT = 50;
 	static const int DEFAULT_DISTANCE_BETWEEN_VERTECIES = 100;
@@ -103,9 +100,6 @@ protected:
 	bool rippleIndexIsValid(int index);
 	void removeRippleAtIndex(int index);
 
-	bool TickBasedOnPlayerDistance();
-
-	bool isInRangeForTick(FVector &vertex, FVector &comparePos);
 
 	//helper for mesh
 	MeshData &findMeshDataReference(
@@ -113,17 +107,6 @@ protected:
 		ELod lod
 	);
 	UProceduralMeshComponent *meshComponentPointer();
-
-
-
-
-
-	int isInRangeForTickOnX(
-		FVector &vertex,
-		FVector &locationOfPlayer);
-	int isInRangeForTickOnY(
-		FVector &vertex,
-		FVector &locationOfPlayer);
 
 
 };

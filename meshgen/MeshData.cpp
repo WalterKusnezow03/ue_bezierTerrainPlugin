@@ -266,20 +266,6 @@ void MeshData::buildTriangle(
     TArray<FVector> &output,
     TArray<int32> &trianglesOutput
 ){
-    //add vertecies
-    /*
-    output.Add(a);
-    output.Add(b);
-    output.Add(c);
-
-    //add triangles
-    int32 offset = trianglesOutput.Num();
-    trianglesOutput.Add(0 + offset); // 0th vertex in the first triangle
-    trianglesOutput.Add(1 + offset); // 1st vertex in the first triangle
-    trianglesOutput.Add(2 + offset); // 2nd vertex in the first triangle*/
-
-    
-
     //add triangles (new more readable)
     int32 offset = output.Num();
     trianglesOutput.Add(0 + offset); // 0th vertex in the first triangle
@@ -816,6 +802,11 @@ bool MeshData::canSplit(FVector &a, FVector &b, FVector &c){
 }
 
 
+
+
+
+
+
 /// @brief calculates the center of the vertecies
 /// @return center
 FVector MeshData::center(){
@@ -1261,6 +1252,7 @@ void MeshData::generateMatricesPerFaceAndLookDirOfNormalInterpolated(
  * 
  */
 
+///@brief appends a cube using the efficent method
 void MeshData::appendCube(
     FVector &a, 
     FVector &b,
@@ -1273,10 +1265,12 @@ void MeshData::appendCube(
 ){
     appendEfficent(a, d, c, b);
     appendEfficent(a1, b1, c1, d1);
+
     appendEfficent(b, b1, a1, a);
     appendEfficent(c, c1, b1, b);
     appendEfficent(d, d1, c1, c);
     appendEfficent(a, a1, d1, d);
+    
     calculateNormals();
 }
 

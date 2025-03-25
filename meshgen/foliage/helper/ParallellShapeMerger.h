@@ -21,8 +21,6 @@ public:
 
 
 
-	std::vector<FVector> &baseVectorReference();
-	std::vector<FVector> &alignedVectorReference();
 	std::vector<FVector> &triangleBufferReference();
 
 private:
@@ -47,8 +45,7 @@ private:
 		return index >= 0 && index < vec.size();
 	}
 
-
-
+	bool isSame(FVector &a, FVector &b);
 
 	//new sorting
 	void sortPointsByDistance(

@@ -18,7 +18,10 @@ public:
 	int xTargetCopy();
 	int yTargetCopy();
 
-	int getRandomHeightFromRange();
+	int getHeightIfSetOrRandomHeight();
+
+	void forceSetHeight(int heightIn); //forceHeight
+	int getForcedSetHeight(); 
 
 private:
 	int xPos = 0;
@@ -27,4 +30,7 @@ private:
 	int yTarget = 1;
 	int zMinheightAdd = 100;
 	int zMaxheightAdd = 200;
+
+	int forceHeight = 0;
+	bool forceHeightWasSet = false;
 };

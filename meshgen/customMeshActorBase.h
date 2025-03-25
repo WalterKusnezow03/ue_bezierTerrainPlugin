@@ -86,8 +86,16 @@ public:
 		ELod lodLevel,
 		bool raycastOnLayer
 	);
-	
+
+	void appendMeshDataAndReload(
+		MeshData &meshdata,
+		materialEnum type,
+		ELod lodLevel,
+		bool raycastOnLayer
+	);
+
 protected:
+	int chunkScaleOneAxisLengthCm = 1; //ONE AXIS LENGTH
 
 	void addRandomNodesToNavmesh(TArray<FVectorTouple> &touples);
 	void filterTouplesForVerticalVectors(
@@ -169,4 +177,7 @@ public:
 	static std::vector<ETerrainType> terrainVector();
 
 	static materialEnum groundMaterialFor(ETerrainType terraintype);
+
+
+
 };

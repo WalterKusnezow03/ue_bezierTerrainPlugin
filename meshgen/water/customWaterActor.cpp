@@ -5,6 +5,7 @@
 #include "p2/gamestart/assetManager.h"
 #include "p2/meshgen/lodHelper/LodCheckContainer.h"
 #include "p2/entities/customIk/MMatrix.h"
+#include "p2/_world/worldLevel.h"
 #include "ripple.h"
 
 
@@ -26,6 +27,10 @@ void AcustomWaterActor::BeginPlay(){
 
 void AcustomWaterActor::Tick(float DeltaTime){
     Super::Tick(DeltaTime);
+
+    if(!worldLevel::terrainIsInitedFlag()){
+        return;
+    }
 
     if(!meshInited){
         return;
@@ -149,7 +154,7 @@ void AcustomWaterActor::createWaterPane(int vertexCountIn, int detail){
     meshInited = true;
 
 
-    //exclude this for boen controller raycast
+    //exclude this for bone controller raycast
     EntityManager *entityManagerPointer = worldLevel::entityManager();
     if(entityManagerPointer){
         entityManagerPointer->addActorToIgnoredAllParams(this);
@@ -186,6 +191,7 @@ UProceduralMeshComponent* AcustomWaterActor::meshComponentPointer(){
     return nullptr;
 }
 
+
 void AcustomWaterActor::vertexShader(){
     MeshData &waterMesh = findMeshDataReference(
         materialEnum::waterMaterial,
@@ -209,64 +215,19 @@ void AcustomWaterActor::vertexShader(){
             if(i >= 0 && i < vertecies.Num()){
                 FVector &vertex = vertecies[i];
 
-                //COMMENTED OUT PART IS OPTIONAL, since
-                //the complete vertex buffer gets copied over to the gpu
-                //its better to have the whole water pane to be split up
-                //in seperate parts and not tick those!
-                /*
-                //old simpler skip
-                if(isInRangeForTick(vertex, locationOfPlayer)){
-                    applyShaderToVertex(vertex);
-                    applyWaterRippleOffset(vertex, actorLocation);
-                }
-
-                //is testet, skips vertecies if out of range based on direction
-                
-                bool wasTicked = false;
-                int dirX = isInRangeForTickOnX(vertex, locationOfPlayer);
-                if (dirX == 0)
-                {
-                    int dirY = isInRangeForTickOnY(vertex, locationOfPlayer);
-                    if(dirY == 0){
-                        applyShaderToVertex(vertex);
-                        applyWaterRippleOffset(vertex, actorLocation);
-                        wasTicked = true;
-                    }
-                    if(dirY < 0){
-                        //nichts, i++
-                    }
-                    if(dirY > 0){
-                        //goto next start of x
-                        int column = i / vertexcountX;
-                        i = (column + 1) * vertexcountX;
-                    }
-                }
-                if(dirX < 0){
-                    //skip to next column
-                    i += vertexcountX;
-                }
-
-                if(!wasTicked){
-                    vertex.Z = 0.0f;
-                }
-
-                if(dirX > 0){
-                    //skip all
-                    break;
-                }*/
                 if(!isAtLockedAxis(vertex)){
                     applyShaderToVertex(vertex);
                     applyWaterRippleOffset(vertex, actorLocation);
                 }else{
                     //debug draw shows it should be fine, somewhere the flag gets resettet
-                    
+                    /*
                     DebugHelper::showLineBetween(
                         GetWorld(),
                         GetActorLocation() + vertex,
                         GetActorLocation() + vertex + FVector(0, 0, 1000),
                         FColor::Orange,
                         0.1f
-                    );
+                    );*/
                     resetVertexShadignFor(vertex);
                 }
             }
@@ -417,10 +378,10 @@ void AcustomWaterActor::applyWaterRippleOffset(FVector &vertex, FVector &actorLo
     }
 }
 
-
+///@brief creates a new or reuses an old ripple object from the local object pool
 void AcustomWaterActor::addNewRipple(FVector &location){
     if(rippleVector.size() == 0 || rippleVecSize >= rippleVector.size()){
-        rippleVector.push_back(ripple(location, ownHalfSize * 0.5f)); //ownHalfSize for max radius
+        rippleVector.push_back(ripple(location, ownHalfSize)); //ownHalfSize for max radius
         rippleVecSize = rippleVector.size();
     }
     
@@ -499,7 +460,6 @@ bool AcustomWaterActor::playerIsInRenderRange(){
 
                 //do vertex alignment at end to have none
                 FVector playerLook = manager->playerLookDir();
-                playerLook = playerLook.GetSafeNormal();
                 
                 //lock according rows to player look to actor location
                 lockOuterAxisBasedOn(
@@ -535,8 +495,7 @@ void AcustomWaterActor::lockOuterAxisBasedOn(
 ){
     unlockAllAxis();
     FVector playerInLocalSpace = playerLocation - GetActorLocation();
-
-    FVector actorLocation = GetActorLocation();
+    playerInLocalSpace.Z = 0.0f;
     playerLookDir = playerLookDir.GetSafeNormal();
     playerLookDir.Z = 0.0f;
 
@@ -547,8 +506,11 @@ void AcustomWaterActor::lockOuterAxisBasedOn(
     FVector bottomRightRotated = playerRotator * BottomRight;
     FVector topLeftRotated = playerRotator * TopLeft;
     
+    //2D distance
+    topRightRotated.Z = 0.0f;
+    bottomRightRotated.Z = 0.0f;
+    topLeftRotated.Z = 0.0f;
 
-    //kleineres skalarprodukt ist näher am orthogonalen winkel
 
     //chunk ist wie normal ausgerichtet
     float distToTop = FVector::Dist(topRightRotated, playerInLocalSpace);
@@ -562,73 +524,20 @@ void AcustomWaterActor::lockOuterAxisBasedOn(
     leftAxisLocked = distToLeft > distToRight; //weiter weg: lock axis
     rightAxisLocked = !leftAxisLocked;
 
-    FString message = FString::Printf(
+    /*FString message = FString::Printf(
         TEXT("DEBUGLOCKAXIS top %d, bottom %d, left %d, right %d"),
         topAxisLocked ? 1 : 0,
         bottomAxisLocked ? 1 : 0,
         leftAxisLocked ? 1 : 0,
         rightAxisLocked ? 1 : 0
     );
-    DebugHelper::logMessage(message);
-}
-
-// DEPRECATED WILL BE REFACTURED
-
-bool AcustomWaterActor::doTick(){
-    return meshInited && playerIsInBounds();
+    */
+    //DebugHelper::logMessage(message);
 }
 
 
 
 
-bool AcustomWaterActor::isInRangeForTick(FVector &vertex, FVector &locationOfPlayer){
-    FVector offset = GetActorLocation();
-    int xdist = std::abs(offset.X + vertex.X - locationOfPlayer.X);
-    if(xdist > MAX_DISTANCE){
-        return false;
-    }
-
-    int ydist = std::abs(offset.Y + vertex.Y - locationOfPlayer.Y);
-    if(ydist > MAX_DISTANCE){
-        return false;
-    }
-    return true;
-}
-
-
-int AcustomWaterActor::isInRangeForTickOnX(
-    FVector &vertex, 
-    FVector &locationOfPlayer
-){
-    FVector vertexWorld = GetActorLocation();
-    vertexWorld += vertex;
-    int xdist = vertexWorld.X - locationOfPlayer.X;
-    if (std::abs(xdist) > MAX_DISTANCE)
-    {
-        if(vertexWorld.X > locationOfPlayer.X){
-            return 1;
-        }
-        return -1;
-    }
-    return 0;
-}
-
-int AcustomWaterActor::isInRangeForTickOnY(
-    FVector &vertex, 
-    FVector &locationOfPlayer
-){
-    FVector vertexWorld = GetActorLocation();
-    vertexWorld += vertex;
-    int ydist = vertexWorld.Y - locationOfPlayer.Y;
-    if (std::abs(ydist) > MAX_DISTANCE)
-    {
-        if(vertexWorld.Y > locationOfPlayer.Y){
-            return 1;
-        }
-        return -1;
-    }
-    return 0;
-}
 
 
 

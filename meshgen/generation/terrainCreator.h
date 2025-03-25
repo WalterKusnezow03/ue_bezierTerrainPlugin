@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "terrainHillSetup.h"
+#include <set>
 #include "p2/meshgen/foliage/ETerrainType.h"
 #include "p2/util/TVector.h"
 
@@ -21,7 +22,7 @@ public:
 	static const bool PLOTTING_ENABLED = false; // false;
 	
 	/// @brief saves the number of vertecies in one chunk (m^2)
-	static const int CHUNKSIZE = 10;
+	static const int CHUNKSIZE = 20; //10
 	static const int ONEMETER = 100; //one meter constant
 	static const int fractureHeightStep = 3;
 
@@ -32,7 +33,10 @@ public:
 	int chunkNum();
 	
 	void createTerrainAndSpawnMeshActors(UWorld *world, int meters);
-	void setFlatArea(FVector &location, int sizeMetersX, int sizeMetersY);
+	void createTerrainAndSpawnMeshActorsAndCreateBuildings(
+		UWorld *world, int meters
+	);
+	
 
 	//apply terrain
 	void applyTerrainDataToMeshActors();
@@ -47,6 +51,8 @@ public:
 	const int CHUNKSTOCREATEATONCE = 10;
 
 private:
+	void setFlatArea(FVector &location, int sizeMetersX, int sizeMetersY);
+
 	void applyTerrainDataToMeshActors(
 		int lowerX,
 		int xLimit,
@@ -59,7 +65,11 @@ private:
 	static const int HEIGHT_MAX_OCEAN = 300; //10 * 100 meter
 
 	void createTerrain(UWorld *world, int meters);
-
+	void createTerrain(
+		UWorld *world,
+		int meters,
+		std::vector<terrainHillSetup> &predefinedHillDataVecFlatArea // flat area
+	);
 
 	class chunk{
 		public:
@@ -68,11 +78,12 @@ private:
 
 			int getHeightFor(FVector &a);
 			FVector position();
-
+			FVector positionPivotBottomLeft();
 
 			void addheightForAll(int value);
 			void scaleheightForAll(float value);
 			void setheightForAll(float value);
+			void clampheightForAllUpperLimit(float value);
 
 			FVector2D getFirstXColumnAnchor(int xColumn);
 			FVector2D getFirstYRowAnchor(int yRow);
@@ -104,6 +115,7 @@ private:
 			void updateTerraintype(ETerrainType typeIn);
 
 			float heightAverage();
+			float maxHeight();
 
 			void setWasCreatedTrue();
 			bool wasAlreadyCreated();
@@ -168,9 +180,12 @@ private:
 	void createRandomHeightMapChunkWide(int layers);
 
 	terrainHillSetup createRandomHillData();
+	terrainHillSetup createRandomHillData(int sizeX, int sizeY);
 	void applyHillData(terrainHillSetup &hillData);
+	void applyHillData(std::vector<terrainHillSetup> &hillDataVec);
 
-
+	void flattenChunksForHillData(std::vector<terrainHillSetup> &hillDataVec);
+	void flattenChunksForHillData(terrainHillSetup &hillData);
 
 	void createChunkAtIfNotCreatedYet(int x, int y);
 
@@ -178,7 +193,32 @@ private:
 	void randomizeTerrainTypes(UWorld *world);
 	void applyTerrainTypeBetween(FVector &a, FVector &b, ETerrainType typeIn);
 	terrainCreator::chunk *chunkAt(int x, int y);
+	terrainCreator::chunk *chunkAt(terrainHillSetup &setup);
 	ETerrainType selectTerrainTypeExcluding(ETerrainType typeToExclude);
 
 	void applySpecialTerrainTypesByHeight();
+
+
+	//--- flat outpost helper ---
+	void createFlatAreas(
+		int count,
+		int minsizeChunks,
+		int maxsizeChunks,
+		int chunkRange,
+		std::vector<terrainHillSetup> &output
+	);
+	void createFlatArea(
+		int minsizeChunks,
+		int maxsizeChunks,
+		int chunkRange,
+		std::vector<terrainHillSetup> &output
+	);
+
+	void findChunksEnclosedBy(
+		std::vector<terrainHillSetup> &hills,
+		std::vector<terrainCreator::chunk *> &output
+	);
+	void findChunksEnclosedBy(
+		terrainHillSetup &hillData,
+		std::set<terrainCreator::chunk *> &output);
 };

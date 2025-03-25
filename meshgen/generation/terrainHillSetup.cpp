@@ -11,6 +11,8 @@ terrainHillSetup::terrainHillSetup(int posX, int posY, int scaleX, int scaleY, i
     yTarget = posY + scaleY;
     zMinheightAdd = minHeightAdd;
 	zMaxheightAdd = maxHeightAdd;
+
+    forceHeightWasSet = false;
 }
 
 terrainHillSetup::~terrainHillSetup()
@@ -32,6 +34,21 @@ int terrainHillSetup::yTargetCopy(){
 
 
 
-int terrainHillSetup::getRandomHeightFromRange(){
+int terrainHillSetup::getHeightIfSetOrRandomHeight(){
+    if(forceHeightWasSet){
+        return forceHeight;
+    }
     return FVectorUtil::randomNumber(zMinheightAdd, zMaxheightAdd);
+}
+
+
+
+
+void terrainHillSetup::forceSetHeight(int heightIn){
+    forceHeight = heightIn;
+    forceHeightWasSet = true;
+}
+
+int terrainHillSetup::getForcedSetHeight(){
+    return forceHeight;
 }

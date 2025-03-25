@@ -65,12 +65,6 @@ void ParallellShapeMerger::fillMissingAlignedVertecies(std::vector<FVector> &oth
 
 
 
-std::vector<FVector> &ParallellShapeMerger::baseVectorReference(){
-    return baseVector;
-}
-std::vector<FVector> &ParallellShapeMerger::alignedVectorReference(){
-    return vectorAligned;
-}
 
 ///@brief will return a triangle buffer where the face look dir is not defined,
 /// use "appendDoubleSided" in the meshdata class
@@ -166,7 +160,7 @@ void ParallellShapeMerger::sortPointsByDistance(
 
     bool checkDir = false;
     FVector dir;
-    if(startingPoint != nextToStartingPoint){
+    if(isSame(startingPoint, nextToStartingPoint)){
         dir = nextToStartingPoint - startingPoint; //AB = B - A
         checkDir = true;
     }
@@ -203,6 +197,10 @@ void ParallellShapeMerger::sortPointsByDistance(
     }
     //override
     points = output;
+}
+
+bool ParallellShapeMerger::isSame(FVector &a, FVector &b){
+    return std::abs(FVector::Dist(a, b)) < 1.0f;
 }
 
 bool ParallellShapeMerger::findClosestPointTo(

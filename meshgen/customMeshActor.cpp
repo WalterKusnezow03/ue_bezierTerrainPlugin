@@ -297,7 +297,9 @@ void AcustomMeshActor::createFoliageAndPushNodesAroundFoliageToNavMesh(
     //create trees at random valid locations
     std::vector<FVector> pickedLocationsForNavmesh;
 
-    int limit = 3; // tree count
+
+    int chunkScaleOneAxisInMeter = chunkScaleOneAxisLengthCm / 100;
+    int limit = chunkScaleOneAxisInMeter / 2; // tree count
     for (int i = 0; i < limit; i++){
 
         int index = FVectorUtil::randomNumber(0, potentialLocations.size() - 1);

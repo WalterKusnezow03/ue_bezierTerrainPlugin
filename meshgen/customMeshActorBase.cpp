@@ -56,6 +56,8 @@ void AcustomMeshActorBase::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
     TickShaderRunningTime(DeltaTime);
     changeLodBasedOnPlayerPosition();
+
+    
 }
 
 void AcustomMeshActorBase::disablePhysicscollision(){
@@ -135,83 +137,15 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
         }
     }
 
-    /*
-    // iterate over the map and create all triangles by creating the quads from 4 given vertecies
-    for (int x = 0; x < map.size() - 1; x++)
-    { // -1 for inbounce connect to next
-        for (int y = 0; y < map.at(x).size() - 1; y++)
-        {
-            // 
-            //    1--2
-            //    |  |
-            //    0<-3
-            //
 
-            if (x + 1 < map.size() && y + 1 < map.at(x + 1).size())
-            {
-                try
-                {
-                    // get the vertecies
-                    FVector vzero = map.at(x).at(y);
-                    FVector vone = map.at(x).at(y + 1);
-                    FVector vtwo = map.at(x + 1).at(y + 1);
-                    FVector vthree = map.at(x + 1).at(y);
-
-                    // add to standard output
-                    // buildQuad(vzero, vone, vtwo, vthree, output, newtriangles);
-
-                    FVector normal = FVectorUtil::calculateNormal(vzero, vone, vtwo); // direction obviously
-                    if (FVectorUtil::directionIsVertical(normal))
-                    {
-                        grassLayer.appendEfficent(vzero, vone, vtwo, vthree);
-                    }
-                    else
-                    {
-                        stoneLayer.appendEfficent(vzero, vone, vtwo, vthree);
-                    }
-
-                    // calculate center
-                    FVector centerLocal = FVectorUtil::calculateCenter(vzero, vone, vtwo);
-                    FVector centerWorld = centerLocal + GetActorLocation();
-
-                    // create and add touple to list
-                    FVectorTouple t(centerLocal, normal); // first center, then normal
-                    touples.Add(t);
-
-                    //
-                    // COLLECT NODES FOR NAV MESH
-                    //
-
-                    // testing only a few per chunk, raycasting takes a lot of time
-                    if (navMeshAdd.size() <= 6 && FVectorUtil::edgeIsVertical(originVec, normal))
-                    {
-                        if (navMeshAdd.size() == 0)
-                        {
-                            navMeshAdd.push_back(centerWorld);
-                        }
-                        else
-                        {
-                            // only push nodes 3 meters away from each other -> reduce mesh count
-                            FVector &prev = navMeshAdd.back();
-                            if (FVector::Dist(prev, centerWorld) >= distanceBetweenNodesMin)
-                            {
-                                navMeshAdd.push_back(centerWorld);
-                            }
-                        }
-                    }
-                }
-                catch (const std::exception &e)
-                {
-                    // this try catch block was just added when debugging can certainly be
-                    // kept for safety
-                    DebugHelper::showScreenMessage("mesh actor exception!", FColor::Red);
-                }
-            }
-        }
+    //find chunk scale for foliage process
+    if(map.size() > 0 && map[0].size() > 0){
+        FVector &a = map[0][0];
+        FVector &b = map[0].back();
+        chunkScaleOneAxisLengthCm = std::abs(FVector::Dist(a, b));
     }
 
-    grassLayer.calculateNormals();
-    stoneLayer.calculateNormals();*/
+
     ReloadMeshAndApplyAllMaterials();
 
     enableLodListening();
@@ -459,10 +393,17 @@ MeshData &AcustomMeshActorBase::findMeshDataReference(
 }
 
 
-
-
-
-
+///@brief will append the meshdata AND RELOAD THE MESH
+void AcustomMeshActorBase::appendMeshDataAndReload(
+    MeshData &meshdata,
+    materialEnum type,
+    ELod lodLevel,
+    bool raycastOnLayer
+){
+    MeshData &found = findMeshDataReference(type, lodLevel, raycastOnLayer);
+    found.append(meshdata);
+    ReloadMeshAndApplyAllMaterials();
+}
 
 void AcustomMeshActorBase::changeLodBasedOnPlayerPosition(){
     /*if(!LISTEN_FOR_LOD_PLAYER){
@@ -874,3 +815,6 @@ void AcustomMeshActorBase::refreshMesh(
     }
 
 }
+
+
+
