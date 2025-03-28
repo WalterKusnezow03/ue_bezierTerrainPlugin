@@ -1187,6 +1187,9 @@ void terrainCreator::flattenChunksForHillData(terrainHillSetup &hillData){
         for (int j = clampIndex(hillData.yPosCopy()); j < clampIndex(hillData.yTargetCopy()); j++){
             if(verifyIndex(i) && verifyIndex(j)){
                 map.at(i).at(j).clampheightForAllUpperLimit(hillData.getForcedSetHeight());
+
+                //disable trees for rooms
+                map.at(i).at(j).setTreesBlocked(true);
             }
         }
     }

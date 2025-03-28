@@ -238,15 +238,22 @@ void layoutMaker::makeWindows(){
             //checkFree(xcopy - 1, ycopy - 1, xTo + 1, yTo + 1, potentialWindows);
             checkFree(xcopy, ycopy, xTo, yTo, potentialWindows);
 
-            
+            bool doorwasAlreadyPlaced = false;
             for (int pos = 0; pos < potentialWindows.size(); pos++)
             {
-                bool r = (int)(FVectorUtil::randomNumber(0, 100)) % 4 != 0;
-                r = true;
-                if (r)
+                int num = (int)(FVectorUtil::randomNumber(0, 10));
+                bool create = true;
+                if (create)
                 {
+                    bool placeDoor = (!doorwasAlreadyPlaced && num > 5);
+
                     FVector currentWindow = potentialWindows[pos];
-                    current->addWindowPosition(currentWindow.X, currentWindow.Y);
+                    if(!placeDoor){
+                        current->addWindowPosition(currentWindow);
+                    }else{
+                        current->addDoorPosition(currentWindow);
+                        doorwasAlreadyPlaced = true;
+                    }
                 }
             }
         }

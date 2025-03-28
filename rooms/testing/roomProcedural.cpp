@@ -263,7 +263,7 @@ void AroomProcedural::createWall(
 	
 	// create gaps for wall
 	createGapsFor(from, to, doorWidthCm, windowsFiltered, oneDimWall);
-	createGapsFor(from, to, doorWidthCm * 2.0f, doorsFiltered, oneDimWall);
+	createGapsFor(from, to, doorWidthCm, doorsFiltered, oneDimWall);
 	//last part added here, wall "complete", lower ceiling 
 	oneDimWall.push_back(to); //FINAL POSITION
 	sortVectorsBetween(from, to, oneDimWall);
@@ -514,14 +514,14 @@ void AroomProcedural::spawnWindowMeshFromBounds(
 void AroomProcedural::removeCloseTouples(
 	std::vector<FVector> &vec
 ){
-	//TESTING NEEDED
-	std::vector<FVector> simplified;
-	if(vec.size() > 0){
-		simplified.push_back(vec[0]);
+	if(vec.size() <= 2){
+		return;
 	}
 
+	//TESTING NEEDED
+	std::vector<FVector> simplified;
 	std::vector<bool> flaggedSkip(vec.size(), false);
-	for (int i = 1; i < vec.size(); i++)
+	for (int i = 2; i < vec.size(); i++)
 	{
 		FVector &prev = vec[i-1];
 		FVector &current = vec[i];
@@ -533,10 +533,14 @@ void AroomProcedural::removeCloseTouples(
 			flaggedSkip[i] = true;
 		}
 	}
-	if(vec.size() > 0){
-		simplified.push_back(vec.back());
+
+	//start and end never removed
+	if(flaggedSkip.size() > 0){
+		flaggedSkip[0] = false;
+		flaggedSkip[flaggedSkip.size() - 1] = false;
 	}
 
+	//add not ignored flags
 	for (int i = 0; i < flaggedSkip.size(); i++){
 		if(flaggedSkip[i] == false){
 			if(i >= 0 && i < vec.size()){
@@ -544,6 +548,7 @@ void AroomProcedural::removeCloseTouples(
 			}
 		}
 	}
+
 
 	vec = simplified; //copy
 }

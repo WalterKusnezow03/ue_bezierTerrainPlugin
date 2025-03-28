@@ -193,6 +193,9 @@ bool roomBoundData::oneApart(int a, int b, bool &flip){
 
 
 
+void roomBoundData::addWindowPosition(FVector &other){
+    addWindowPosition(other.X, other.Y);
+}
 
 /// @brief adds a window poisiton at x and y in global space
 /// @param xIn x global
@@ -209,6 +212,12 @@ void roomBoundData::addWindowPosition(int xIn, int yIn){
     if(!contains(windowPositions, pos)){    
         windowPositions.push_back(pos);
     }
+}
+
+
+
+void roomBoundData::addDoorPosition(FVector &other){
+    addDoorPosition(other.X, other.Y);
 }
 
 /// @brief adds a door poisiton at x and y in global space

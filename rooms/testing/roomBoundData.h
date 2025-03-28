@@ -18,7 +18,9 @@ public:
 
 	void connect(roomBoundData &other);
 	void addDoorPosition(int xIn, int yIn);
+	void addDoorPosition(FVector &other);
 	void addWindowPosition(int xIn, int yIn);
+	void addWindowPosition(FVector &other);
 
 	std::vector<FVector> relativeWindowPositionsCm(int onemeter);
 	std::vector<FVector> relativeDoorPositionsCm(int onemeter);
