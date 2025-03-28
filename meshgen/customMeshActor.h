@@ -37,6 +37,9 @@ public:
 	//methods
 	virtual void takedamage(int d) override;
 	virtual void takedamage(int d, FVector &from) override;
+	virtual void takedamage(int d, bool surpressed) override;
+	virtual void takedamage(int d, FVector &hitpoint, bool surpressed) override;
+
 	virtual void setTeam(teamEnum t) override;
 	virtual teamEnum getTeam() override;
 
@@ -126,5 +129,10 @@ protected:
 
 	//shader
 	std::vector<materialEnum> foliageMaterials();
-	
+
+	void glassreactionToHitWorld(FVector &hitWorld);
+	void glassreactionToHitLocal(FVector &hitlocal);
+	void debugDrawMeshData(MeshData &meshdata);
+
+	bool hasGlassMesh();
 };

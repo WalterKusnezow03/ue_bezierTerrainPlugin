@@ -45,8 +45,7 @@ void AroomProcedural::createRoom(
 	roomBoundData &currentRoom,
 	int oneMeter
 ){
-	FVector fullOffset = location; //+ currentRoom.positionInMeterSpace(oneMeter);
-	SetActorLocation(fullOffset);
+	SetActorLocation(location);
 
 	/*
 	createRoom(
@@ -57,19 +56,24 @@ void AroomProcedural::createRoom(
 		true
 	);*/
 
+	//reset height because mesh starts at 0 height, world location is set by actor itself
+	location.Z = 0.0f;
 	int layers = FVectorUtil::randomNumber(1, 3);
 	for (int i = 0; i < layers; i++){
 		bool openForStaircaseBottom = (i != 0);
 		bool openForStaircaseTop = (i != layers - 1);
 
 		createRoom(
-			fullOffset,
+			location,
 			currentRoom,
 			oneMeter,
 			openForStaircaseBottom,
 			openForStaircaseTop
 		);
 	}
+
+	//very important to reload the mesh
+	ReloadMeshAndApplyAllMaterials();
 }
 
 
@@ -108,6 +112,7 @@ void AroomProcedural::createRoom(
 	// erstmal den boden
 	MeshData floorAndRoof;
 	MeshData walls;
+	MeshData windows;
 
 	FVector bottomLeftAnchor;
 
@@ -139,44 +144,29 @@ void AroomProcedural::createRoom(
 
 	//floor
 	std::vector<FVector> quad = MeshData::create2DQuadVertecies(scaleMetersX * onemeter, scaleMetersY * onemeter);
-	if(false){ //deprecated
-		//floor
-		floorAndRoof.appendDoublesided(quad[0], quad[1], quad[2], quad[3]);
-
-		//roof
-		std::vector<FVector> quadcopy = quad;
-		FVector offset(0, 0, zCm);
-		for (int i = 0; i < quadcopy.size(); i++){
-			quadcopy[i] += offset;
-		}
-		floorAndRoof.appendDoublesided(quadcopy[0], quadcopy[1], quadcopy[2], quadcopy[3]);
-	}
 	
-
-
 	//dann wände --> die man mit einer methode schreibt
 	//türen nach wänden sortieren
 	//std::vector<FVector> corners = {bl, tl, tr, br, bl};
 	std::vector<FVector> corners = {quad[0], quad[1], quad[2], quad[3], quad[0]};
 
 
-	FVector centerOfRoom = FVectorUtil::calculateCenter(quad[0], quad[1], quad[2], quad[3]);
-
 	for (int i = 1; i < corners.size(); i++)
 	{
 		FVector &from = corners[i - 1];
 		FVector &to = corners[i];
-		MeshData tmp = createWall(
+		createWall(
+			walls,
+			windows,
 			from, 
 			to, 
 			doorPositions,
 			windowPositions, 
 			doorWidthCm, 
-			zCm,
-			location,
-			centerOfRoom
+			zCm
+			//,
+			//location
 		);
-		walls.appendEfficent(tmp);
 	}
 
 
@@ -192,17 +182,8 @@ void AroomProcedural::createRoom(
 	MMatrix translateOffset(goUp);
 	floorAndRoof.transformAllVertecies(translateOffset);
 	walls.transformAllVertecies(translateOffset);
+	windows.transformAllVertecies(translateOffset);
 
-	//deprecated, instead find and append!
-	//replaceMeshData(floorAndRoof, materialEnum::stoneMaterial);
-	//replaceMeshData(walls, materialEnum::wallMaterial);
-
-	/*
-	MeshData &findMeshDataReference(
-		materialEnum type,
-		ELod lodLevel,
-		bool raycastOnLayer
-	);*/
 	/*
 	void appendMeshDataAndReload(
 		MeshData &meshdata,
@@ -225,24 +206,28 @@ void AroomProcedural::createRoom(
 		ELod::lodNear,
 		raycastOnLayer
 	);
+	appendMeshDataAndReload(
+		windows,
+		materialEnum::glassMaterial,
+		ELod::lodNear,
+		raycastOnLayer
+	);
 
-	//very important to reload the mesh
-	ReloadMeshAndApplyAllMaterials();
 
 
 	//go to next layer
 	location.Z += zCm;
 }
 
-MeshData AroomProcedural::createWall(
+void AroomProcedural::createWall(
+	MeshData &wallMesh,
+	MeshData &windowMesh,
 	FVector from, 
 	FVector to, 
 	std::vector<FVector> &doors, //doors in cm local
 	std::vector<FVector> &windows, //windows in cm local
 	int doorWidthCm,
-	int scaleZCm,
-	FVector &locationOffset,
-	FVector &centerOfRoom
+	int scaleZCm
 ){
 	//sort vectors for consistent door placement, otherwise overlap issues occur
 	//very important!
@@ -285,11 +270,11 @@ MeshData AroomProcedural::createWall(
 	
 
 	//walls new
-	MeshData output;
+	//MeshData output;
 
 	int widthCmWall = 20;
 	appendWallsFromMeshBounds(
-		output,
+		wallMesh,
 		oneDimWall,
 		widthCmWall,
 		scaleZCm
@@ -297,7 +282,6 @@ MeshData AroomProcedural::createWall(
 
 	// --- CREATE WINDOWS ---
 	
-	//COPY WINDOW POSITIONS
 	//will save the 1d window representation
 	std::vector<FVector> oneDimWindows;
 
@@ -313,15 +297,21 @@ MeshData AroomProcedural::createWall(
 	removeCloseTouples(oneDimWindows);
 
 	//spawn windows seperately
+	/*
 	spawnWindowMeshFromBounds(
 		oneDimWindows,
 		scaleZCm,
 		5.0f, //5cm
 		locationOffset
+	);*/
+
+	//spawn windows part of this mesh Actor
+	appendWindowsFromMeshBounds(
+		windowMesh,
+		oneDimWindows,
+		scaleZCm
 	);
 
-	//return walls
-	return output;
 }
 
 
@@ -397,8 +387,27 @@ void AroomProcedural::appendWallsFromMeshBounds(
 			);
 		}
 	}
-
 }
+
+//new helper method, merge windows into all meshdata from this actor
+void AroomProcedural::appendWindowsFromMeshBounds(
+	MeshData &output,
+	std::vector<FVector> &vec,
+	int scaleZCm
+){
+	FVector upVec(0, 0, std::abs(scaleZCm));
+	for (int i = 1; i < vec.size(); i += 2){ //immer one skip, paar weise
+		FVector &v0 = vec[i - 1];
+		FVector &v3 = vec[i];
+		FVector v1 = v0 + upVec;
+		FVector v2 = v3 + upVec;
+
+		output.appendDoublesided(v0, v1, v2, v3);
+	}
+}
+
+
+
 
 
 
@@ -444,6 +453,9 @@ void AroomProcedural::appendCubeTo(
 
 }
 
+
+//deprecated.
+
 /// @brief creates a new mesh from touples representing the vertical edges of an window
 /// @param windowTouples 
 /// @param offset 
@@ -454,7 +466,6 @@ void AroomProcedural::spawnWindowMeshFromBounds(
 	FVector &offset
 ){
 
-
 	assetManager *assetManagerPointer = assetManager::instance();
 	EntityManager *e = worldLevel::entityManager();
 	if(assetManagerPointer != nullptr && e != nullptr){
@@ -462,7 +473,8 @@ void AroomProcedural::spawnWindowMeshFromBounds(
 
 			AcustomMeshActor *newActor = e->spawnAcustomMeshActor(GetWorld(), offset);
 			if(newActor != nullptr){
-				//testing needed
+				
+				newActor->SetActorLocation(offset);
 
 				MeshData &glassMesh = newActor->findMeshDataReference(
 					materialEnum::glassMaterial,
@@ -473,14 +485,19 @@ void AroomProcedural::spawnWindowMeshFromBounds(
 				FVector currentStart = windowTouples[i - 1];
 				FVector currentEnd = windowTouples[i];
 
+				FVector v1 = currentStart + FVector(0, 0, std::abs(scaleZCm));
+				FVector v2 = currentEnd + FVector(0, 0, std::abs(scaleZCm));
+
+				glassMesh.appendDoublesided(currentStart, v1, v2, currentEnd);
+				//glassMesh.append(currentStart, v2, v1, currentEnd); //debug.
+				/*
 				appendCubeTo(
 					glassMesh, //output
 					currentStart,
 					currentEnd,
 					std::abs(scaleZCm),
 					width
-				);
-				
+				);*/
 
 				newActor->ReloadMeshAndApplyAllMaterials();
 
@@ -563,6 +580,7 @@ void AroomProcedural::filterForVectorsBetween(
 		//vector from A to B and A to wall will be paralell if the wall is in interest
 		float dot = AB.X * ACdir.X + AB.Y * ACdir.Y;
 		
+		//ist parallell und ggf zwischen den beiden positionen
 		if(dot >= 0.99f){
 
 			FVector BC = (current - B);

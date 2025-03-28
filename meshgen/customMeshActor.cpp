@@ -10,6 +10,7 @@
 #include "p2/meshgen/foliage/MatrixTree.h"
 #include "p2/meshgen/foliage/ETreeType.h"
 #include "p2/util/FVectorUtil.h"
+#include "p2/entities/customIk/MMatrix.h"
 #include <set>
 #include "customMeshActor.h"
 
@@ -69,15 +70,19 @@ void AcustomMeshActor::setMaterialAndHealthAndSplitOnDeath(materialEnum mat, int
     materialtypeSet = mat;
     setHealth(std::max(1, healthIn));
     splitOnDeath = split;
+
+    if(split){
+        enableDebug();
+    }
 }
 
 
 
 // --- derived methods from damageinferface ---
 
-/// @brief will allow custom emsh actors such as destructables and terrain react to damage
+/// @brief will allow custom mesh actors such as destructables and terrain react to damage
 /// @param d 
-void AcustomMeshActor::takedamage(int d){
+void AcustomMeshActor::takedamage(int d, bool surpressed){
     //damage owner as this could be a kimb of an actor
     if(damagedOwner != nullptr){
         damagedOwner->takedamage(d);
@@ -96,10 +101,9 @@ void AcustomMeshActor::takedamage(int d){
                 damagedOwner = nullptr;
 
                 health = 100;
-                if(splitOnDeath){
+                if(splitOnDeath && false){ //OLD 
 
                     splitIntoAllTriangles();
-                    // splitAndreplace(this, originPoint, 50, materialtypeSet);
                 }
 
                 SetActorLocation(FVector(0, 0, -10000));
@@ -112,17 +116,27 @@ void AcustomMeshActor::takedamage(int d){
             }
         }
     }
+}
 
+
+
+void AcustomMeshActor::takedamage(int d){
+    takedamage(d, false);
 }
 
 /// @brief allows tha ctor to react to damage from a origin
 /// @param d 
 /// @param hitpoint hitpoint from weapon  
 void AcustomMeshActor::takedamage(int d, FVector &hitpoint){
-    takedamage(d);
+    takedamage(d, hitpoint, false);
+}
 
+
+
+void AcustomMeshActor::takedamage(int d, FVector &hitpoint, bool surpressed){
     debugThis(hitpoint);
-
+    glassreactionToHitWorld(hitpoint); 
+    takedamage(d, surpressed);
 
     EntityManager *entityManager = worldLevel::entityManager();
     if(entityManager != nullptr){
@@ -130,8 +144,10 @@ void AcustomMeshActor::takedamage(int d, FVector &hitpoint){
         FVector originPoint = GetActorLocation();
         entityManager->createDebree(GetWorld(), hitpoint, materialtypeSet);
     }
-
 }
+
+
+
 
 void AcustomMeshActor::setTeam(teamEnum t){
     this->team = t;
@@ -366,9 +382,6 @@ void AcustomMeshActor::createTreeAndSaveToMesh(FVector &location){
 
 
 
-
-
-
 void AcustomMeshActor::splitIntoAllTriangles(){
     
     std::vector<MeshDataLod> newLodMeshes;
@@ -488,27 +501,70 @@ void AcustomMeshActor::debugThis(FVector &hitpoint){
         meshdata.pushInwards(meshHit, sizeHole, direction); //error prone!
 
         //meshdata.cutHoleWithInnerExtensionOfMesh(localHit, sizeHole); //cut sphere
+
+        ReloadMeshForMaterial(hitMaterials[i]);
     }
 
-    /*
-    MeshData &meshdata = findMeshDataReference(materialEnum::stoneMaterial, ELod::lodNear, true);
 
-    int sizeHole = 50;
-    //meshdata.cutHoleWithInnerExtensionOfMesh(localHit, sizeHole); //cut sphere
 
-    //cut push in
-    FVector direction(0, 0, -100);
-    meshdata.pushInwards(meshHit, sizeHole, direction);*/
-
-    ReloadMeshAndApplyAllMaterials();
 }
 
 
 
+///@brief reacts to hit if has glass mesh
+void AcustomMeshActor::glassreactionToHitWorld(FVector &hitpoint){
+    if(hasGlassMesh()){
+        //world hit to local
+        FVector meshHit = hitpoint - GetActorLocation();
+        FQuat inverseRotation = GetActorQuat().Inverse();
+        FVector localHit = inverseRotation.RotateVector(meshHit);
+        glassreactionToHitLocal(localHit);
+    }
+}
 
+///@brief reacts to hit if has glass mesh
+void AcustomMeshActor::glassreactionToHitLocal(FVector &hitlocal){
+    //if(splitOnDeath){
+    if(hasGlassMesh()){
+        health = 100;
 
+        MeshData &meshFound = findMeshDataReference(
+            materialEnum::glassMaterial,
+            ELod::lodNear,
+            true//raycastFlag
+        );
 
+        meshFound.splitAndRemoveTrianglesAt(hitlocal);
+        ReloadMeshForMaterial(materialEnum::glassMaterial);
+        
 
+        debugDrawMeshData(meshFound);
+
+        DebugHelper::showScreenMessage("glass hit!");
+    }
+}
+
+bool AcustomMeshActor::hasGlassMesh(){
+    MeshData &meshFound = findMeshDataReference(
+        materialEnum::glassMaterial,
+        ELod::lodNear,
+        true//raycastFlag
+    );
+    return meshFound.hasAnyVertecies();
+}
+
+//Debug
+void AcustomMeshActor::debugDrawMeshData(MeshData &meshdata){
+    MMatrix currentTransform;
+
+    FRotator rot = GetActorRotation();
+    currentTransform.setRotation(rot);
+
+    FVector pos = GetActorLocation();
+    currentTransform.setTranslation(pos);
+
+    meshdata.debugDrawMesh(currentTransform, GetWorld());
+}
 
 /**
  * 

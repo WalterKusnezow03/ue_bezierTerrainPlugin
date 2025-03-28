@@ -48,6 +48,8 @@ public:
 
 	std::vector<FVector> &stairBoundsQuadInIndexSpaceRef(int onemeter);
 
+	
+
 private:
 	bool stairBoundsFound = false;
 	FVector2D startStairBounds;

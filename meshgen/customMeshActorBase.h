@@ -80,6 +80,7 @@ public:
 	void replaceMeshData(MeshData &meshdata, materialEnum type);
 
 	void ReloadMeshAndApplyAllMaterials();
+	void ReloadMeshForMaterial(materialEnum material);
 
 	MeshData &findMeshDataReference(
 		materialEnum type,

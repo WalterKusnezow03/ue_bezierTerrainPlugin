@@ -100,6 +100,8 @@ public:
 		std::vector<MeshData> &meshDataVectorOutput
 	);
 
+	void splitAndRemoveTrianglesAt(FVector &localHitPoint);
+
 	FVector center();
 	void centerMesh();
 
@@ -124,12 +126,15 @@ public:
 
 protected:
 	float MIN_SPLITDISTANCE = 50.0f;
+
+	bool canSplit(int v0, int v1, int v2);
 	bool canSplit(FVector &a, FVector &b, FVector &c);
+	bool canSplit(FVector &a, FVector &b, FVector &c, float mindistanceKept);
+	bool canSplit(int v0, int v1, int v2, float mindistanceKept);
 
 	float EPSILON = 5.0f;
 	bool isCloseSame(FVector &a, FVector &b);
 	bool isCloseSame(FVector &a, int index);
-	
 
 	void fillUpMissingVertecies(int count);
 
@@ -154,6 +159,7 @@ protected:
 	//what ever these are
 	TArray<FVector2D> UV0;
 
+	std::vector<int> findClosestIndexWithVertexDuplicatesTo(FVector &vertex);
 	int findClosestIndexTo(FVector &vertex);
 	int findClosestIndexToAndAvoid(FVector &vertex, int indexAvoid);
 	int findClosestIndexToAndAvoid(FVector &vertex, std::vector<int> &avoid);
@@ -166,13 +172,26 @@ protected:
 	bool isValidNormalIndex(int index);
 	FVector createNormal(int v0, int v1, int v2);
 
+	void findTrianglesInvolvedWith(int index, std::vector<int> &trianglesFound);
+	bool isPartOfTraingle(int target, int v0, int v1, int v2);
+
+	bool solveIsInTriangle(
+		int v0, int v1, int v2, FVector &target
+	);
+	
+
+	void addTriangle(int v0, int v1, int v2);
+	void addTriangleDoublesided(int v0, int v1, int v2);
+	void splitTriangleInHalf(int v0, int v1, int v2);
+	bool trianglesAreSame(int v0, int v1, int v2, int v00, int v01, int v02);
+	int removeTriangleSimilarTo(int v0, int v1, int v2);
+
 	//helper for removing triangles by vertex
 	void removeVertex(int index);
 	void removeVertex(int index, std::vector<int> &connectedvertecies);
 	void removeTrianglesInvolvedWith(int vertexIndex, std::vector<int> &connectedvertecies);
 	bool contains(std::vector<int> &ref, int index);
 
-	
 
 public:
 	//helper for removing triangles by vertex
@@ -190,12 +209,12 @@ public:
 	);
 
 	int verteciesNum();
-
+	bool hasAnyVertecies();
 
 	//helper for displacement
 	void pushInwards(FVector &location, int radius, FVector scaleddirection);
 
-	
+	void debugDrawMesh(MMatrix &transform, UWorld *world);
 
 protected:
 	void findConnectedVerteciesTo(int index, std::vector<int> &output);

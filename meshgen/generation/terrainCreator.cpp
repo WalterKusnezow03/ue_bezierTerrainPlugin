@@ -1333,6 +1333,8 @@ void terrainCreator::applySpecialTerrainTypesByHeight(){
  * 
  * 
  */
+
+///@brief will create surrounding chunks if not created yet
 void terrainCreator::Tick(FVector &playerLocation){
     //player to chunkindex
     int x = cmToChunkIndex(playerLocation.X);
@@ -1359,7 +1361,7 @@ void terrainCreator::debugCreateTerrain(UWorld *world){
     //createTerrainAndSpawnMeshActors(world, 200);
 
     //new
-    createTerrainAndSpawnMeshActorsAndCreateBuildings(world, 200);
+    createTerrainAndCreateBuildings(world, 200);
 }
 
 /// @brief creates a terrain and brand new mesh actors without using the entity manager
@@ -1390,7 +1392,7 @@ void terrainCreator::createTerrainAndSpawnMeshActors(
 /**
  * create outposts section / buildings
  */
-void terrainCreator::createTerrainAndSpawnMeshActorsAndCreateBuildings(
+void terrainCreator::createTerrainAndCreateBuildings(
     UWorld *world, int meters
 ){
     int chunkRange = meters / CHUNKSIZE;

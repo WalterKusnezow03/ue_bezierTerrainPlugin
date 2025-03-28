@@ -343,6 +343,13 @@ void AcustomWaterActor::takedamage(int d, FVector &hitpoint){
     addNewRipple(hitpoint);
 }
 
+void AcustomWaterActor::takedamage(int d, bool surpressed){
+    takedamage(d);
+}
+void AcustomWaterActor::takedamage(int d, FVector &hitpoint, bool surpressed){
+    takedamage(d, hitpoint);
+}
+
 /**
  * 
  * -- ripple index management --

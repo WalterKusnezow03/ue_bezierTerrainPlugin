@@ -393,6 +393,12 @@ MeshData &AcustomMeshActorBase::findMeshDataReference(
 }
 
 
+
+
+
+
+
+
 ///@brief will append the meshdata AND RELOAD THE MESH
 void AcustomMeshActorBase::appendMeshDataAndReload(
     MeshData &meshdata,
@@ -402,7 +408,8 @@ void AcustomMeshActorBase::appendMeshDataAndReload(
 ){
     MeshData &found = findMeshDataReference(type, lodLevel, raycastOnLayer);
     found.append(meshdata);
-    ReloadMeshAndApplyAllMaterials();
+    ReloadMeshForMaterial(type);
+    // ReloadMeshAndApplyAllMaterials();
 }
 
 void AcustomMeshActorBase::changeLodBasedOnPlayerPosition(){
@@ -452,34 +459,38 @@ void AcustomMeshActorBase::updateLodLevelAndReloadMesh(ELod level){
 void AcustomMeshActorBase::ReloadMeshAndApplyAllMaterials(){
 
     std::vector<materialEnum> materials = AcustomMeshActorBase::materialVector();
+    for (int i = 0; i < materials.size(); i++){
+        ReloadMeshForMaterial(materials[i]);
+    }
+}
 
+///@brief reloads the mesh data for a single material
+void AcustomMeshActorBase::ReloadMeshForMaterial(materialEnum material){
     //raycast
     if(Mesh){
         bool raycastOn = true;
-        for (int i = 0; i < materials.size(); i++){
-            int layer = layerByMaterialEnum(materials[i]);
-            MeshData &meshData = findMeshDataReference(materials[i], currentLodLevel, raycastOn);
-            updateMesh(*Mesh, meshData, layer, raycastOn);
-            ApplyMaterial(materials[i]);
-
-        }
+        int layer = layerByMaterialEnum(material);
+        MeshData &meshData = findMeshDataReference(material, currentLodLevel, raycastOn);
+        updateMesh(*Mesh, meshData, layer, raycastOn);
+        ApplyMaterial(material);
     }
 
 
     //noraycast
     if(MeshNoRaycast){
         bool raycastOn = false;
-        for (int i = 0; i < materials.size(); i++)
-        {
-            int layer = layerByMaterialEnum(materials[i]);
-            MeshData &meshData = findMeshDataReference(materials[i], currentLodLevel, raycastOn);
-            updateMesh(*MeshNoRaycast, meshData, layer, raycastOn);
-            ApplyMaterialNoRaycastLayer(materials[i]);
-        }
+        int layer = layerByMaterialEnum(material);
+        MeshData &meshData = findMeshDataReference(material, currentLodLevel, raycastOn);
+        updateMesh(*MeshNoRaycast, meshData, layer, raycastOn);
+        ApplyMaterialNoRaycastLayer(material);
     }
-
-
 }
+
+
+
+
+
+
 
 
 /// @brief replaces the mesh layer for an mesh component

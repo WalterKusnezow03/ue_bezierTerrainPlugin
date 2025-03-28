@@ -23,6 +23,9 @@ public:
 
 	virtual void takedamage(int d) override;
 	virtual void takedamage(int d, FVector &from) override;
+	virtual void takedamage(int d, bool surpressed) override;
+	virtual void takedamage(int d, FVector &hitpoint, bool surpressed) override;
+
 	virtual void setTeam(teamEnum t) override;
 	virtual teamEnum getTeam() override;
 

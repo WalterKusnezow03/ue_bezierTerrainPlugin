@@ -33,7 +33,7 @@ public:
 	int chunkNum();
 	
 	void createTerrainAndSpawnMeshActors(UWorld *world, int meters);
-	void createTerrainAndSpawnMeshActorsAndCreateBuildings(
+	void createTerrainAndCreateBuildings(
 		UWorld *world, int meters
 	);
 	
