@@ -201,6 +201,11 @@ void terrainCreator::chunk::setheightForAll(float value){
     }
 }
 
+
+void terrainCreator::chunk::clampheightForAllUpperLimitByOwnAverageHeight(){
+    clampheightForAllUpperLimit(heightAverage());
+}
+
 void terrainCreator::chunk::clampheightForAllUpperLimit(float value){
     for (int i = 0; i < innerMap.size(); i++)
     {
@@ -1140,8 +1145,8 @@ terrainHillSetup terrainCreator::createRandomHillData(
 
     int startX = clampIndex(FVectorUtil::randomNumber(1, map.size() - sizeX));
     int startY = clampIndex(FVectorUtil::randomNumber(1, map.size() - sizeY));
-    int heightMin = terrainCreator::ONEMETER;
-    int heightMax = heightMin * 2; //2
+    int heightMin = terrainCreator::ONEMETER / 2.0f;
+    int heightMax = heightMin * 3; //2
 
     return terrainHillSetup(
         startX,
@@ -1186,7 +1191,8 @@ void terrainCreator::flattenChunksForHillData(terrainHillSetup &hillData){
     for (int i = clampIndex(hillData.xPosCopy()); i < clampIndex(hillData.xTargetCopy()); i++){
         for (int j = clampIndex(hillData.yPosCopy()); j < clampIndex(hillData.yTargetCopy()); j++){
             if(verifyIndex(i) && verifyIndex(j)){
-                map.at(i).at(j).clampheightForAllUpperLimit(hillData.getForcedSetHeight());
+                //map.at(i).at(j).clampheightForAllUpperLimit(hillData.getForcedSetHeight());
+                map.at(i).at(j).clampheightForAllUpperLimitByOwnAverageHeight();
 
                 //disable trees for rooms
                 map.at(i).at(j).setTreesBlocked(true);
@@ -1407,6 +1413,10 @@ void terrainCreator::createTerrainAndCreateBuildings(
     createFlatAreas(count, minsizeChunks, maxsizeChunks, chunkRange, predefinedHillDataVecFlatArea);
     createTerrain(world, meters, predefinedHillDataVecFlatArea);
 
+    DebugHelper::logMessage("debugterrain hill data size ", predefinedHillDataVecFlatArea.size());
+
+    randomizeTerrainTypes(world);
+    applySpecialTerrainTypesByHeight();
     
     //recursion issue ? 
     //use this data to create the buildings
@@ -1417,7 +1427,7 @@ void terrainCreator::createTerrainAndCreateBuildings(
         predefinedHillDataVecFlatArea,
         chunksFound
     );
-
+    DebugHelper::logMessage("debugterrain chunks found", chunksFound.size());
     
     for (int i = 0; i < chunksFound.size(); i++){
         terrainCreator::chunk *currentPointer = chunksFound[i];
@@ -1429,6 +1439,22 @@ void terrainCreator::createTerrainAndCreateBuildings(
             int sizeMaxMeters = CHUNKSIZE;
             sizeMaxMeters -= 3;
             AroomProcedural::generate(world, sizeMaxMeters, sizeMaxMeters, posPivot); //in size is METERS
+
+
+            //debug
+            if(world){
+                for (int line = 0; line < 10; line++){
+                    DebugHelper::showLineBetween(
+                        world, 
+                        posPivot, 
+                        posPivot + FVector(line * 10, 0, 10000), 
+                        FColor::Black,
+                        1000.0f
+                    );
+                }
+
+                DebugHelper::logMessage("debugterrain ", posPivot);
+            }
         }
     }
 }
@@ -1451,11 +1477,35 @@ void terrainCreator::createFlatArea(
     int chunkRange,
     std::vector<terrainHillSetup> &output
 ){
-    int scaleX = FVectorUtil::randomNumber(minsizeChunks, maxsizeChunks);
-    int scaleY = FVectorUtil::randomNumber(minsizeChunks, maxsizeChunks);
+    int scaleX = 0;
+    int scaleY = 0;
+    int startX = 0;
+    int startY = 0;
+    int i = 1000;
+    while(i > 0){
 
-    int startX = clampIndex(FVectorUtil::randomNumber(1, chunkRange - scaleX));
-    int startY = clampIndex(FVectorUtil::randomNumber(1, chunkRange - scaleY));
+        scaleX = std::abs(FVectorUtil::randomNumber(minsizeChunks, maxsizeChunks));
+        scaleY = std::abs(FVectorUtil::randomNumber(minsizeChunks, maxsizeChunks));
+
+        int min = 3;
+        startX = std::abs(FVectorUtil::randomNumber(min, chunkRange - scaleX));
+        startY = std::abs(FVectorUtil::randomNumber(min, chunkRange - scaleY));
+
+        bool overlapFound = false;
+        for (int t = 0; t < output.size(); t++)
+        {
+            if(output[t].doesOverlapArea(startX, startY, scaleX, scaleY)){
+                overlapFound = true;
+                t = output.size();
+            }
+        }
+        if(!overlapFound){
+            break;
+        }
+
+        i--;
+    }
+
     int heightMin = 0;
     int heightMax = 0;
 

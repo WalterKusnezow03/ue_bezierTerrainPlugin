@@ -11,6 +11,9 @@ class P2_API terrainHillSetup
 {
 public:
 	terrainHillSetup(int posX, int posY, int scaleX, int scaleY, int minHeightAdd, int maxHeightAdd);
+	terrainHillSetup(const terrainHillSetup &other);
+	terrainHillSetup &operator=(const terrainHillSetup &other);
+
 	~terrainHillSetup();
 
 	int xPosCopy();
@@ -21,7 +24,11 @@ public:
 	int getHeightIfSetOrRandomHeight();
 
 	void forceSetHeight(int heightIn); //forceHeight
-	int getForcedSetHeight(); 
+	int getForcedSetHeight();
+
+	bool doesOverlapArea(int startX, int startY, int scaleX, int scaleY);
+
+	void extendInEveryDirectionBy(int count);
 
 private:
 	int xPos = 0;
@@ -33,4 +40,11 @@ private:
 
 	int forceHeight = 0;
 	bool forceHeightWasSet = false;
+
+	bool overlapOnX(int checkvalue);
+	bool overlapOnY(int checkvalue);
+	bool isInRange(int from, int to, int checkValue);
+
+	bool isEnclousingX(int from, int to);
+	bool isEnclousingY(int from, int to);
 };

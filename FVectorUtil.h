@@ -12,7 +12,7 @@ class P2_API FVectorUtil
 public:
 	//very important!
 	static FRotator lookAt(FVector ownlocation, FVector TargetLocation);
-
+	static FRotator lookRotation(FVector &other);
 
 	static FVector randomOffset(int range);
 	static FVector calculateNormal(FVector &a, FVector &b, FVector &c);
@@ -29,6 +29,7 @@ public:
 	static bool directionIsVertical(FVector &A);
 
 	static int randomNumber(int range);
+	static int randomNumberAbs(int range);
 	static int randomNumber(int lower, int higher);
 	static float randomFloatNumber(int lower, int higher);
 	static void fillWithRandomNumbers(std::vector<int> &nums, int count, int lower, int higher);

@@ -84,6 +84,7 @@ private:
 			void scaleheightForAll(float value);
 			void setheightForAll(float value);
 			void clampheightForAllUpperLimit(float value);
+			void clampheightForAllUpperLimitByOwnAverageHeight();
 
 			FVector2D getFirstXColumnAnchor(int xColumn);
 			FVector2D getFirstYRowAnchor(int yRow);

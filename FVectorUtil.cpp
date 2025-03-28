@@ -2,6 +2,7 @@
 
 
 #include "FVectorUtil.h"
+#include "Kismet/KismetMathLibrary.h"
 #include <cstdlib>
 
 
@@ -111,12 +112,31 @@ int FVectorUtil::randomNumber(int range){
 int FVectorUtil::randomNumber(int lower, int higher){
     int a = std::rand();
     a %= higher;
+    if(lower < 0 && a > 0){
+        if(a < std::abs(lower)){
+            int neg = std::rand();
+            if(neg % 2 == 0){
+                a *= -1;
+            }
+        }
+    }
     if (a < lower) //clamp lower bound
     {
-        return lower;
+        return lower + a;
     }
     return a;
 }
+
+
+
+
+int FVectorUtil::randomNumberAbs(int range){
+    int r = std::rand();
+    r %= range;
+    return r;
+}
+
+
 
 /// @brief generates a random float variable between 2 floats
 /// @param lower lower bound
@@ -168,7 +188,10 @@ FRotator FVectorUtil::lookAt(FVector ownlocation, FVector TargetLocation)
     return LookAtRotation;
 }
 
-
+FRotator FVectorUtil::lookRotation(FVector &other){
+    FVector zeroVec;
+    return lookAt(zeroVec, other);
+}
 
 /// @brief creates a random rotation
 /// @param ownLocation own location of the object
@@ -235,7 +258,7 @@ bool FVectorUtil::edgeIsVertical(FVector &A, FVector &B){
 bool FVectorUtil::directionIsVertical(FVector &A){
     FVector aNormalized = A.GetSafeNormal(); //auf einheitskreis normalisieren
     float skalarProduktUp = std::abs(aNormalized.Z); //Up component
-    return skalarProduktUp > 0.7f;  //edge of interest wenn er weit genug nach oben zeigt.
+    return skalarProduktUp >= 0.7f;  //edge of interest wenn er weit genug nach oben zeigt.
 }
 
 
