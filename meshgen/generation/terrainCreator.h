@@ -18,6 +18,7 @@ public:
 	~terrainCreator();
 
 	void debugCreateTerrain(UWorld *world);
+	void debugCreateTerrain(UWorld *world, int meters);
 
 	static const bool PLOTTING_ENABLED = false; // false;
 	
@@ -83,6 +84,7 @@ private:
 			void addheightForAll(int value);
 			void scaleheightForAll(float value);
 			void setheightForAll(float value);
+			void setheightForAllToAverage();
 			void clampheightForAllUpperLimit(float value);
 			void clampheightForAllUpperLimitByOwnAverageHeight();
 
@@ -195,6 +197,7 @@ private:
 	void applyTerrainTypeBetween(FVector &a, FVector &b, ETerrainType typeIn);
 	terrainCreator::chunk *chunkAt(int x, int y);
 	terrainCreator::chunk *chunkAt(terrainHillSetup &setup);
+	std::vector<ETerrainType> createRandomTerrainTypes(int count);
 	ETerrainType selectTerrainTypeExcluding(ETerrainType typeToExclude);
 
 	void applySpecialTerrainTypesByHeight();
@@ -221,5 +224,6 @@ private:
 	);
 	void findChunksEnclosedBy(
 		terrainHillSetup &hillData,
-		std::set<terrainCreator::chunk *> &output);
+		std::set<terrainCreator::chunk *> &output
+	);
 };

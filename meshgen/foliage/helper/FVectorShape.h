@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "p2/meshgen/MeshData.h"
+#include "p2/meshgen/MeshData/MeshData.h"
 
 /**
  * 
@@ -30,8 +30,7 @@ public:
 	void push_back(std::vector<FVector> &other);
 
 	void moveVerteciesWith(MMatrix &mat);
-	
-
+	void moveVerteciesWithButPivotCenter(MMatrix &mat);
 
 	MeshData createDoubleSidedMesh();
 	MeshData closeMeshAtCenter(bool clockwise);

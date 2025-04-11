@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ELod.h"
-#include "MeshData.h"
+#include "p2/meshgen/MeshData/MeshData.h"
 #include <map>
 
 /**
@@ -15,6 +15,7 @@ class P2_API MeshDataLod
 public:
 	MeshDataLod();
 	~MeshDataLod();
+
 
 	void replace(ELod lodlevel, MeshData &meshdata);
 	MeshData &meshDataReference(ELod lodLevel);

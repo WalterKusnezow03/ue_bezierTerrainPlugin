@@ -2,7 +2,7 @@
 
 
 #include "MeshDataLod.h"
-#include "MeshData.h"
+#include "p2/meshgen/MeshData/MeshData.h"
 
 MeshDataLod::MeshDataLod()
 {

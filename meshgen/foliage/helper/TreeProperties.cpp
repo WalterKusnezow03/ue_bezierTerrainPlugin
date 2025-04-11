@@ -6,6 +6,7 @@
 TreeProperties::TreeProperties()
 {
     leafcountPerJointSaved = 10;
+    recursionLevelInternal = 0;
 }
 
 TreeProperties::TreeProperties(const TreeProperties &other){
@@ -24,6 +25,7 @@ TreeProperties &TreeProperties::operator=(const TreeProperties &other){
     leafcountPerJointSaved = other.leafcountPerJointSaved;
     partsPerSubtreeSaved = other.partsPerSubtreeSaved;
     subTreeCountSaved = other.subTreeCountSaved;
+    recursionLevelInternal = other.recursionLevelInternal;
 
     leafMaterial = other.leafMaterial;
 	stemMaterial = other.stemMaterial;
@@ -126,7 +128,16 @@ int TreeProperties::subTreeCount(){
     return 0;
 }
 
+void TreeProperties::setRecursionLevelMax(int count){
+    recursionLevelInternal = std::abs(count);
+    if(recursionLevelInternal < 1){
+        recursionLevelInternal = 1;
+    }
+}
 
+int TreeProperties::resursionLevelMax(){
+    return recursionLevelInternal;
+}
 
 void TreeProperties::setTargetedMaterials(materialEnum stem, materialEnum leaf){
     stemMaterial = stem;

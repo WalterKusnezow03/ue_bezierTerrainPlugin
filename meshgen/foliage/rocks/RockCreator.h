@@ -4,8 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "p2/meshgen/foliage/helper/FVectorShape.h"
-#include "p2/meshgen/MeshData.h"
-
+#include "p2/meshgen/MeshData/MeshData.h"
 /**
  * 
  */

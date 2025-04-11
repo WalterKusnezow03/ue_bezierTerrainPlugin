@@ -2,7 +2,7 @@
 
 
 #include "FVectorShape.h"
-#include "p2/meshgen/MeshData.h"
+#include "p2/meshgen/MeshData/MeshData.h"
 #include "p2/meshgen/generation/bezierCurve.h"
 #include "GrahamScan.h"
 #include "p2/util/TVector.h"
@@ -45,7 +45,18 @@ void FVectorShape::moveVerteciesWith(MMatrix &mat){
     }
 }
 
+///@brief moves the vertecies with a matrix with moving it first to the center for a pivot
+void FVectorShape::moveVerteciesWithButPivotCenter(MMatrix &mat){
+    FVector center = calculateCenter();
+    FVector toPivot = center * -1.0f;
+    MMatrix moveToCenter(toPivot);
+    moveVerteciesWith(moveToCenter);
 
+    moveVerteciesWith(mat);
+
+    MMatrix moveBack(center);
+    moveVerteciesWith(moveBack);
+}
 
 void FVectorShape::push_back(FVector other){
     vec.push_back(other);
@@ -347,9 +358,16 @@ void FVectorShape::createRandomNewSmoothedShape(int sizeXYMax, int smoothStep){
 
     int radius = sizeXYMax / 2;
     createCircleShape(radius, 10);
-    randomizeVertecies(sizeXYMax / 10);
 
-    smoothWithBezier(smoothStep);
+    if(vec.size() > 0){
+        randomizeVertecies(sizeXYMax / 3);
+
+        //close
+        vec.push_back(vec[0]);
+        
+        smoothWithBezier(smoothStep);
+    }
+    
 }
 
 

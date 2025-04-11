@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "p2/entities/customIk/MMatrix.h"
-#include "p2/meshgen/MeshData.h"
+#include "p2/meshgen/MeshData/MeshData.h"
 #include "p2/meshgen/foliage/helper/IndexChain.h"
 #include "p2/meshgen/foliage/helper/TreeProperties.h"
 #include "p2/meshgen/foliage/helper/FVectorShape.h"
+#include <map>
 #include "ETreeType.h"
 
 /**
@@ -61,9 +62,10 @@ private:
 	MMatrix &matrixByIndex(int index);
 	void randomRotationForAllMatrices();
 
-	void wrapWithMesh(std::vector<MMatrix> &matricesIn, MeshData &meshToAddTo);
+	void wrapWithMesh(IndexChain &chainIn, MeshData &meshToAddTo);
 
-	void createSubTrees(MMatrix &offset, TreeProperties &propeties);
+	void createSubTrees(MMatrix &offset, TreeProperties &prop);
+	void createSubTrees(MMatrix &offset, TreeProperties &propeties, int recursionLevel);
 	IndexChain createSubTree(MMatrix &offset, TreeProperties &propeties);
 
 	
@@ -84,5 +86,19 @@ private:
 	TreeProperties defaultProperty;
 	
 	TreeProperties &findProperty(ETerrainType type);
-	
+
+	std::vector<ETreeType> allTreeTypes();
+
+
+
+
+
+	void generateLeafShapes();
+	void generateLeafShape(ETreeType type);
+	void generateStemShapes();
+	void generateStemShapeFor(ETreeType type);
+
+	std::map<ETreeType, std::vector<FVectorShape>> stemMap;
+	std::map<ETreeType, FVectorShape> leafMap;
+
 };

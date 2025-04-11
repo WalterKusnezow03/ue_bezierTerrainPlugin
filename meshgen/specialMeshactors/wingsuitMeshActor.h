@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "p2/meshgen/customMeshActorBase.h"
-#include "p2/meshgen/MeshData.h"
+#include "p2/meshgen/MeshData/MeshData.h"
 #include "wingMeshData.h"
 #include "wingsuitMeshActor.generated.h"
 

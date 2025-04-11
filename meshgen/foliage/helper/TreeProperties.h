@@ -40,6 +40,9 @@ public:
 
 	int subTreeCount();
 
+	void setRecursionLevelMax(int count);
+	int resursionLevelMax();
+
 	void setTargetedMaterials(materialEnum stem, materialEnum leaf);
 	materialEnum targetMaterialForStem();
 	materialEnum targetMaterialForLeaf();
@@ -60,4 +63,8 @@ private:
 	int partsPerSubtreeSaved;
 
 	void updateDetailStep(int detailStepIn);
+
+
+	//new: recursion level
+	int recursionLevelInternal = 0;
 };
