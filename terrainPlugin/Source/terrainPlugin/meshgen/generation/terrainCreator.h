@@ -8,6 +8,7 @@
 #include "terrainPlugin/meshgen/generation/helper/TerrainChunkSetup.h"
 #include "GameCore/MeshGenBase/foliage/ETerrainType.h"
 #include "GameCore/util/FVectorTouple.h"
+#include "terrainPlugin/meshgen/generation/helper/HeightExtractionData.h"
 #include "GameCore/util/TVector.h"
 
 /**
@@ -84,21 +85,7 @@ private:
 		std::vector<terrainHillSetup> &predefinedHillDataVecFlatArea // flat area
 	);
 
-	class HeightExtractionData{
-		public:
-			HeightExtractionData(FVector &posIn);
-			~HeightExtractionData();
-
-			HeightExtractionData(const HeightExtractionData &other);
-			HeightExtractionData &operator=(const HeightExtractionData &other);
-
-			float height = 0.0f;
-			float distanceFromTarget = 0.0f;
-
-			FVector position;
-
-			static float findHeight(TArray<HeightExtractionData> &array);
-	};
+	
 
 	class chunk
 	{
@@ -163,11 +150,26 @@ private:
 
 		void markCreateOutpostTrue();
 
+		void blockAreaForFoliage(
+			FVector &v0,
+			FVector &v1,
+			FVector &v2,
+			FVector &v3
+		);
 		void blockAreaForFoliage(FVector &a, FVector &b);
 		void freePositionsForFoliageLocal(
 			TArray<FVectorTouple> &outpositions);
 
 	private:
+		void generateBoundingIndicesFromWorldSpace(
+			FVector &a,
+			FVector &b,
+			int &minX,
+			int &minY,
+			int &maxX,
+			int &maxY
+		);
+
 		bool indexFreeForFoliage(int i, int j);
 		void lockPositionForAnyFoliage(int i, int j);
 		void lockPositionForAnyFoliageIfTrue(int i, int j, bool flag);
@@ -253,6 +255,10 @@ private:
 	void applyTerrainTypeBetween(FVector &a, FVector &b, ETerrainType typeIn);
 	terrainCreator::chunk *chunkAt(int x, int y);
 	terrainCreator::chunk *chunkAt(terrainHillSetup &setup);
+	TArray<terrainCreator::chunk *> chunksAt(
+		TArray<FVector> &positionsWorld
+	);
+
 	std::vector<ETerrainType> createRandomTerrainTypes(int count);
 	ETerrainType selectTerrainTypeExcluding(ETerrainType typeToExclude);
 

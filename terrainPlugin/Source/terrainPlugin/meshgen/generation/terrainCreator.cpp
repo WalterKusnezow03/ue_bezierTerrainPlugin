@@ -12,7 +12,7 @@
 #include "CoreMath/Matrix/MMatrix.h"
 
 #include "GameCore/EntityGC/EntityManagerBase.h"
-
+#include "GameCore/MeshGenBase/MeshData/BoundingBox/BoundingShapeXY.h"
 
 #include "terrainPlugin/meshgen/rooms/roomActor/roomProcedural.h"
 #include "terrainPlugin/meshgen/water/customWaterActor.h"
@@ -29,54 +29,6 @@ terrainCreator::~terrainCreator()
 
 }
 
-/**
- * height extraction container
- */
-terrainCreator::HeightExtractionData::HeightExtractionData(
-    FVector &posin
-){
-    position = posin;
-}
-terrainCreator::HeightExtractionData::~HeightExtractionData(){
-    //none
-}
-
-terrainCreator::HeightExtractionData::HeightExtractionData(const HeightExtractionData &other){
-    *this = other;
-}
-
-terrainCreator::HeightExtractionData &terrainCreator::HeightExtractionData::operator=(
-    const HeightExtractionData &other
-){
-    if(this != &other){
-        height = other.height;
-        distanceFromTarget = other.distanceFromTarget;
-        position = other.position;
-    }
-    return *this;
-}
-
-float terrainCreator::HeightExtractionData::findHeight(
-    TArray<HeightExtractionData> &array
-){
-    float heightOutput = 0.0f;
-    float weightSum = 0.0f;
-    for (int i = 0; i < array.Num(); i++)
-    {
-        HeightExtractionData &current = array[i];
-        float weight = 1.0f;
-        if(current.distanceFromTarget > 0.01f){
-            weight = (1.0f / current.distanceFromTarget);
-        }
-        heightOutput += weight * current.height;
-        weightSum += weight;
-    }
-
-    heightOutput /= weightSum; //normalisieren ganz wichtig
-
-
-    return heightOutput;
-}
 
 /***
  * 
@@ -274,20 +226,29 @@ float terrainCreator::chunk::getHeightFor(FVector &a){
 void terrainCreator::chunk::getHeightWith(
     HeightExtractionData &data
 ){
-    if(isInBounds(data.position)){
+    FVector &positionWorld = data.vertexPositionToLookFor();
+    if (isInBounds(positionWorld))
+    {
         int xa = 0;
         int ya = 0;
-        convertPositionToInnerIndexClamped(data.position, xa, ya);
+        convertPositionToInnerIndexClamped(positionWorld, xa, ya);
 
-        FVector innerMapVertex = innerMap.at(xa).at(ya);
-        data.height = innerMapVertex.Z;
+        FVector &innerMapVertex = innerMap.at(xa).at(ya);
+        FVector vertexWorldSpace = innerMapVertex + position();
+        data.SetupDataAndWeighting(vertexWorldSpace);
 
-        FVector posA_noHeight = data.position;
-        posA_noHeight.Z = 0.0f;
-        FVector posB_noHeight = innerMapVertex;
-        posB_noHeight.Z = 0.0f;
-
-        data.distanceFromTarget = FVector::Dist(posA_noHeight, posB_noHeight);
+        //debug
+        FString s = FString::Printf(
+            TEXT("terrain vertex (%d, %d) at %.2f   xy(%.2f, %.2f)"),
+            xa,
+            ya,
+            vertexWorldSpace.Z,
+            vertexWorldSpace.X,
+            vertexWorldSpace.Y
+        );
+        
+        if(false)
+            DebugHelper::showScreenMessage(s);
     }
 }
 
@@ -594,7 +555,7 @@ void terrainCreator::chunk::applyIndivualVertexIndexBased(
     }
 }
 
-/// @brief will check if a position is within the chunks bounds
+/// @brief will check if a WORLD position is within the chunks bounds
 /// @param a position to check
 /// @return return true if within the chunks index bounds on x and y axis
 bool terrainCreator::chunk::isInBounds(FVector &a){
@@ -656,9 +617,82 @@ float terrainCreator::chunk::minHeight(){
 
 
 // --- chunk block area functions ---
+
+//new precise bounds
+void terrainCreator::chunk::blockAreaForFoliage(
+    FVector &v0,
+    FVector &v1,
+    FVector &v2,
+    FVector &v3
+){
+    FVector removeOffset = position();
+    FVector v0_ = v0 - removeOffset;
+    FVector v1_ = v1 - removeOffset;
+    FVector v2_ = v2 - removeOffset;
+    FVector v3_ = v3 - removeOffset;
+
+    BoundingShapeXY shape; //TESTING NEEDED!
+    shape.initWithSortedQuad(v0_, v1_, v2_, v3_);
+
+    int minX, minY, maxX, maxY = 0;
+    /*
+    1 -> 2
+    |    |
+    0 <- 3
+    */
+    generateBoundingIndicesFromWorldSpace(v0_, v2_, minX, minY, maxX, maxY);
+    
+    for(int i = minX; i <= maxX; i++){
+        for(int j = minY; j <= maxY; j++){
+            //lockPositionForAnyFoliage(i,j);
+            int iCopy = clampInnerIndex(i);
+            int jCopy = clampInnerIndex(j);
+            if(xIsValid(iCopy) && yIsValid(jCopy)){
+                FVector &vertex = innerMap[iCopy][jCopy];
+                if(shape.isInsideShape(vertex)){
+                    lockPositionForAnyFoliage(iCopy,jCopy);
+                }
+            }
+        }
+    }
+
+}
+
+//old simple bounds
 void terrainCreator::chunk::blockAreaForFoliage(
     FVector &a, 
     FVector &b
+){
+
+    int minX, minY, maxX, maxY = 0;
+    generateBoundingIndicesFromWorldSpace(a, b, minX, minY, maxX, maxY);
+
+
+    if (false)
+    {
+        FString message = FString::Printf(
+            TEXT(
+                "terrain blocked area: (%d, %d) (%d, %d)"
+            ),
+            minX, minY, maxX, maxY
+        );
+        DebugHelper::logMessage(message);
+    }
+
+    for(int i = minX; i <= maxX; i++){
+        for(int j = minY; j <= maxY; j++){
+            lockPositionForAnyFoliage(i,j);
+        }
+    }
+}
+
+void terrainCreator::chunk::generateBoundingIndicesFromWorldSpace(
+    FVector &a,
+    FVector &b,
+    int &minX,
+    int &minY,
+    int &maxX,
+    int &maxY
 ){
     int ax = convertToInnerIndex(a.X);
     int ay = convertToInnerIndex(a.Y);
@@ -669,27 +703,13 @@ void terrainCreator::chunk::blockAreaForFoliage(
     convertPositionToInnerIndexClamped(a, ax, ay);
     convertPositionToInnerIndexClamped(b, bx, by);
 
-
-    int minX = std::min(ax, bx);
-    int maxX = std::max(ax, bx);
-    int minY = std::min(ay, by);
-    int maxY = std::max(ay, by);
-
-    FString message = FString::Printf(
-        TEXT(
-            "terrain blocked area: (%d, %d) (%d, %d)"
-        ),
-        minX, minY, maxX, maxY
-    );
-    DebugHelper::logMessage(message);
-
-
-    for(int i = minX; i <= maxX; i++){
-        for(int j = minY; j <= maxY; j++){
-            lockPositionForAnyFoliage(i,j);
-        }
-    }
+    minX = std::min(ax, bx);
+    maxX = std::max(ax, bx);
+    minY = std::min(ay, by);
+    maxY = std::max(ay, by);
 }
+
+
 
 void terrainCreator::chunk::convertPositionToInnerIndexClamped(
     FVector inpos,
@@ -1273,7 +1293,9 @@ void terrainCreator::plotAllChunks(UWorld * world){
 /// @return return z for the x y position
 float terrainCreator::getHeightFor(FVector &position){
 
-    //new from average height if the vertex is inside a quad
+    //spannt automatisch das viereck um den vertex weil die position nach unten geclamped wird
+    //mit modulo
+    //so die idee 
     TArray<FVector> positionIndices = {
         FVector(position.X, position.Y, 0.0f),
         FVector(position.X + ONEMETER, position.Y, 0.0f),
@@ -1281,44 +1303,24 @@ float terrainCreator::getHeightFor(FVector &position){
         FVector(position.X + ONEMETER, position.Y + ONEMETER, 0.0f)
     };
 
-    TArray<FVector2D> chunkIndiceParellellArray; //paralell to above array
-    for (int i = 0; i < positionIndices.Num(); i++){
-        FVector &current = positionIndices[i];
-        FVector2D chunkIndexPair(
-            cmToChunkIndex(current.X),
-            cmToChunkIndex(current.Y)
-        );
-        chunkIndiceParellellArray.Add(chunkIndexPair);
-    }
-
-
-    //find heights for extraction data 
+    // find heights for extraction data
     TArray<HeightExtractionData> heights;
-    for (int i = 0; i < chunkIndiceParellellArray.Num(); i++)
-    {
+    TArray<terrainCreator::chunk *> chunks = chunksAt(positionIndices);
+    for (int i = 0; i < chunks.Num(); i++){
+        terrainCreator::chunk *ptr = chunks[i];
         FVector &posCurrent = positionIndices[i];
-        FVector2D &chunkIndexPair = chunkIndiceParellellArray[i];
-        if (verifyIndex(chunkIndexPair.X) && verifyIndex(chunkIndexPair.Y))
+        if (ptr)
         {
-            HeightExtractionData container(posCurrent);
-            map.at(chunkIndexPair.X).at(chunkIndexPair.Y).getHeightWith(container);
+            //HeightExtractionData(vertex targeted, target pos for height extraction per weight)
+            HeightExtractionData container(posCurrent, position);
+            ptr->getHeightWith(container);
             heights.Add(container);
         }
     }
 
-    float outheight = HeightExtractionData::findHeight(heights);
+    float outheight = HeightExtractionData::findHeight(heights, ONEMETER);
     return outheight;
 
-    /*
-    // old
-    int chunkX = cmToChunkIndex(position.X);
-    int chunkY = cmToChunkIndex(position.Y);
-
-    if(verifyIndex(chunkX) && verifyIndex(chunkY)){
-        return map.at(chunkX).at(chunkY).getHeightFor(position);
-    }
-    return position.Z;
-    */
 }
 
 
@@ -1595,7 +1597,7 @@ void terrainCreator::randomizeTerrainTypes(UWorld *world){
 
         //DEBUG
         
-        if(true){
+        if(false){
             std::vector<FVector> vertecies = shape.vectorCopy();
             MMatrix scaleMat;
             scaleMat.scale(100, 100, 1);
@@ -1716,8 +1718,23 @@ terrainCreator::chunk *terrainCreator::chunkAt(int x, int y){
     return nullptr;
 }
 
-
-
+TArray<terrainCreator::chunk *> terrainCreator::chunksAt(
+    TArray<FVector> &positionsWorld
+){
+    TArray<terrainCreator::chunk *> outputArray;
+    for (int i = 0; i < positionsWorld.Num(); i++)
+    {
+        FVector &current = positionsWorld[i];
+        terrainCreator::chunk *ptr = chunkAt(
+            cmToChunkIndex(current.X),
+            cmToChunkIndex(current.Y)
+        );
+        if(ptr != nullptr){
+            outputArray.Add(ptr);
+        }
+    }
+    return outputArray;
+}
 
 /// @brief applies the ESnowhill terrain type to chunks matching the minheight requirement
 void terrainCreator::applySpecialTerrainTypesByHeight(){
@@ -2058,6 +2075,9 @@ void terrainCreator::createRoads(UWorld *world){
 }
 
 void terrainCreator::createRoads(MeshData &meshdata, int count){
+    //debug
+    //return;
+
     for(int i = 0; i < count; i++){
         createRoad(meshdata);
     }
@@ -2073,34 +2093,82 @@ void terrainCreator::createRoad(MeshData &meshdata){
 
 
     bezierCurve curve;
-
-    /*
-    FVector2D &startingPoint,
-    TVector<FVector2D> &output,
-    float _einheitsValue,
-    float distanceBetweenAnchorsOnXAxisMin,
-    float distanceBetweenAnchorsOnXAxisMax,
-    float distanceBetweenAnchorsYRange,
-    float max_xy_coordinate
-    */
-
-    FVector2D startingPoint;
     TVector<FVector2D> output;
     float _einheitsValue = ONEMETER;
-    float distanceBetweenAnchorsOnXAxisMin = scalePerChunk * 1.0f;
-    float distanceBetweenAnchorsOnXAxisMax = scalePerChunk * 3.0f;
-    float distanceBetweenAnchorsYRange = scalePerChunk;
-    float max_xy_coordinate = limitall;
 
-    curve.createNewRandomCurve(
-        startingPoint,
-        output,
-        _einheitsValue,
-        distanceBetweenAnchorsOnXAxisMin,
-        distanceBetweenAnchorsOnXAxisMax,
-        distanceBetweenAnchorsYRange,
-        max_xy_coordinate
-    );
+    if(true){
+        /*
+        FVector2D &startingPoint,
+        TVector<FVector2D> &output,
+        float _einheitsValue,
+        float distanceBetweenAnchorsOnXAxisMin,
+        float distanceBetweenAnchorsOnXAxisMax,
+        float distanceBetweenAnchorsYRange,
+        float max_xy_coordinate
+        */
+
+        FVector2D startingPoint;
+        float distanceBetweenAnchorsOnXAxisMin = scalePerChunk * 1.0f;
+        float distanceBetweenAnchorsOnXAxisMax = scalePerChunk * 3.0f;
+        float distanceBetweenAnchorsYRange = scalePerChunk;
+        float max_xy_coordinate = limitall;
+
+        curve.createNewRandomCurve(
+            startingPoint,
+            output,
+            _einheitsValue,
+            distanceBetweenAnchorsOnXAxisMin,
+            distanceBetweenAnchorsOnXAxisMax,
+            distanceBetweenAnchorsYRange,
+            max_xy_coordinate
+        );
+    }else{
+        /*
+        FVector2D &startingPoint,
+        TVector<FVector2D> &output,
+        float _einheitsValue,
+        float distanceMin,
+        float distanceMax,
+        float angleTurnMinAbs,
+        float angleTurnMaxAbs,
+        float max_xy_coordinate
+        */
+        FVector2D start(
+            0, //goes along x.
+            FVectorUtil::randomNumber(0, limitall)
+        );
+        float distanceBetweenAnchorsOnXAxisMin = scalePerChunk * 1.0f;
+        float distanceBetweenAnchorsOnXAxisMax = scalePerChunk * 3.0f;
+        float angleTurnMin = 10.0f;
+        float angleTurnMax = 30.0f;
+        float max_xy_coordinate = limitall;
+        curve.createNewRandomCurve(
+            start,
+            output,
+            _einheitsValue,
+            distanceBetweenAnchorsOnXAxisMin,
+            distanceBetweenAnchorsOnXAxisMax,
+            angleTurnMin,
+            angleTurnMax,
+            max_xy_coordinate
+        );
+
+
+        //draw small version
+        for (int i = 1; i < output.size(); i++){
+            FVector2D prev = output[i - 1] / (terrainCreator::ONEMETER * terrainCreator::CHUNKSIZE);
+            FVector2D current = output[i] / (terrainCreator::ONEMETER * terrainCreator::CHUNKSIZE);
+            FVector prev3D(prev.X, 0.0f, prev.Y);
+            FVector current3D(current.X, 0.0f, current.Y);
+
+            DebugHelper::showLineBetween(
+                worldPointer,
+                prev3D,
+                current3D,
+                FColor::Red
+            );
+        }
+    }
 
     float roadWidth = ONEMETER * 5.0f;
     processRoad(output, roadWidth, meshdata, _einheitsValue);
@@ -2148,18 +2216,19 @@ void terrainCreator::processRoad(
     }
 
 
+    //make road look less clunky
     bezierCurve bezierCurveMaker;
     int skipIndicesForSmooth = 10;
     bezierCurveMaker.afterSmoothHeight(
-		line1, //TArray<FVector> &curve,
-		_einheitsValue,
-		skipIndicesForSmooth//int anchorSkipPerStep
-	);
+        line1, //TArray<FVector> &curve,
+        _einheitsValue,
+        skipIndicesForSmooth//int anchorSkipPerStep
+    );
     bezierCurveMaker.afterSmoothHeight(
-		line2, 
-		_einheitsValue,
-		skipIndicesForSmooth
-	);
+        line2, 
+        _einheitsValue,
+        skipIndicesForSmooth
+    );
 
 
 
@@ -2218,23 +2287,43 @@ void terrainCreator::lockQuadsFromParalellArrayLines(
         FVector &v2 = line1[i];
         FVector &v0 = line0[i-1];
 
-        //chunk 0
-        terrainCreator::chunk *ptr = chunkAt(
-            cmToChunkIndex(v0.X),
-            cmToChunkIndex(v0.Y)
-        );
-        if(ptr != nullptr){
-            ptr->blockAreaForFoliage(v0,v2);
+        if(false){
+            /**
+             * CAUTION: is still. Bugged.
+             */
+
+            FVector &v1 = line1[i-1];
+            FVector &v3 = line0[i];
+            TArray<FVector> positions = {v0, v1, v2, v3};
+            TArray<terrainCreator::chunk *> chunksCollected = chunksAt(positions);
+
+            for (int j = 0; j < chunksCollected.Num(); j++){
+                terrainCreator::chunk *currentChunk = chunksCollected[j];
+                if(currentChunk != nullptr){
+                    currentChunk->blockAreaForFoliage(v0, v1, v2, v3);
+                }
+            }
+        }else{
+            //old
+            //chunk 0
+            terrainCreator::chunk *ptr = chunkAt(
+                cmToChunkIndex(v0.X),
+                cmToChunkIndex(v0.Y)
+            );
+            if(ptr != nullptr){
+                ptr->blockAreaForFoliage(v0,v2);
+            }
+            
+            //chunk 1
+            terrainCreator::chunk *ptr1 = chunkAt(
+                cmToChunkIndex(v2.X),
+                cmToChunkIndex(v2.Y)
+            );
+            if(ptr1 != nullptr){
+                ptr1->blockAreaForFoliage(v0,v2);
+            }
         }
         
-        //chunk 1
-        terrainCreator::chunk *ptr1 = chunkAt(
-            cmToChunkIndex(v2.X),
-            cmToChunkIndex(v2.Y)
-        );
-        if(ptr1 != nullptr){
-            ptr1->blockAreaForFoliage(v0,v2);
-        }
     }
 
 
