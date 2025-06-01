@@ -5,6 +5,10 @@
 #include <map>
 #include "EntityManagerGeneric.h"
 
+/**
+ * base class to store pointers if an aactor derived class is not needed anymore but 
+ * destruction isnt wanted, rather reuse. Dont remove from ram.
+ */
 class GAMECORE_API EntityManagerBase {
 
 public:
@@ -29,8 +33,8 @@ public:
         {
             FActorSpawnParameters SpawnParams;
             UClass* classType = T::StaticClass();
-            FVector Location;
-            FRotator Rotation;
+            FVector Location = FVector::ZeroVector;
+            FRotator Rotation = FRotator::ZeroRotator;
 
             AActor* spawned = world->SpawnActor<AActor>(classType, Location, Rotation, SpawnParams);
             if (spawned)

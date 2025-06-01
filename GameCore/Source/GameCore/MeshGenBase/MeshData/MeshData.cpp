@@ -7,7 +7,7 @@
 #include "KismetProceduralMeshLibrary.h"
 #include "AssetPlugin/gameStart/assetEnums/materialEnum.h"
 #include "GameCore/MeshGenBase/MathHelp/baryCentricInterpolator.h"
-#include "BoundingBox.h"
+
 
 #include <algorithm>
 #include <set>

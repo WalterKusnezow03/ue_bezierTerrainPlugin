@@ -136,14 +136,20 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class UProceduralMeshComponent *MeshNoRaycast;
 
-	//new!
+	/// @brief saves mesh data per lod level per material int
 	std::map<int, MeshDataLod> meshLayersLodMap;
 	std::map<int, MeshDataLod> meshLayersLodMapNoRaycast;
 
+	std::map<ELod, UProceduralMeshComponent *> meshComponentLodMap;
+	std::map<ELod, UProceduralMeshComponent *> meshComponentLodMapNoRaycast;
 	
+	UProceduralMeshComponent *MeshForLod(ELod lod);
+	UProceduralMeshComponent *MeshNoRaycastForLod(ELod lod);
+	void switchToLod(ELod lod);
+	void initLodMeshesOnBeginPlay();
 
+	void ReloadMeshForMaterialByLod(ELod lod, materialEnum material);
 	
-	void updateLodLevelAndReloadMesh(ELod level);
 
 	//allows custom mesh without Lod
 	void updateMesh(
@@ -165,6 +171,10 @@ protected:
 		UProceduralMeshComponent *ProceduralMeshComponent,
 		UMaterialInterface *Material,
 		int layer
+	);
+	void ApplyMaterial(
+		UProceduralMeshComponent *ProceduralMeshComponent,
+		materialEnum type
 	);
 
 	bool isInRange(FVector &a, int maxDistance, int &smallestEdge);

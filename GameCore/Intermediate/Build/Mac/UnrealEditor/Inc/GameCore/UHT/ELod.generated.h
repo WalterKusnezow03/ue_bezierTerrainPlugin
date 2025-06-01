@@ -20,6 +20,7 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 
 #define FOREACH_ENUM_ELOD(op) \
 	op(ELod::lodNear) \
+	op(ELod::lodMiddle) \
 	op(ELod::lodFar) 
 
 enum class ELod;

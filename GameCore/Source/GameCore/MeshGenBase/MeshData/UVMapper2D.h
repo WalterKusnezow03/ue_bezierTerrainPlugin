@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BoundingBox.h"
+class BoundingBoxSimple;
 
 class GAMECORE_API UVMapper2D{
 
@@ -18,6 +18,6 @@ public:
 private:
     FVector2D generateUVCoordinate(
         FVector &vertex,
-        BoundingBox &boundingBox
+        BoundingBoxSimple &boundingBox
     );
 };

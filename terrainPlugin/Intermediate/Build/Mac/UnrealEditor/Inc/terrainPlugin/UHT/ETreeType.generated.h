@@ -4,7 +4,7 @@
 	DO NOT modify this manually! Edit the corresponding .h files instead!
 ===========================================================================*/
 
-// IWYU pragma: private, include "meshgen/foliage/ETreeType.h"
+// IWYU pragma: private, include "meshgen/foliage/MatrixTree/ETreeType.h"
 #include "UObject/ObjectMacros.h"
 #include "UObject/ScriptMacros.h"
 
@@ -15,7 +15,7 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 #define TERRAINPLUGIN_ETreeType_generated_h
 
 #undef CURRENT_FILE_ID
-#define CURRENT_FILE_ID FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_foliage_ETreeType_h
+#define CURRENT_FILE_ID FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_foliage_MatrixTree_ETreeType_h
 
 
 #define FOREACH_ENUM_ETREETYPE(op) \

@@ -1,7 +1,6 @@
 #include "UVMapper2D.h"
 #include "CoreMinimal.h"
-#include "BoundingBox.h"
-
+#include "GameCore/MeshGenBase/MeshData/BoundingBox/BoundingBoxSimple.h"
 
 void UVMapper2D::generateUVBuffer(
     const TArray<FVector> &vertecies,
@@ -24,7 +23,7 @@ void UVMapper2D::generateUVBuffer(
         bufferOnXYPane[i] = InverseMatrix.TransformPosition(copy);
     }
 
-    BoundingBox bounds(bufferOnXYPane);
+    BoundingBoxSimple bounds(bufferOnXYPane);
 
     outUV.Empty();
     outUV.SetNum(vertecies.Num());
@@ -36,7 +35,7 @@ void UVMapper2D::generateUVBuffer(
 
 FVector2D UVMapper2D::generateUVCoordinate(
     FVector &vertex,
-    BoundingBox &boundingBox
+    BoundingBoxSimple &boundingBox
 ){
     FVector bl = boundingBox.bottomLeftNearVertex();
     FVector tr = boundingBox.topRightLeftVertex();

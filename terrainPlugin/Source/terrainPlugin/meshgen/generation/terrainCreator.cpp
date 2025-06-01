@@ -246,7 +246,7 @@ void terrainCreator::chunk::getHeightWith(
             vertexWorldSpace.X,
             vertexWorldSpace.Y
         );
-        
+
         if(false)
             DebugHelper::showScreenMessage(s);
     }
@@ -640,7 +640,7 @@ void terrainCreator::chunk::blockAreaForFoliage(
     |    |
     0 <- 3
     */
-    generateBoundingIndicesFromWorldSpace(v0_, v2_, minX, minY, maxX, maxY);
+    generateBoundingIndicesFromWorldSpace(v0, v2, minX, minY, maxX, maxY);
     
     for(int i = minX; i <= maxX; i++){
         for(int j = minY; j <= maxY; j++){
@@ -1487,21 +1487,44 @@ void terrainCreator::createWaterPaneAt(FVector &location){
 /// @brief will create a random height map chunk wide, then to be smoothed
 void terrainCreator::createRandomHeightMapChunkWide(int layers){
 
-    for (int i = 0; i < std::abs(layers); i++){
+    layers = std::abs(layers);
+    for (int i = 0; i < layers; i++)
+    {
         terrainHillSetup newHill = createRandomHillData();
         applyHillData(newHill);
     }
+
+    if(MINCHUNK_LARGEHILL < map.size()){
+        int layersLarge = layers / 4.0f;
+        for (int i = 0; i < layersLarge; i++){
+            terrainHillSetup newHillLarge = createRandomHillDataLargeScale();
+            applyHillData(newHillLarge);
+        }
+    }
+    
+    
 }
 
 
 terrainHillSetup terrainCreator::createRandomHillData(){
     int scaleX = FVectorUtil::randomNumber(MINCHUNK_HILL, map.size()); //random hardcoded for now.
     int scaleY = FVectorUtil::randomNumber(MINCHUNK_HILL, map.size());
-    return createRandomHillData(scaleX, scaleY);
+    int heightMin = terrainCreator::ONEMETER / 2.0f;
+    return createRandomHillData(scaleX, scaleY,heightMin);
+}
+
+terrainHillSetup terrainCreator::createRandomHillDataLargeScale(){
+    
+    int scaleX = FVectorUtil::randomNumber(MINCHUNK_LARGEHILL, map.size()); //random hardcoded for now.
+    int scaleY = FVectorUtil::randomNumber(MINCHUNK_LARGEHILL, map.size());
+    int heightMin = terrainCreator::ONEMETER * 2.0f;
+    return createRandomHillData(scaleX, scaleY, heightMin);
 }
 
 terrainHillSetup terrainCreator::createRandomHillData(
-    int sizeX, int sizeY
+    int sizeX, 
+    int sizeY,
+    int heightMin
 ){
     sizeX = std::abs(sizeX);
     sizeY = std::abs(sizeY);
@@ -1515,7 +1538,6 @@ terrainHillSetup terrainCreator::createRandomHillData(
 
     int startX = clampIndex(FVectorUtil::randomNumber(1, map.size() - sizeX));
     int startY = clampIndex(FVectorUtil::randomNumber(1, map.size() - sizeY));
-    int heightMin = terrainCreator::ONEMETER / 2.0f;
     int heightMax = heightMin * 3; //2
 
     return terrainHillSetup(
@@ -2064,27 +2086,40 @@ void terrainCreator::createRoads(UWorld *world){
             return;
         }
         currentActor->disableDistanceListening();
-        MeshData &meshdata = currentActor->findMeshDataReference(
+        MeshData &meshdataSurface = currentActor->findMeshDataReference(
             materialEnum::stoneMaterial,
             true //has raycast
         );
-        createRoads(meshdata, 2);
+        MeshData &meshdataSides = currentActor->findMeshDataReference(
+            materialEnum::beigeStoneMaterial,
+            true //has raycast
+        );
+        createRoads(meshdataSurface, meshdataSides, 2);
+        meshdataSurface.calculateNormals();
+        meshdataSides.calculateNormals();
         currentActor->ReloadMeshAndApplyAllMaterials();
     }
 
 }
 
-void terrainCreator::createRoads(MeshData &meshdata, int count){
+void terrainCreator::createRoads(
+    MeshData &outmeshDataSurface,
+    MeshData &outmeshDataSides,
+    int count
+){
     //debug
     //return;
 
     for(int i = 0; i < count; i++){
-        createRoad(meshdata);
+        createRoad(outmeshDataSurface, outmeshDataSides);
     }
 }
 
 
-void terrainCreator::createRoad(MeshData &meshdata){
+void terrainCreator::createRoad(
+    MeshData &outmeshDataSurface,
+    MeshData &outmeshDataSides
+){
     int chunks = map.size();
     int scalePerChunk = CHUNKSIZE * ONEMETER;
     int limitall = scalePerChunk * chunks;
@@ -2109,8 +2144,8 @@ void terrainCreator::createRoad(MeshData &meshdata){
 
         FVector2D startingPoint;
         float distanceBetweenAnchorsOnXAxisMin = scalePerChunk * 1.0f;
-        float distanceBetweenAnchorsOnXAxisMax = scalePerChunk * 3.0f;
-        float distanceBetweenAnchorsYRange = scalePerChunk;
+        float distanceBetweenAnchorsOnXAxisMax = scalePerChunk * 4.0f;
+        float distanceBetweenAnchorsYRange = scalePerChunk * 2.0f;
         float max_xy_coordinate = limitall;
 
         curve.createNewRandomCurve(
@@ -2122,56 +2157,16 @@ void terrainCreator::createRoad(MeshData &meshdata){
             distanceBetweenAnchorsYRange,
             max_xy_coordinate
         );
-    }else{
-        /*
-        FVector2D &startingPoint,
-        TVector<FVector2D> &output,
-        float _einheitsValue,
-        float distanceMin,
-        float distanceMax,
-        float angleTurnMinAbs,
-        float angleTurnMaxAbs,
-        float max_xy_coordinate
-        */
-        FVector2D start(
-            0, //goes along x.
-            FVectorUtil::randomNumber(0, limitall)
-        );
-        float distanceBetweenAnchorsOnXAxisMin = scalePerChunk * 1.0f;
-        float distanceBetweenAnchorsOnXAxisMax = scalePerChunk * 3.0f;
-        float angleTurnMin = 10.0f;
-        float angleTurnMax = 30.0f;
-        float max_xy_coordinate = limitall;
-        curve.createNewRandomCurve(
-            start,
-            output,
-            _einheitsValue,
-            distanceBetweenAnchorsOnXAxisMin,
-            distanceBetweenAnchorsOnXAxisMax,
-            angleTurnMin,
-            angleTurnMax,
-            max_xy_coordinate
-        );
-
-
-        //draw small version
-        for (int i = 1; i < output.size(); i++){
-            FVector2D prev = output[i - 1] / (terrainCreator::ONEMETER * terrainCreator::CHUNKSIZE);
-            FVector2D current = output[i] / (terrainCreator::ONEMETER * terrainCreator::CHUNKSIZE);
-            FVector prev3D(prev.X, 0.0f, prev.Y);
-            FVector current3D(current.X, 0.0f, current.Y);
-
-            DebugHelper::showLineBetween(
-                worldPointer,
-                prev3D,
-                current3D,
-                FColor::Red
-            );
-        }
     }
 
     float roadWidth = ONEMETER * 5.0f;
-    processRoad(output, roadWidth, meshdata, _einheitsValue);
+    processRoad(
+        output, 
+        roadWidth, 
+        outmeshDataSurface, 
+        outmeshDataSides, 
+        _einheitsValue
+    );
 
     //assign data to mesh actor when done.
 
@@ -2180,7 +2175,8 @@ void terrainCreator::createRoad(MeshData &meshdata){
 void terrainCreator::processRoad(
     TVector<FVector2D> &curve,
     float roadWidth,
-    MeshData &outmeshData,
+    MeshData &outmeshDataSurface,
+    MeshData &outmeshDataSides,
     float _einheitsValue
 ){
     TArray<FVector> line1;
@@ -2238,11 +2234,28 @@ void terrainCreator::processRoad(
     |  |
     0<-3
     */
-    outmeshData.appendParalellLinesClosedAsQuads(line1, line2);
+    outmeshDataSurface.appendParalellLinesClosedAsQuads(line1, line2);
 
+    //TESTING NEEDED
+    //extend sides to bottom
+    TArray<FVector> line1Bottom = line1;
+    TArray<FVector> line2Bottom = line2;
+    for (int i = 0; i < line1Bottom.Num(); i++){
+        FVector &current = line1Bottom[i];
+        current += FVector(0, 0, -200);
+    }
+    for (int i = 0; i < line2Bottom.Num(); i++){
+        FVector &current = line2Bottom[i];
+        current += FVector(0, 0, -200);
+    }
+    outmeshDataSides.appendParalellLinesClosedAsQuads(line1Bottom, line1);
+    outmeshDataSides.appendParalellLinesClosedAsQuads(line2, line2Bottom);
+
+
+
+
+    // blocks terrain
     lockQuadsFromParalellArrayLines(line1, line2);
-
-
 }
 
 FVector terrainCreator::make3D(FVector2D &pos, float height){
@@ -2287,7 +2300,7 @@ void terrainCreator::lockQuadsFromParalellArrayLines(
         FVector &v2 = line1[i];
         FVector &v0 = line0[i-1];
 
-        if(false){
+        if(true){
             /**
              * CAUTION: is still. Bugged.
              */

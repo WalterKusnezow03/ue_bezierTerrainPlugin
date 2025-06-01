@@ -35,11 +35,13 @@ void EmptyLinkFunctionForGeneratedCodeELod() {}
 	};
 	const UECodeGen_Private::FEnumeratorParam Z_Construct_UEnum_GameCore_ELod_Statics::Enumerators[] = {
 		{ "ELod::lodNear", (int64)ELod::lodNear },
+		{ "ELod::lodMiddle", (int64)ELod::lodMiddle },
 		{ "ELod::lodFar", (int64)ELod::lodFar },
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UEnum_GameCore_ELod_Statics::Enum_MetaDataParams[] = {
 		{ "lodFar.Name", "ELod::lodFar" },
+		{ "lodMiddle.Name", "ELod::lodMiddle" },
 		{ "lodNear.Name", "ELod::lodNear" },
 		{ "ModuleRelativePath", "MeshGenBase/ELod.h" },
 	};
@@ -69,9 +71,9 @@ void EmptyLinkFunctionForGeneratedCodeELod() {}
 		static const FEnumRegisterCompiledInInfo EnumInfo[];
 	};
 	const FEnumRegisterCompiledInInfo Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_GameCore_Source_GameCore_MeshGenBase_ELod_h_Statics::EnumInfo[] = {
-		{ ELod_StaticEnum, TEXT("ELod"), &Z_Registration_Info_UEnum_ELod, CONSTRUCT_RELOAD_VERSION_INFO(FEnumReloadVersionInfo, 3079056863U) },
+		{ ELod_StaticEnum, TEXT("ELod"), &Z_Registration_Info_UEnum_ELod, CONSTRUCT_RELOAD_VERSION_INFO(FEnumReloadVersionInfo, 2228989240U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_GameCore_Source_GameCore_MeshGenBase_ELod_h_859387015(TEXT("/Script/GameCore"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_GameCore_Source_GameCore_MeshGenBase_ELod_h_3717155024(TEXT("/Script/GameCore"),
 		nullptr, 0,
 		nullptr, 0,
 		Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_GameCore_Source_GameCore_MeshGenBase_ELod_h_Statics::EnumInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_GameCore_Source_GameCore_MeshGenBase_ELod_h_Statics::EnumInfo));

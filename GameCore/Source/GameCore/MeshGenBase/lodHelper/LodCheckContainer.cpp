@@ -6,13 +6,18 @@
 #include "LodCheckContainer.h"
 
 LodCheckContainer::LodCheckContainer(){
-    modifyUpperDistanceLimitFor(ELod::lodNear, 100 * 100);
-    modifyUpperDistanceLimitFor(ELod::lodFar, 300 * 100);
+    int metersLodNear = 50;
+    int metersLodMiddle = 200;
+    int metersLodFar = 300;
+
+    modifyUpperDistanceLimitFor(ELod::lodNear, metersLodNear * 100);
+    modifyUpperDistanceLimitFor(ELod::lodMiddle, metersLodMiddle * 100);
+    modifyUpperDistanceLimitFor(ELod::lodFar, metersLodFar * 100);
 }
 
-LodCheckContainer::LodCheckContainer(FVector &a, FVector &b){
-    modifyUpperDistanceLimitFor(ELod::lodNear, 100 * 100);
-    modifyUpperDistanceLimitFor(ELod::lodFar, 300 * 100);
+LodCheckContainer::LodCheckContainer(FVector &a, FVector &b) : LodCheckContainer(){
+    //modifyUpperDistanceLimitFor(ELod::lodNear, 100 * 100);
+    //modifyUpperDistanceLimitFor(ELod::lodFar, 300 * 100);
 
     checkLod(a, b);
 }

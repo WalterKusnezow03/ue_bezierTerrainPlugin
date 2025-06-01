@@ -57,6 +57,7 @@ public:
 	void plotAllChunks(UWorld *world);
 
 	const int MINCHUNK_HILL = 5; //5x5 min hill size
+	const int MINCHUNK_LARGEHILL = 15; //15x15
 
 	const int CHUNKSTOCREATEATONCE = 10;
 
@@ -240,8 +241,10 @@ private:
 	//new chunk bezier curve
 	void createRandomHeightMapChunkWide(int layers);
 
+
 	terrainHillSetup createRandomHillData();
-	terrainHillSetup createRandomHillData(int sizeX, int sizeY);
+	terrainHillSetup createRandomHillDataLargeScale();
+	terrainHillSetup createRandomHillData(int sizeX, int sizeY, int minHeight);
 	void applyHillData(terrainHillSetup &hillData);
 	void applyHillData(std::vector<terrainHillSetup> &hillDataVec);
 
@@ -293,12 +296,20 @@ private:
 
 	//--road--
 	void createRoads(UWorld *world);
-	void createRoads(MeshData &meshdata, int count);
-	void createRoad(MeshData &meshdata);
+	void createRoads(
+		MeshData &outmeshDataSurface,
+    	MeshData &outmeshDataSides,
+		int count
+	);
+	void createRoad(
+		MeshData &outmeshDataSurface,
+    	MeshData &outmeshDataSides
+	);
 	void processRoad(
 		TVector<FVector2D> &curve,
 		float roadWidth,
-		MeshData &data,
+		MeshData &outmeshDataSurface,
+    	MeshData &outmeshDataSides,
 		float _einheitsValue
 	);
 	FVector make3D(FVector2D &pos, float height);

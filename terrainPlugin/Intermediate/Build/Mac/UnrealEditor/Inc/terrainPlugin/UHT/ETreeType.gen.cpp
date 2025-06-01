@@ -5,7 +5,7 @@
 ===========================================================================*/
 
 #include "UObject/GeneratedCppIncludes.h"
-#include "terrainPlugin/meshgen/foliage/ETreeType.h"
+#include "terrainPlugin/meshgen/foliage/MatrixTree/ETreeType.h"
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 void EmptyLinkFunctionForGeneratedCodeETreeType() {}
 // Cross Module References
@@ -45,7 +45,7 @@ void EmptyLinkFunctionForGeneratedCodeETreeType() {}
 		{ "Edefault.Name", "ETreeType::Edefault" },
 		{ "EPalmBush.Name", "ETreeType::EPalmBush" },
 		{ "EPalmTree.Name", "ETreeType::EPalmTree" },
-		{ "ModuleRelativePath", "meshgen/foliage/ETreeType.h" },
+		{ "ModuleRelativePath", "meshgen/foliage/MatrixTree/ETreeType.h" },
 	};
 #endif
 	const UECodeGen_Private::FEnumParams Z_Construct_UEnum_terrainPlugin_ETreeType_Statics::EnumParams = {
@@ -68,15 +68,15 @@ void EmptyLinkFunctionForGeneratedCodeETreeType() {}
 		}
 		return Z_Registration_Info_UEnum_ETreeType.InnerSingleton;
 	}
-	struct Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_foliage_ETreeType_h_Statics
+	struct Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_foliage_MatrixTree_ETreeType_h_Statics
 	{
 		static const FEnumRegisterCompiledInInfo EnumInfo[];
 	};
-	const FEnumRegisterCompiledInInfo Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_foliage_ETreeType_h_Statics::EnumInfo[] = {
-		{ ETreeType_StaticEnum, TEXT("ETreeType"), &Z_Registration_Info_UEnum_ETreeType, CONSTRUCT_RELOAD_VERSION_INFO(FEnumReloadVersionInfo, 2177445851U) },
+	const FEnumRegisterCompiledInInfo Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_foliage_MatrixTree_ETreeType_h_Statics::EnumInfo[] = {
+		{ ETreeType_StaticEnum, TEXT("ETreeType"), &Z_Registration_Info_UEnum_ETreeType, CONSTRUCT_RELOAD_VERSION_INFO(FEnumReloadVersionInfo, 802346641U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_foliage_ETreeType_h_1874801311(TEXT("/Script/terrainPlugin"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_foliage_MatrixTree_ETreeType_h_3085803680(TEXT("/Script/terrainPlugin"),
 		nullptr, 0,
 		nullptr, 0,
-		Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_foliage_ETreeType_h_Statics::EnumInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_foliage_ETreeType_h_Statics::EnumInfo));
+		Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_foliage_MatrixTree_ETreeType_h_Statics::EnumInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_foliage_MatrixTree_ETreeType_h_Statics::EnumInfo));
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

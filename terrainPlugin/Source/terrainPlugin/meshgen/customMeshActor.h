@@ -14,7 +14,7 @@
 #include "GameCore/MeshGenBase/foliage/ETerrainType.h"
 #include "GameCore/MeshGenBase/customMeshActorBase.h"
 #include "terrainPlugin/meshgen/generation/helper/TerrainChunkSetup.h"
-#include "terrainPlugin/meshgen/foliage/MatrixTree.h"
+#include "terrainPlugin/meshgen/foliage/MatrixTree/MatrixTree.h"
 #include <map>
 #include "customMeshActor.generated.h"
 

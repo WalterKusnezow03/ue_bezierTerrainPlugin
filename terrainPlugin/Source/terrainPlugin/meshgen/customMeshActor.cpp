@@ -7,8 +7,7 @@
 #include "Components/BoxComponent.h"
 #include "KismetProceduralMeshLibrary.h"
 #include "terrainPlugin/meshgen/generation/bezierCurve.h"
-#include "terrainPlugin/meshgen/foliage/MatrixTree.h"
-#include "terrainPlugin/meshgen/foliage/ETreeType.h"
+#include "terrainPlugin/meshgen/foliage/MatrixTree/ETreeType.h"
 #include "GameCore/util/FVectorUtil.h"
 #include "CoreMath/Matrix/MMatrix.h"
 #include "terrainPlugin/meshgen/generation/helper/TerrainChunkSetup.h"
@@ -212,6 +211,8 @@ void AcustomMeshActor::createTerrainFrom2DMap(TerrainChunkSetup &package){
     enableDebug(); //DEBUG WISE FOR MESH DESTRUCTION!
 
     package.createOutPostIfFlagged(GetWorld());
+
+    LISTEN_FOR_LOD_PLAYER = true;
 }
 
 

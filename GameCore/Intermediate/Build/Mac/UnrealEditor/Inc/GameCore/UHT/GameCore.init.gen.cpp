@@ -17,7 +17,7 @@ void EmptyLinkFunctionForGeneratedCodeGameCore_init() {}
 				nullptr,
 				0,
 				PKG_CompiledIn | 0x00000000,
-				0x5969BD3C,
+				0xF52D7313,
 				0x84505C1A,
 				METADATA_PARAMS(nullptr, 0)
 			};
@@ -25,5 +25,5 @@ void EmptyLinkFunctionForGeneratedCodeGameCore_init() {}
 		}
 		return Z_Registration_Info_UPackage__Script_GameCore.OuterSingleton;
 	}
-	static FRegisterCompiledInInfo Z_CompiledInDeferPackage_UPackage__Script_GameCore(Z_Construct_UPackage__Script_GameCore, TEXT("/Script/GameCore"), Z_Registration_Info_UPackage__Script_GameCore, CONSTRUCT_RELOAD_VERSION_INFO(FPackageReloadVersionInfo, 0x5969BD3C, 0x84505C1A));
+	static FRegisterCompiledInInfo Z_CompiledInDeferPackage_UPackage__Script_GameCore(Z_Construct_UPackage__Script_GameCore, TEXT("/Script/GameCore"), Z_Registration_Info_UPackage__Script_GameCore, CONSTRUCT_RELOAD_VERSION_INFO(FPackageReloadVersionInfo, 0xF52D7313, 0x84505C1A));
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
