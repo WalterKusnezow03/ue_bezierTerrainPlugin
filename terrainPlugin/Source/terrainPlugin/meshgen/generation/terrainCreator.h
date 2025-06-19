@@ -8,7 +8,6 @@
 #include "terrainPlugin/meshgen/generation/helper/TerrainChunkSetup.h"
 #include "GameCore/MeshGenBase/foliage/ETerrainType.h"
 #include "GameCore/util/FVectorTouple.h"
-#include "terrainPlugin/meshgen/generation/helper/HeightExtractionData.h"
 #include "GameCore/util/TVector.h"
 
 /**
@@ -100,10 +99,9 @@ private:
 			chunk *right,
 			chunk *topRight);
 
-		float getHeightFor(FVector &a);
-		void getHeightWith(
-			HeightExtractionData &data
-		);
+		bool NextWorldVertexAt(FVector &a, FVector &out);
+
+		
 		FVector position();
 		FVector positionPivotBottomLeft();
 

@@ -205,54 +205,20 @@ std::vector<std::vector<FVector>>& terrainCreator::chunk::readAndMerge(
 /**
  * RAYCAST
  */
-/// @brief get the height for an specific vertex
-/// @param a vertex
-/// @return 
-float terrainCreator::chunk::getHeightFor(FVector &a){
+
+//New
+bool terrainCreator::chunk::NextWorldVertexAt(FVector &a, FVector &out){
     if(isInBounds(a)){
         
-        //int xa = convertToInnerIndex(a.X);
-        //int ya = convertToInnerIndex(a.Y);
-
         int xa = 0;
         int ya = 0;
         convertPositionToInnerIndexClamped(a, xa, ya); //testing needed
 
-        return innerMap.at(xa).at(ya).Z;
+        out = innerMap.at(xa).at(ya) + position();
+        return true;
     }
-    return a.Z;
+    return false;
 }
-
-void terrainCreator::chunk::getHeightWith(
-    HeightExtractionData &data
-){
-    FVector &positionWorld = data.vertexPositionToLookFor();
-    if (isInBounds(positionWorld))
-    {
-        int xa = 0;
-        int ya = 0;
-        convertPositionToInnerIndexClamped(positionWorld, xa, ya);
-
-        FVector &innerMapVertex = innerMap.at(xa).at(ya);
-        FVector vertexWorldSpace = innerMapVertex + position();
-        data.SetupDataAndWeighting(vertexWorldSpace);
-
-        //debug
-        FString s = FString::Printf(
-            TEXT("terrain vertex (%d, %d) at %.2f   xy(%.2f, %.2f)"),
-            xa,
-            ya,
-            vertexWorldSpace.Z,
-            vertexWorldSpace.X,
-            vertexWorldSpace.Y
-        );
-
-        if(false)
-            DebugHelper::showScreenMessage(s);
-    }
-}
-
-
 
 
 
@@ -1293,33 +1259,61 @@ void terrainCreator::plotAllChunks(UWorld * world){
 /// @return return z for the x y position
 float terrainCreator::getHeightFor(FVector &position){
 
-    //spannt automatisch das viereck um den vertex weil die position nach unten geclamped wird
-    //mit modulo
-    //so die idee 
+    
+
+
+    //create pane at world vertecies and perform hittest with FMath.
     TArray<FVector> positionIndices = {
         FVector(position.X, position.Y, 0.0f),
         FVector(position.X + ONEMETER, position.Y, 0.0f),
-        FVector(position.X, position.Y + ONEMETER, 0.0f),
-        FVector(position.X + ONEMETER, position.Y + ONEMETER, 0.0f)
+        FVector(position.X, position.Y + ONEMETER, 0.0f)
+        //,FVector(position.X + ONEMETER, position.Y + ONEMETER, 0.0f)
     };
 
-    // find heights for extraction data
-    TArray<HeightExtractionData> heights;
+    //NEW Collect vertecies
+    TArray<FVector> worldVertecies;
     TArray<terrainCreator::chunk *> chunks = chunksAt(positionIndices);
     for (int i = 0; i < chunks.Num(); i++){
-        terrainCreator::chunk *ptr = chunks[i];
-        FVector &posCurrent = positionIndices[i];
-        if (ptr)
-        {
-            //HeightExtractionData(vertex targeted, target pos for height extraction per weight)
-            HeightExtractionData container(posCurrent, position);
-            ptr->getHeightWith(container);
-            heights.Add(container);
+        FVector newPos;
+        terrainCreator::chunk *current = chunks[i];
+        if(current && i < positionIndices.Num()){
+            if(current->NextWorldVertexAt(positionIndices[i], newPos)){
+                worldVertecies.Add(newPos); //closest vertex added
+            }
         }
     }
 
-    float outheight = HeightExtractionData::findHeight(heights, ONEMETER);
-    return outheight;
+    /*
+    FPlane(va,vb,vc)
+
+    template<typename FReal>  
+    static UE::Math::TVector < FReal > LinePlaneIntersection  
+    (  
+        const UE::Math::TVector < FReal > & Point1,  
+        const UE::Math::TVector < FReal > & Point2,  
+        const UE::Math::TPlane < FReal > & Plane  
+    )
+    */
+
+    //is tested works very well
+    if(worldVertecies.Num() == 3){
+        FVector start = position + FVector(0, 0, 10000);
+        FVector end = position - FVector(0, 0, 10000);
+        FPlane plane(
+            worldVertecies[0],
+            worldVertecies[1],
+            worldVertecies[2]
+        );
+        //DebugHelper::showScreenMessage("plane test", FColor::Orange);
+        FVector hit;
+        if (FMath::SegmentPlaneIntersection(start, end, plane, hit))
+        {
+            //DebugHelper::showScreenMessage("plane test hit", FColor::Orange);
+            //DebugHelper::showLineBetween(worldPointer, hit, hit + FVector(0, 0, 100), FColor::Red, 0.5f);
+            return hit.Z;
+        }
+    }
+    return 0.0f;
 
 }
 
@@ -2078,7 +2072,9 @@ AcustomMeshActor *terrainCreator::getNewMeshActor(){
  * ROAD SECTION
  */
 void terrainCreator::createRoads(UWorld *world){
-    
+
+    return;
+
     if(world){
         AcustomMeshActor *currentActor = getNewMeshActor();
         if (currentActor == nullptr)
