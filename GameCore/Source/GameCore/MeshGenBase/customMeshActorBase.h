@@ -10,6 +10,9 @@
 #include "ELod.h"
 #include "GameCore/util/FVectorTouple.h"
 #include "GameCore/MeshGenBase/foliage/ETerrainType.h"
+
+#include "GameCore/MeshGenBase/lodHelper/ProceduralMeshComponentPair.h"
+
 #include "customMeshActorBase.generated.h"
 
 UCLASS()
@@ -137,12 +140,20 @@ protected:
 	class UProceduralMeshComponent *MeshNoRaycast;
 
 	/// @brief saves mesh data per lod level per material int
-	std::map<int, MeshDataLod> meshLayersLodMap;
+	/*std::map<int, MeshDataLod> meshLayersLodMap;
 	std::map<int, MeshDataLod> meshLayersLodMapNoRaycast;
 
 	std::map<ELod, UProceduralMeshComponent *> meshComponentLodMap;
-	std::map<ELod, UProceduralMeshComponent *> meshComponentLodMapNoRaycast;
-	
+	std::map<ELod, UProceduralMeshComponent *> meshComponentLodMapNoRaycast;*/
+
+
+	//NEW
+	std::map<ELod, ProceduralMeshComponentPair> meshLodContainers;
+
+
+
+
+
 	UProceduralMeshComponent *MeshForLod(ELod lod);
 	UProceduralMeshComponent *MeshNoRaycastForLod(ELod lod);
 	void switchToLod(ELod lod);
@@ -197,7 +208,7 @@ protected:
 
 public:
 	static int layerByMaterialEnum(materialEnum type);
-	static std::vector<materialEnum> materialVector();
+	
 	static std::vector<ELod> lodVector();
 	static std::vector<ETerrainType> terrainVector();
 

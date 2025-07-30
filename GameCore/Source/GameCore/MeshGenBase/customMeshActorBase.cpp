@@ -11,6 +11,7 @@
 #include "GameCore/util/FVectorUtil.h"
 #include "GameCore/PlayerInfo/PlayerInfo.h"
 #include "AssetPlugin/gameStart/assetManager.h"
+#include "GameCore/MeshGenBase/materialHelper/MaterialEnumHelper.h"
 #include "GameCore/MeshGenBase/customMeshActorBase.h"
 
 // Sets default values
@@ -31,27 +32,16 @@ AcustomMeshActorBase::AcustomMeshActorBase()
     MeshNoRaycast->SetupAttachment(RootComponent);
 
     currentLodLevel = ELod::lodNear;
+
+    bool asyncCook = true;
+    if(asyncCook){
+        // Asynchrones Cooking aktivieren
+        Mesh->bUseAsyncCooking = true;
+        MeshNoRaycast->bUseAsyncCooking = true;
+
+    }
 }
 
-std::vector<materialEnum> AcustomMeshActorBase::materialVector(){
-    std::vector<materialEnum> types = {
-        materialEnum::grassMaterial,
-        materialEnum::wallMaterial,
-        materialEnum::glassMaterial,
-        materialEnum::stoneMaterial,
-        materialEnum::sandMaterial,
-        materialEnum::redsandMaterial,
-        materialEnum::treeMaterial,
-        materialEnum::palmLeafMaterial,
-        materialEnum::waterMaterial,
-        materialEnum::snowMaterial,
-        materialEnum::beigeStoneMaterial,
-        materialEnum::prop_alarmBoxMaterial,
-        materialEnum::_texturedMaterial,
-        materialEnum::wingMaterial
-    };
-    return types;
-}
 
 // Called when the game starts or when spawned
 void AcustomMeshActorBase::BeginPlay()
@@ -121,7 +111,7 @@ void AcustomMeshActorBase::createTerrainFrom2DMap(
         ELod lodNow = lods[lodStep];
 
 
-        materialEnum groundMaterial = AcustomMeshActorBase::groundMaterialFor(typeIn);
+        materialEnum groundMaterial = MaterialEnumHelper::groundMaterialFor(typeIn);
         MeshData &grassLayer = findMeshDataReference(groundMaterial, lodNow, true);
         MeshData &stoneLayer = findMeshDataReference(materialEnum::stoneMaterial, lodNow, true);
 
@@ -294,6 +284,13 @@ MeshData &AcustomMeshActorBase::findMeshDataReference(
     ELod lodLevel,
     bool raycastOnLayer
 ){
+    if(meshLodContainers.find(lodLevel) == meshLodContainers.end()){
+        meshLodContainers[lodLevel] = ProceduralMeshComponentPair();
+    }
+    return meshLodContainers[lodLevel].meshDataReference(type, raycastOnLayer);
+
+    /*
+    //deprecated
     int layer = layerByMaterialEnum(type);
     if(raycastOnLayer){
         if(meshLayersLodMap.find(layer) == meshLayersLodMap.end()){
@@ -310,7 +307,7 @@ MeshData &AcustomMeshActorBase::findMeshDataReference(
         MeshDataLod &meshLodLevel = meshLayersLodMapNoRaycast[layer];
         MeshData &data = meshLodLevel.meshDataReference(lodLevel);
         return data;
-    }
+    }*/
 }
 
 
@@ -380,16 +377,25 @@ void AcustomMeshActorBase::changeLodBasedOnPlayerPosition(){
 /// call this method when replacing mesh data or changing the lod!
 void AcustomMeshActorBase::ReloadMeshAndApplyAllMaterials(){
     std::vector<ELod> lodLevels = lodVector();
-    std::vector<materialEnum> materials = AcustomMeshActorBase::materialVector();
+    std::vector<materialEnum> materials = MaterialEnumHelper::materialVector();
     for (int i = 0; i < lodLevels.size(); i++){
         ELod lod = lodLevels[i];
+
+        if(meshLodContainers.find(lod) != meshLodContainers.end()){
+            ProceduralMeshComponentPair &ref = meshLodContainers[lod];
+            for (int j = 0; j < materials.size(); j++){
+                ref.updateMeshAllAndApplyMaterial(materials[j]);
+            }
+        }
+
+        /*
         for (int j = 0; j < materials.size(); j++)
         {
 
             //ReloadMeshForMaterial(materials[i]);
             materialEnum material = materials[j];
             ReloadMeshForMaterialByLod(lod, material);
-        }
+        }*/
     }
     
 }
@@ -423,10 +429,39 @@ void AcustomMeshActorBase::ReloadMeshForMaterial(materialEnum material){
  * LOD REFACTURE SECTION
  */
 void AcustomMeshActorBase::initLodMeshesOnBeginPlay(){
+
+    //override lod near
+    meshLodContainers[ELod::lodNear] = ProceduralMeshComponentPair();
+    meshLodContainers[ELod::lodNear].overrideMeshPair(Mesh, MeshNoRaycast);
+
+    
+
+    // create others
+    std::vector<ELod> lods = lodVector();
+    for (int i = 0; i < lods.size(); i++){
+        ELod iLod = lods[i];
+        if(iLod != ELod::lodNear){
+            meshLodContainers[iLod] = ProceduralMeshComponentPair();
+            ProceduralMeshComponentPair &ref = meshLodContainers[iLod];
+            ref.init(
+                TEXT("ProceduralMeshActor"),
+                i, // index
+                this,
+                RootComponent
+            );
+        }
+    }
+
+
+
+    /*
+    // DEPRECATED
+
+    // lod near already created
     meshComponentLodMap[ELod::lodNear] = Mesh;
     meshComponentLodMapNoRaycast[ELod::lodNear] = MeshNoRaycast;
     
-    // others
+    //create mesh components per lod
     std::vector<ELod> lods = lodVector();
     for (int i = 0; i < lods.size(); i++){
         ELod iLod = lods[i];
@@ -436,8 +471,9 @@ void AcustomMeshActorBase::initLodMeshesOnBeginPlay(){
             if(meshPtr){
                 meshComponentLodMap[iLod] = meshPtr;
                 meshPtr->SetupAttachment(RootComponent);
-                meshPtr->RegisterComponent();
+                meshPtr->RegisterComponent(); //it is not visible otherwise
 
+                //disable collsion if not near mesh
                 if(iLod != ELod::lodNear){
                     meshPtr->SetCollisionEnabled(ECollisionEnabled::NoCollision);
                 }
@@ -450,11 +486,11 @@ void AcustomMeshActorBase::initLodMeshesOnBeginPlay(){
             if(meshNoRaycastPtr){
                 meshComponentLodMapNoRaycast[iLod] = meshNoRaycastPtr;
                 meshNoRaycastPtr->SetupAttachment(RootComponent);
-                meshNoRaycastPtr->RegisterComponent();
+                meshNoRaycastPtr->RegisterComponent(); //it is not visible otherwise
                 meshNoRaycastPtr->SetCollisionEnabled(ECollisionEnabled::NoCollision);
             }
         }
-    }
+    }*/
 }
 
 
@@ -462,15 +498,24 @@ void AcustomMeshActorBase::initLodMeshesOnBeginPlay(){
 
 //new: meshes per lod
 UProceduralMeshComponent *AcustomMeshActorBase::MeshForLod(ELod lod){
+    if(meshLodContainers.find(lod) != meshLodContainers.end()){
+        return meshLodContainers[lod].RaycastMesh();
+    }
+
+    /*
     if(meshComponentLodMap.find(lod) != meshComponentLodMap.end()){
         return meshComponentLodMap[lod];
-    }
+    }*/
     return nullptr;
 }
 UProceduralMeshComponent *AcustomMeshActorBase::MeshNoRaycastForLod(ELod lod){
-    if(meshComponentLodMapNoRaycast.find(lod) != meshComponentLodMapNoRaycast.end()){
+    /*if(meshComponentLodMapNoRaycast.find(lod) != meshComponentLodMapNoRaycast.end()){
         return meshComponentLodMapNoRaycast[lod];
+    }*/
+    if(meshLodContainers.find(lod) != meshLodContainers.end()){
+        return meshLodContainers[lod].noRaycastMesh();
     }
+
     return nullptr;
 }
 
@@ -479,56 +524,80 @@ void AcustomMeshActorBase::switchToLod(ELod lod){
 
     FString lodString;
     if(currentLodLevel == ELod::lodNear)
-        lodString = TEXT("lod near");
+        lodString = TEXT("switch to lod near");
     if(currentLodLevel == ELod::lodMiddle)
-        lodString = TEXT("lod middle");
+        lodString = TEXT("switch to lod middle");
     if(currentLodLevel == ELod::lodFar)
-        lodString = TEXT("lod far");
+        lodString = TEXT("switch to lod far");
 
     DebugHelper::showScreenMessage(lodString);
 
+    for(auto &pair : meshLodContainers){
+        ELod pairLod = pair.first;
+        ProceduralMeshComponentPair &ref = pair.second;
+        bool show = pairLod == lod;
+        ref.setHiddenInGame(!show);
+    }
+
+    /*
+    //deprecated
     for(auto &pair : meshComponentLodMap){
         ELod pairLod = pair.first;
         UProceduralMeshComponent *meshCurrent = pair.second;
-        bool show = pairLod == lod;
         if(meshCurrent != nullptr){
-            meshCurrent->SetVisibility(show);
+            bool show = pairLod == lod;
+            meshCurrent->SetHiddenInGame(!show);
+        }else{
+            DebugHelper::showScreenMessage("mesh was nullptr!");
         }
     }
     for(auto &pair : meshComponentLodMapNoRaycast){
         ELod pairLod = pair.first;
         UProceduralMeshComponent *meshCurrent = pair.second;
-        bool show = pairLod == lod;
         if(meshCurrent != nullptr){
-            meshCurrent->SetVisibility(show);
+            bool show = pairLod == lod;
+            meshCurrent->SetHiddenInGame(!show);
+        }else{
+            DebugHelper::showScreenMessage("mesh was nullptr!");
         }
-    }
+    }*/
 }
 
 
 void AcustomMeshActorBase::ReloadMeshForMaterialByLod(ELod lod, materialEnum material){
 
+
+    if(meshLodContainers.find(lod) == meshLodContainers.end()){
+        meshLodContainers[lod] = ProceduralMeshComponentPair();
+    }
+    return meshLodContainers[lod].updateMeshAll(material);
+
+    /*
     UProceduralMeshComponent *MeshPtr = MeshForLod(lod);
     UProceduralMeshComponent *MeshPtrNoRaycast = MeshNoRaycastForLod(lod);
 
     //raycast
     if(MeshPtr){
-        bool raycastOn = true;
+        //logically sorted in enabled meshes...
+        bool raycastEnabledType = true;
         int layer = layerByMaterialEnum(material);
-        MeshData &meshData = findMeshDataReference(material, lod, raycastOn);
-        updateMesh(*MeshPtr, meshData, layer, raycastOn);
+        MeshData &meshData = findMeshDataReference(material, lod, raycastEnabledType);
+
+        //... but only enable when near.
+        bool raycastAndCollisionOn = (lod == ELod::lodNear);
+        updateMesh(*MeshPtr, meshData, layer, raycastAndCollisionOn);
         ApplyMaterial(MeshPtr, material);
     }
 
 
     //noraycast
     if(MeshPtrNoRaycast){
-        bool raycastOn = false;
+        bool raycastAndCollisionOn = false;
         int layer = layerByMaterialEnum(material);
-        MeshData &meshData = findMeshDataReference(material, lod, raycastOn);
-        updateMesh(*MeshPtrNoRaycast, meshData, layer, raycastOn);
+        MeshData &meshData = findMeshDataReference(material, lod, raycastAndCollisionOn);
+        updateMesh(*MeshPtrNoRaycast, meshData, layer, raycastAndCollisionOn);
         ApplyMaterial(MeshPtrNoRaycast, material);
-    }
+    }*/
 }
 
 /**
@@ -635,13 +704,27 @@ void AcustomMeshActorBase::replaceMeshData(MeshData &meshdata, materialEnum type
 /// @param type 
 /// @param lodLevel 
 void AcustomMeshActorBase::replaceMeshData(MeshData &meshdata, materialEnum type, ELod lodLevel){
+    
+
+    if(meshLodContainers.find(lodLevel) == meshLodContainers.end()){
+        meshLodContainers[lodLevel] = ProceduralMeshComponentPair();
+    }
+
+    meshLodContainers[lodLevel].replaceMeshDataRaycastAndUpdate(
+        meshdata,
+        type
+    );
+    
+    
+    
+    /*
     int layer = layerByMaterialEnum(type);
     if (meshLayersLodMap.find(layer) == meshLayersLodMap.end())
     {
         meshLayersLodMap[layer] = MeshDataLod();
     }
     MeshDataLod &meshLodLevel = meshLayersLodMap[layer];
-    meshLodLevel.replace(lodLevel, meshdata);
+    meshLodLevel.replace(lodLevel, meshdata);*/
 }
 
 
@@ -703,7 +786,11 @@ void AcustomMeshActorBase::ApplyMaterial(
 void AcustomMeshActorBase::ApplyMaterial(
     materialEnum type
 ){
-    ApplyMaterial(Mesh, type);
+    if(meshLodContainers.find(ELod::lodNear) != meshLodContainers.end()){
+        meshLodContainers[ELod::lodNear].ApplyMaterialRaycast(type);
+    }
+
+    //ApplyMaterial(Mesh, type);
 }
 
 
@@ -712,7 +799,13 @@ void AcustomMeshActorBase::ApplyMaterial(
 void AcustomMeshActorBase::ApplyMaterialNoRaycastLayer(
     materialEnum type
 ){
-    ApplyMaterial(MeshNoRaycast, type);
+    //ApplyMaterial(MeshNoRaycast, type);
+
+
+    if(meshLodContainers.find(ELod::lodNear) != meshLodContainers.end()){
+        meshLodContainers[ELod::lodNear].ApplyMaterialNoRaycast(type);
+    }
+
 }
 
 
@@ -723,7 +816,7 @@ void AcustomMeshActorBase::ApplyMaterialNoRaycastLayer(
 /// @param type type of material
 /// @return int layer index
 int AcustomMeshActorBase::layerByMaterialEnum(materialEnum type){
-    std::vector<materialEnum> types = AcustomMeshActorBase::materialVector();
+    std::vector<materialEnum> types = MaterialEnumHelper::materialVector();
     for (int i = 0; i < types.size(); i++)
     {
         if(type == types[i]){
@@ -735,22 +828,6 @@ int AcustomMeshActorBase::layerByMaterialEnum(materialEnum type){
 
 
 
-materialEnum AcustomMeshActorBase::groundMaterialFor(ETerrainType terraintype){
-    if(terraintype == ETerrainType::EOcean){
-        return materialEnum::sandMaterial;
-    }
-    if(terraintype == ETerrainType::EDesert){
-        return materialEnum::redsandMaterial;
-    }
-    if(terraintype == ETerrainType::ESnowHill){
-        return materialEnum::snowMaterial;
-    }
-    if(terraintype == ETerrainType::EDesertForest){
-        return materialEnum::beigeStoneMaterial;
-    }
-
-    return materialEnum::grassMaterial;
-}
 
 /**
  * 

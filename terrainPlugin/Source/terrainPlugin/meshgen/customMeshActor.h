@@ -108,7 +108,7 @@ protected:
 	MatrixTree tree;
 
 	bool DEBUG_enabled = false;
-	void debugThis(FVector &hitpoint);
+	void groundReactionToHitWorld(FVector &hitpoint);
 
 	void createDebreeOnDamage(FVector &worldhit);
 

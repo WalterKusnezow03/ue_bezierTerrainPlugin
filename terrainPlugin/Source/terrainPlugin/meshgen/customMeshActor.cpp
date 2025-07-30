@@ -15,6 +15,7 @@
 #include "GameCore/EntityGC/trackedActors.h"
 #include "GameCore/DebugHelper.h"
 #include "GameCore/EntityGC/EntityManagerBase.h"
+#include "GameCore/MeshGenBase/materialHelper/MaterialEnumHelper.h"
 #include "customMeshActor.h"
 
 
@@ -110,7 +111,7 @@ void AcustomMeshActor::takedamage(int d, FVector &hitpoint){
 
 
 void AcustomMeshActor::takedamage(int d, FVector &hitpoint, bool surpressed){
-    debugThis(hitpoint);
+    groundReactionToHitWorld(hitpoint);
     glassreactionToHitWorld(hitpoint); 
     takedamage(d, surpressed);
 
@@ -130,8 +131,8 @@ void AcustomMeshActor::createDebreeOnDamage(FVector &worldhit){
     //iterate all layers, if hit: create debree
     
 
-    //std::map<int, MeshDataLod> meshLayersLodMap;
-    std::vector<materialEnum> materials = materialVector();
+    
+    std::vector<materialEnum> materials = MaterialEnumHelper::materialVector();
     for (int i = 0; i < materials.size(); i++){
         MeshData &meshdata = findMeshDataReference(
             materials[i],
@@ -414,7 +415,7 @@ void AcustomMeshActor::createTreeAndSaveToMesh(FVector &location){
 void AcustomMeshActor::splitIntoAllTriangles(){
     
     std::vector<MeshDataLod> newLodMeshes;
-    std::vector<materialEnum> materials = materialVector();
+    std::vector<materialEnum> materials = MaterialEnumHelper::materialVector();
     std::vector<bool> raycastFlags = {true, false};
 
     FVector actorLocation = GetActorLocation();
@@ -507,7 +508,7 @@ void AcustomMeshActor::enableDebug(){
 
 
 
-void AcustomMeshActor::debugThis(FVector &hitpoint){
+void AcustomMeshActor::groundReactionToHitWorld(FVector &hitpoint){
     if(!DEBUG_enabled){
         return;
     }

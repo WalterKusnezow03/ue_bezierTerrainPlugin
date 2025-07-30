@@ -11,7 +11,7 @@ void UVMapper2D::generateUVBuffer(
     normal = normal.GetSafeNormal();
     FRotator rotation = normal.Rotation();
 
-    rotation.Pitch += -90.0f; //sodass Z = 0.0f wird, xy pane only
+    rotation.Pitch += -90.0f; //sodass Z = 1.0f wird, xy pane only
 
     FMatrix RotationMatrix = FRotationMatrix(rotation);
     FMatrix InverseMatrix = RotationMatrix.Inverse();

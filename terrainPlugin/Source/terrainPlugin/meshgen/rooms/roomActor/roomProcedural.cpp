@@ -711,12 +711,12 @@ void AroomProcedural::sortVectorsBetween(FVector &A, FVector &B, std::vector<FVe
 	});
 
 	//debug print sorted vector
-	DebugHelper::logMessage("debug vector sorted: ");
+	//DebugHelper::logMessage("debug vector sorted: ");
 	for (int i = 0; i < output.size(); i++)
 	{
 		int number = vectorIsXDirection ? output.at(i).X : output.at(i).Y;
 		FString s = FString::Printf(TEXT("debug vector sorted %d"), number);
-		DebugHelper::logMessage(s); // sieht gut aus
+		//DebugHelper::logMessage(s); // sieht gut aus
 	}
 }
 
