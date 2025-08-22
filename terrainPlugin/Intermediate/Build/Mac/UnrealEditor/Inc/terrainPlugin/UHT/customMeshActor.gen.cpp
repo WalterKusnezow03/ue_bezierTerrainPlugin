@@ -10,7 +10,6 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 void EmptyLinkFunctionForGeneratedCodecustomMeshActor() {}
 // Cross Module References
 	GAMECORE_API UClass* Z_Construct_UClass_AcustomMeshActorBase();
-	GAMECORE_API UClass* Z_Construct_UClass_UDamageinterface_NoRegister();
 	TERRAINPLUGIN_API UClass* Z_Construct_UClass_AcustomMeshActor();
 	TERRAINPLUGIN_API UClass* Z_Construct_UClass_AcustomMeshActor_NoRegister();
 	UPackage* Z_Construct_UPackage__Script_terrainPlugin();
@@ -29,7 +28,6 @@ void EmptyLinkFunctionForGeneratedCodecustomMeshActor() {}
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam Class_MetaDataParams[];
 #endif
-		static const UECodeGen_Private::FImplementedInterfaceParams InterfaceParams[];
 		static const FCppClassTypeInfoStatic StaticCppClassTypeInfo;
 		static const UECodeGen_Private::FClassParams ClassParams;
 	};
@@ -43,9 +41,6 @@ void EmptyLinkFunctionForGeneratedCodecustomMeshActor() {}
 		{ "ModuleRelativePath", "meshgen/customMeshActor.h" },
 	};
 #endif
-		const UECodeGen_Private::FImplementedInterfaceParams Z_Construct_UClass_AcustomMeshActor_Statics::InterfaceParams[] = {
-			{ Z_Construct_UClass_UDamageinterface_NoRegister, (int32)VTABLE_OFFSET(AcustomMeshActor, IDamageinterface), false },  // 2638534275
-		};
 	const FCppClassTypeInfoStatic Z_Construct_UClass_AcustomMeshActor_Statics::StaticCppClassTypeInfo = {
 		TCppClassTypeTraits<AcustomMeshActor>::IsAbstract,
 	};
@@ -56,11 +51,11 @@ void EmptyLinkFunctionForGeneratedCodecustomMeshActor() {}
 		DependentSingletons,
 		nullptr,
 		nullptr,
-		InterfaceParams,
+		nullptr,
 		UE_ARRAY_COUNT(DependentSingletons),
 		0,
 		0,
-		UE_ARRAY_COUNT(InterfaceParams),
+		0,
 		0x009000A4u,
 		METADATA_PARAMS(Z_Construct_UClass_AcustomMeshActor_Statics::Class_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UClass_AcustomMeshActor_Statics::Class_MetaDataParams))
 	};
@@ -83,9 +78,9 @@ void EmptyLinkFunctionForGeneratedCodecustomMeshActor() {}
 		static const FClassRegisterCompiledInInfo ClassInfo[];
 	};
 	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_customMeshActor_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_AcustomMeshActor, AcustomMeshActor::StaticClass, TEXT("AcustomMeshActor"), &Z_Registration_Info_UClass_AcustomMeshActor, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AcustomMeshActor), 3794178636U) },
+		{ Z_Construct_UClass_AcustomMeshActor, AcustomMeshActor::StaticClass, TEXT("AcustomMeshActor"), &Z_Registration_Info_UClass_AcustomMeshActor, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AcustomMeshActor), 2303813384U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_customMeshActor_h_534868452(TEXT("/Script/terrainPlugin"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_customMeshActor_h_4206040450(TEXT("/Script/terrainPlugin"),
 		Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_customMeshActor_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_customMeshActor_h_Statics::ClassInfo),
 		nullptr, 0,
 		nullptr, 0);

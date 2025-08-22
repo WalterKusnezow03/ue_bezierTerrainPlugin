@@ -74,6 +74,18 @@ void FVectorShape::push_back(std::vector<FVector> &other){
     }
 }
 
+void FVectorShape::createRefectionAtAxis(float x, float y, float z){
+    //flip shape for copy
+    MMatrix flip;
+    flip.scale(x,y,z);
+    FVectorShape copy = *this;
+    copy.moveVerteciesWith(flip);
+    push_back(copy); 
+}
+
+
+
+
 
 /// @brief Auto joins the previous vertecies added without bricking the illumnation / shading
 /// @param other mesh data to append smoothley to

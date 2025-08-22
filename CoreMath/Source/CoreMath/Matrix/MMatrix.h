@@ -42,8 +42,16 @@ public:
 	void rollRad(float angle);
 	void yawRad(float angle);
 
+	/// @brief add a roll angle, will multiply internally with a new rotation matrix!
+	/// @param angle 
 	void rollRadAdd(float angle);
+
+	/// @brief add a pitch angle, will multiply internally with a new rotation matrix!
+	/// @param angle 
 	void pitchRadAdd(float angle);
+
+	/// @brief add a yaw angle, will multiply internally with a new rotation matrix!
+	/// @param angle 
 	void yawRadAdd(float angle);
 
 	void scaleUniform(float value);
@@ -65,12 +73,33 @@ public:
 		bool yawConstraint90
 	);
 
+	//debug method
+	static MMatrix createRotatorFrom(
+		FVector &other,
+		FVector2D XAxis,
+		FVector2D ZAxis,
+		bool yawConstraint90,
+		float &outYaw, //debug
+		float &outPitch //debug
+	);
+
+	//new method for choosing roll instead of yaw
+	static MMatrix createRotatorFrom(
+		FVector &other,
+		FVector2D XAxis,
+		FVector2D ZAxis,
+		bool yawConstraint90,
+		FVector &localFoward
+	);
+
 	void resetRotation();
 
 	void rotate(MMatrix &other);
 	void setRotation(FRotator &other);
 	void setRotation(MMatrix &other);
 	void setRotation(FVector &other);
+
+	void setRotation(std::vector<float> &values);
 
 	MMatrix createInverse();
 
@@ -89,6 +118,11 @@ public:
 	static float signedAngleRadBetween(FVector2D &a, FVector2D &b);
 
 	void transpose();
+	void transposeRotation();
+	MMatrix transposedRotation();
+	MMatrix invertedTranslation();
+
+	std::vector<float> CopyRotation();
 
 private:
 	//16 langes array für die 4x4 matrix
@@ -120,5 +154,10 @@ private:
 	void scaleRow(int row, float scale);
 	void minusForRow(int row, int otherRow, float faktor);
 
-	
+
+
+
+	//extraction rotation special
+	static bool useRoll(float dotProduct);
+	static float DotProduct2D(FVector &a, FVector &b);
 };

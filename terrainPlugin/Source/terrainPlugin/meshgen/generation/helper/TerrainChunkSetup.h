@@ -4,6 +4,7 @@
 #include "GameCore/util/FVectorTouple.h"
 #include "GameCore/MeshGenBase/foliage/ETerrainType.h"
 
+/// @brief set up package provided by terrain creator: chunk setup inside chunk parser
 class TERRAINPLUGIN_API TerrainChunkSetup{
 
 public:
@@ -12,7 +13,8 @@ public:
         ETerrainType typeIn,
         bool createOutpostIn,
         FVector &outpostLocationIn,
-        bool hasTrees
+        bool hasTrees,
+        bool bCreateBuildings
     );
 
     TerrainChunkSetup(TerrainChunkSetup &other);
@@ -24,6 +26,12 @@ public:
     bool createTrees();
     ETerrainType getTerrainType();
     float treeDensitySkalar();
+
+    //outpost creating needed
+    bool OutPostFlagged();
+
+    //building creation needed
+    bool BuildingFlagged();
 
     void createOutPostIfFlagged(UWorld *world);
 
@@ -42,6 +50,7 @@ private:
     ETerrainType savedTerrainType = ETerrainType::ETropical;
     bool createOutpost = false;
     bool blockTrees = false;
+    bool createBuilding = false;
 
     FVector outpostLocation;
 };

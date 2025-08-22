@@ -323,17 +323,7 @@ void AcustomWaterActor::refreshMesh(
 /**
  * -- damage interaction --
  */
-void AcustomWaterActor::setTeam(teamEnum t){
-    teamSaved = t;
-}
 
-teamEnum AcustomWaterActor::getTeam(){
-    return teamSaved;
-}
-
-void AcustomWaterActor::takedamage(int d){
-    //nicht reagieren
-}
 
 void AcustomWaterActor::takedamage(int d, FVector &hitpoint){
     //DebugHelper::logMessage("water damage");
@@ -341,9 +331,6 @@ void AcustomWaterActor::takedamage(int d, FVector &hitpoint){
     addNewRipple(hitpoint);
 }
 
-void AcustomWaterActor::takedamage(int d, bool surpressed){
-    takedamage(d);
-}
 void AcustomWaterActor::takedamage(int d, FVector &hitpoint, bool surpressed){
     takedamage(d, hitpoint);
 }

@@ -15,7 +15,32 @@
  * and keeping code clean when applying meshes and handling more layers
  */
 class GAMECORE_API MeshData
-{
+{	
+	// ------ SAVE TO STORAGE SECTION -------
+public:
+
+
+private:
+	int internalLayerId = 0;
+
+	// ------ MEMBER VARIABLES NEEDED FOR COPY CONSTRUCTOR ------
+protected:
+	//mesh data
+	TArray<FVector> vertecies;
+	TArray<int32> triangles;
+	TArray<FVector> normals;
+	TArray<FProcMeshTangent> Tangents; 
+    TArray<FColor> VertexColors;
+	TArray<FVector2D> UV0; //Uv generation custom planar mapping not implemented yet, to come
+
+	//bound data needed for hittesting
+	BoundingBoxSimple bounds;
+
+	materialEnum materialPreferred = materialEnum::wallMaterial;
+
+
+
+	// ------ CLASS SECTION --------
 public:
 	MeshData();
 	virtual ~MeshData(); //automatischer aufruf aus subklasse
@@ -164,16 +189,7 @@ protected:
 		TArray<int32> &trianglesOutput
 	);
 
-	//mesh data i understand
-	TArray<FVector> vertecies;
-	TArray<int32> triangles;
-	TArray<FVector> normals;
-
-	TArray<FProcMeshTangent> Tangents; 
-    TArray<FColor> VertexColors;
-
-	//what ever these are
-	TArray<FVector2D> UV0;
+	
 
 	std::vector<int> findClosestIndexWithVertexDuplicatesTo(FVector &vertex);
 	int findClosestIndexTo(FVector &vertex);
@@ -235,12 +251,8 @@ public:
 protected:
 	void findConnectedVerteciesTo(int index, std::vector<int> &output);
 
-	materialEnum materialPreferred = materialEnum::wallMaterial;
 
 
-
-	//bound
-	BoundingBoxSimple bounds;
 
 	void updateBoundsIfNeeded();
 	void updateBoundsIfNeeded(FVector &other);

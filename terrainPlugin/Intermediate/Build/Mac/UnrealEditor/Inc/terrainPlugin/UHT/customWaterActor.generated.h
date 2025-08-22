@@ -24,8 +24,7 @@ private: \
 	friend struct Z_Construct_UClass_AcustomWaterActor_Statics; \
 public: \
 	DECLARE_CLASS(AcustomWaterActor, AcustomMeshActorBase, COMPILED_IN_FLAGS(0 | CLASS_Config), CASTCLASS_None, TEXT("/Script/terrainPlugin"), NO_API) \
-	DECLARE_SERIALIZER(AcustomWaterActor) \
-	virtual UObject* _getUObject() const override { return const_cast<AcustomWaterActor*>(this); }
+	DECLARE_SERIALIZER(AcustomWaterActor)
 
 
 #define FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_water_customWaterActor_h_17_INCLASS \
@@ -34,8 +33,7 @@ private: \
 	friend struct Z_Construct_UClass_AcustomWaterActor_Statics; \
 public: \
 	DECLARE_CLASS(AcustomWaterActor, AcustomMeshActorBase, COMPILED_IN_FLAGS(0 | CLASS_Config), CASTCLASS_None, TEXT("/Script/terrainPlugin"), NO_API) \
-	DECLARE_SERIALIZER(AcustomWaterActor) \
-	virtual UObject* _getUObject() const override { return const_cast<AcustomWaterActor*>(this); }
+	DECLARE_SERIALIZER(AcustomWaterActor)
 
 
 #define FID_UnrealProjects_p2_Plugins_terrainPlugin_Source_terrainPlugin_meshgen_water_customWaterActor_h_17_STANDARD_CONSTRUCTORS \

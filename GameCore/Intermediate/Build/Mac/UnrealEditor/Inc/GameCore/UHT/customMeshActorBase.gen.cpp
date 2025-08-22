@@ -12,6 +12,7 @@ void EmptyLinkFunctionForGeneratedCodecustomMeshActorBase() {}
 	ENGINE_API UClass* Z_Construct_UClass_AActor();
 	GAMECORE_API UClass* Z_Construct_UClass_AcustomMeshActorBase();
 	GAMECORE_API UClass* Z_Construct_UClass_AcustomMeshActorBase_NoRegister();
+	GAMECORE_API UClass* Z_Construct_UClass_UDamageinterface_NoRegister();
 	PROCEDURALMESHCOMPONENT_API UClass* Z_Construct_UClass_UProceduralMeshComponent_NoRegister();
 	UPackage* Z_Construct_UPackage__Script_GameCore();
 // End Cross Module References
@@ -38,6 +39,7 @@ void EmptyLinkFunctionForGeneratedCodecustomMeshActorBase() {}
 #endif
 		static const UECodeGen_Private::FObjectPropertyParams NewProp_MeshNoRaycast;
 		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+		static const UECodeGen_Private::FImplementedInterfaceParams InterfaceParams[];
 		static const FCppClassTypeInfoStatic StaticCppClassTypeInfo;
 		static const UECodeGen_Private::FClassParams ClassParams;
 	};
@@ -73,6 +75,9 @@ void EmptyLinkFunctionForGeneratedCodecustomMeshActorBase() {}
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AcustomMeshActorBase_Statics::NewProp_Mesh,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AcustomMeshActorBase_Statics::NewProp_MeshNoRaycast,
 	};
+		const UECodeGen_Private::FImplementedInterfaceParams Z_Construct_UClass_AcustomMeshActorBase_Statics::InterfaceParams[] = {
+			{ Z_Construct_UClass_UDamageinterface_NoRegister, (int32)VTABLE_OFFSET(AcustomMeshActorBase, IDamageinterface), false },  // 2638534275
+		};
 	const FCppClassTypeInfoStatic Z_Construct_UClass_AcustomMeshActorBase_Statics::StaticCppClassTypeInfo = {
 		TCppClassTypeTraits<AcustomMeshActorBase>::IsAbstract,
 	};
@@ -83,11 +88,11 @@ void EmptyLinkFunctionForGeneratedCodecustomMeshActorBase() {}
 		DependentSingletons,
 		nullptr,
 		Z_Construct_UClass_AcustomMeshActorBase_Statics::PropPointers,
-		nullptr,
+		InterfaceParams,
 		UE_ARRAY_COUNT(DependentSingletons),
 		0,
 		UE_ARRAY_COUNT(Z_Construct_UClass_AcustomMeshActorBase_Statics::PropPointers),
-		0,
+		UE_ARRAY_COUNT(InterfaceParams),
 		0x009000A4u,
 		METADATA_PARAMS(Z_Construct_UClass_AcustomMeshActorBase_Statics::Class_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UClass_AcustomMeshActorBase_Statics::Class_MetaDataParams))
 	};
@@ -110,9 +115,9 @@ void EmptyLinkFunctionForGeneratedCodecustomMeshActorBase() {}
 		static const FClassRegisterCompiledInInfo ClassInfo[];
 	};
 	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_GameCore_Source_GameCore_MeshGenBase_customMeshActorBase_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_AcustomMeshActorBase, AcustomMeshActorBase::StaticClass, TEXT("AcustomMeshActorBase"), &Z_Registration_Info_UClass_AcustomMeshActorBase, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AcustomMeshActorBase), 337468243U) },
+		{ Z_Construct_UClass_AcustomMeshActorBase, AcustomMeshActorBase::StaticClass, TEXT("AcustomMeshActorBase"), &Z_Registration_Info_UClass_AcustomMeshActorBase, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AcustomMeshActorBase), 1065283441U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_GameCore_Source_GameCore_MeshGenBase_customMeshActorBase_h_3216493822(TEXT("/Script/GameCore"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_GameCore_Source_GameCore_MeshGenBase_customMeshActorBase_h_390476143(TEXT("/Script/GameCore"),
 		Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_GameCore_Source_GameCore_MeshGenBase_customMeshActorBase_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_UnrealProjects_p2_Plugins_GameCore_Source_GameCore_MeshGenBase_customMeshActorBase_h_Statics::ClassInfo),
 		nullptr, 0,
 		nullptr, 0);

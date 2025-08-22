@@ -10,6 +10,9 @@ class GAMECORE_API worldLevelBase {
 public:
     static void addOutpostAt(FVector &location);
 
+    static bool DebugSkelletonRecordMode(){
+        return false;
+    }
 
 protected:
     static TArray<FVector> outpostsToCreate;

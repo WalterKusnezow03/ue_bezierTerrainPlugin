@@ -42,7 +42,8 @@ public class terrainPlugin : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"ProceduralMeshComponent"
+				"ProceduralMeshComponent",
+				"StoragePlugin"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

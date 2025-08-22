@@ -12,6 +12,22 @@ BoundingBoxSimple::BoundingBoxSimple(TArray<FVector> &vertecies){
     updateBoundsIfNeeded(vertecies);
 }
 
+BoundingBoxSimple &BoundingBoxSimple::operator=(const BoundingBoxSimple &other){
+    if(this != &other){
+        bottomLeftNear = other.bottomLeftNear;
+        topRightLeft = other.topRightLeft;
+    }
+    return *this;
+}
+
+BoundingBoxSimple::BoundingBoxSimple(const BoundingBoxSimple &other){
+    if(this != &other){
+        *this = other;
+    }
+}
+
+
+
 BoundingBoxSimple::~BoundingBoxSimple(){
 
 }

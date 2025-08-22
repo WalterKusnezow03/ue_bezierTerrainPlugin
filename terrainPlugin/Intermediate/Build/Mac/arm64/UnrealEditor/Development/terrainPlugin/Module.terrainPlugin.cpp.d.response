@@ -275,6 +275,8 @@
 -I"../Plugins/Runtime/ProceduralMeshComponent/Intermediate/Build/Mac/UnrealEditor/Inc/ProceduralMeshComponent/UHT"
 -I"../Plugins/Runtime/ProceduralMeshComponent/Source/ProceduralMeshComponent/Public"
 -I"../Plugins/Runtime/ProceduralMeshComponent/Source"
+-I"/Users/walterk/Documents/UnrealProjects/p2/Plugins/StoragePlugin/Source"
+-I"/Users/walterk/Documents/UnrealProjects/p2/Plugins/StoragePlugin/Source/StoragePlugin/Public"
 -I"/Users/walterk/Documents/UnrealProjects/p2/Plugins/terrainPlugin/Intermediate/Build/Mac/UnrealEditor/Inc/terrainPlugin/UHT"
 -I"/Users/walterk/Documents/UnrealProjects/p2/Plugins/terrainPlugin/Source"
 -I"/Users/walterk/Documents/UnrealProjects/p2/Plugins/terrainPlugin/Source/terrainPlugin/Public"

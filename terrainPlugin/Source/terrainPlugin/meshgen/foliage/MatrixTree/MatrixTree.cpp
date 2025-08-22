@@ -42,12 +42,12 @@ void MatrixTree::loadProperties(){
 	);
     
     */
-    TreeProperties palmProperty(100, ETreeType::EPalmTree, ETerrainType::ETropical, 8, 8, 3);
+    TreeProperties palmProperty(100, ETreeType::EPalmTree, ETerrainType::ETropical, 6, 8, 3);
     palmProperty.setTargetedMaterials(materialEnum::treeMaterial, materialEnum::palmLeafMaterial);
     palmProperty.addTerrainType(ETerrainType::EDesert); // additional types for more than one terrain
     addPropertyToMap(palmProperty);
 
-    TreeProperties oakProperty(200, ETreeType::Edefault, ETerrainType::ETropical, 8, 3, 3);
+    TreeProperties oakProperty(200, ETreeType::Edefault, ETerrainType::ETropical, 6, 3, 3);
     oakProperty.addTerrainType(ETerrainType::EForest);
     oakProperty.addTerrainType(ETerrainType::EDesertForest);
     oakProperty.setTargetedMaterials(materialEnum::treeMaterial, materialEnum::palmLeafMaterial);
@@ -56,7 +56,7 @@ void MatrixTree::loadProperties(){
     defaultProperty = oakProperty;
     addPropertyToMap(oakProperty);
 
-    TreeProperties palmBush(100, ETreeType::EPalmBush, ETerrainType::ETropical, 8, 2, 1);
+    TreeProperties palmBush(100, ETreeType::EPalmBush, ETerrainType::ETropical, 5, 2, 1);
     palmBush.setTargetedMaterials(materialEnum::treeMaterial, materialEnum::palmLeafMaterial);
     addPropertyToMap(palmBush);
 
@@ -393,7 +393,7 @@ MMatrix MatrixTree::randomRotator(){
     MMatrix rotator;
     rotator.rollRadAdd(MMatrix::degToRadian(FVectorUtil::randomNumber(-90,90)));
     rotator.pitchRadAdd(MMatrix::degToRadian(FVectorUtil::randomNumber(-90,90)));
-    rotator.yawRadAdd(MMatrix::degToRadian(FVectorUtil::randomNumber(-90,90)));
+    rotator.yawRadAdd(MMatrix::degToRadian(FVectorUtil::randomNumber(-180,180)));
     return rotator;
 }
 
@@ -401,7 +401,7 @@ MMatrix MatrixTree::randomRotator(int lower, int heigher){
     MMatrix rotator;
     rotator.rollRadAdd(MMatrix::degToRadian(FVectorUtil::randomNumber(lower,heigher)));
     rotator.pitchRadAdd(MMatrix::degToRadian(FVectorUtil::randomNumber(lower,heigher)));
-    rotator.yawRadAdd(MMatrix::degToRadian(FVectorUtil::randomNumber(lower,heigher)));
+    rotator.yawRadAdd(MMatrix::degToRadian(FVectorUtil::randomNumber(0,360)));
     return rotator;
 }
 
@@ -423,9 +423,8 @@ void MatrixTree::generateLeafs(TreeProperties &properties){
 }
 
 void MatrixTree::generateLeaf(MMatrix &offset){
-    //M = T * R <-- lese richtung --
-    MMatrix rotation = randomRotator(-90, 90);
-    MMatrix offsetFinal = offset * rotation;
+    MMatrix rotation = randomRotator();
+    MMatrix offsetFinal = offset * rotation; //M = T * R <-- lese richtung --
 
     FVectorShape shape = leafShapeByEnum(treeType);
     shape.moveVerteciesWith(offsetFinal);
@@ -633,15 +632,9 @@ void MatrixTree::generateLeafShape(ETreeType type){
         oneSide.push_back(FVector(-10, 0, 20));
         oneSide.push_back(FVector(-5, 0, 30));
         oneSide.push_back(FVector(0, 0, 35));
-        output = oneSide; //copy
-        
-        //flip shape for copy
-        MMatrix flip;
-        flip.scale(-1.0f, 1.0f, 1.0f);
-        oneSide.moveVerteciesWith(flip);
 
-        //add flipped
-        output.push_back(oneSide); 
+        output = oneSide; //copy
+        output.createRefectionAtAxis(-1.0f, 1.0f, 1.0f);
         MMatrix scaleUp;
 
         int scaleUpRand = FVectorUtil::randomNumber(6, 20);
@@ -660,7 +653,12 @@ void MatrixTree::generateLeafShape(ETreeType type){
         oneSide.push_back(FVector(0, 0, 70));
         output = oneSide;
         
+
+
+
+
         //flip shape for copy
+        
         MMatrix flip;
         flip.scale(-1.0f, 1.0f, 1.0f);
         oneSide.moveVerteciesWith(flip);
@@ -668,17 +666,19 @@ void MatrixTree::generateLeafShape(ETreeType type){
         //rotate vertecies to create folding leaf
         MMatrix rotateLeft;
         rotateLeft.yawRadAdd(MMatrix::degToRadian(40));
+        output.moveVerteciesWith(rotateLeft);
+        
         MMatrix rotateRight;
         rotateRight.yawRadAdd(MMatrix::degToRadian(-40));
-        output.moveVerteciesWith(rotateLeft);
         oneSide.moveVerteciesWith(rotateRight);
 
         //merge both leafs
-        output.push_back(oneSide); 
+        output.push_back(oneSide);
 
 
         MMatrix scaleUp;
-        scaleUp.scaleUniform(4.0f);
+        int scaleUpRand = FVectorUtil::randomNumber(1, 3);
+        scaleUp.scaleUniform(scaleUpRand);
         output.moveVerteciesWith(scaleUp);
     }
     leafMap[type] = output;

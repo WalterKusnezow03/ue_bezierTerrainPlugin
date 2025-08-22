@@ -286,6 +286,8 @@
 -I"/Users/walterk/Documents/UnrealProjects/p2/Plugins/AssetPlugin/Source/AssetPlugin/Public"
 -I"/Users/walterk/Documents/UnrealProjects/p2/Plugins/CoreMath/Source"
 -I"/Users/walterk/Documents/UnrealProjects/p2/Plugins/CoreMath/Source/CoreMath/Public"
+-I"/Users/walterk/Documents/UnrealProjects/p2/Plugins/PathFinder/Source"
+-I"/Users/walterk/Documents/UnrealProjects/p2/Plugins/PathFinder/Source/PathFinder/Public"
 -isystem"ThirdParty/mimalloc/include"
 -isystem"ThirdParty/LibTiff/Source/Mac"
 -isystem"ThirdParty/LibTiff/Source"

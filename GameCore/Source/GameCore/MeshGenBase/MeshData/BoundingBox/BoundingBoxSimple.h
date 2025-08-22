@@ -13,6 +13,9 @@ public:
     BoundingBoxSimple(TArray<FVector3f> &vertecies);
     ~BoundingBoxSimple();
 
+    BoundingBoxSimple &operator=(const BoundingBoxSimple &other);
+    BoundingBoxSimple(const BoundingBoxSimple &other);
+
     FVector bottomLeftNearVertex();
     FVector topRightLeftVertex();
 

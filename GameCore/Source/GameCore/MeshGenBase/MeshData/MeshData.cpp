@@ -54,6 +54,21 @@ MeshData& MeshData::operator=(const MeshData &other){
     if(&other != this){
         clearMesh(); //clear mesh data before adding any data!
 
+        
+        //broken?
+        
+        vertecies = other.vertecies;
+        triangles = other.triangles;
+        normals = other.normals;
+        UV0 = other.UV0;
+        Tangents = other.Tangents;
+        VertexColors = other.VertexColors;
+
+
+        materialPreferred = other.materialPreferred;
+        bounds = other.bounds; //very important for mesh push in
+
+        /*
         for (int i = 0; i < other.vertecies.Num(); i++){
             vertecies.Add(other.vertecies[i]);
         }
@@ -72,8 +87,10 @@ MeshData& MeshData::operator=(const MeshData &other){
         for (int i = 0; i < other.VertexColors.Num(); i++){
             VertexColors.Add(other.VertexColors[i]);
         }
+        */
+        
 
-        materialPreferred = other.materialPreferred;
+        
     }
     return *this;
 }
@@ -1322,6 +1339,7 @@ bool MeshData::contains(std::vector<int> &ref, int index){
  */
 void MeshData::pushInwards(FVector &location, int radius, FVector scaleddirection){
     if(vertecies.Num() == 0){
+        DebugHelper::logMessage("MeshData PushInwards: Empty Vertex Count");
         return;
     }
 
@@ -1330,6 +1348,7 @@ void MeshData::pushInwards(FVector &location, int radius, FVector scaleddirectio
     std::vector<int> connected;
     int index = findClosestIndexTo(location);
     if(!isValidVertexIndex(index)){
+        DebugHelper::logMessage("MeshData PushInwards: No Index Found Closest");
         return;
     }
     FVector foundLocation = vertecies[index];
@@ -1355,6 +1374,7 @@ void MeshData::pushInwards(FVector &location, int radius, FVector scaleddirectio
         i++;
     }
 
+    DebugHelper::logMessage("MeshData PushInwards: Connected Vertecies", connected.size());
 
     // apply scaled offset direction
     for (int j = 0; j < connected.size(); j++)
@@ -1362,9 +1382,14 @@ void MeshData::pushInwards(FVector &location, int radius, FVector scaleddirectio
         int currentIndex = connected[j];
         if (isValidVertexIndex(currentIndex))
         {
+            DebugHelper::logMessage("MeshData Vertex Push in Index", currentIndex);
             FVector &vertex = vertecies[currentIndex];
             if(isInsideBoundingbox(vertex)){
                 vertex += scaleddirection;
+
+
+                //debug
+                DebugHelper::logMessage("MeshData Vertex Push in", vertex);
             }
             
         }

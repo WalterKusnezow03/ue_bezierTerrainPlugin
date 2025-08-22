@@ -23,8 +23,13 @@ public:
 	/**
 	 * very important function to append this mesh to other data linearly
 	 */
+
+	//will append this shape to some mesh data
 	void joinMeshData(MeshData &other);
 
+	//will copy the mesh and flip along the values passed. Use 1.0 for none
+	//use -1.0 on x, for flip on x axis.
+	void createRefectionAtAxis(float xAxis, float yAxis, float zAxis);
 
 	void push_back(FVector other);
 	void push_back(FVectorShape &other);

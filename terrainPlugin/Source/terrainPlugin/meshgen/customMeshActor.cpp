@@ -1,4 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
+#include "customMeshActor.h"
 
 #include "CoreMinimal.h"
 #include "GameCore/util/FVectorTouple.h"
@@ -16,8 +17,26 @@
 #include "GameCore/DebugHelper.h"
 #include "GameCore/EntityGC/EntityManagerBase.h"
 #include "GameCore/MeshGenBase/materialHelper/MaterialEnumHelper.h"
-#include "customMeshActor.h"
+#include "GameCore/MeshGenBase/lodHelper/LodConstants.h"
 
+#include "GameCore/world/worldLevelBase.h"
+
+
+AcustomMeshActor* AcustomMeshActor::makeInstance(UWorld *world){
+    if(world){
+        UClass *toSpawn = AcustomMeshActor::StaticClass();
+        if(toSpawn){
+            
+            FActorSpawnParameters SpawnParams;
+            FVector Location;
+            AcustomMeshActor *spawned = world->SpawnActor<AcustomMeshActor>(
+                toSpawn, Location, FRotator::ZeroRotator, SpawnParams
+            );
+            return spawned;
+        }
+    }
+    return nullptr;
+}
 
 // Sets default values
 AcustomMeshActor::AcustomMeshActor() : AcustomMeshActorBase()
@@ -44,32 +63,21 @@ void AcustomMeshActor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void AcustomMeshActor::setDamagedOwner(IDamageinterface *damagedOwnerIn){
-    damagedOwner = damagedOwnerIn;
-}
 
 /// @brief sets the health of the material 
 /// if material is glass it will be split on death
 /// @param mat material to set
 void AcustomMeshActor::setMaterialBehaiviour(materialEnum mat){
     materialtypeSet = mat;
-    if(mat == materialEnum::glassMaterial){
-        enableDebug();
-    }
 }
-
-
-
 
 // --- derived methods from damageinferface ---
 
 /// @brief will allow custom mesh actors such as destructables and terrain react to damage
 /// @param d 
 void AcustomMeshActor::takedamage(int d, bool surpressed){
-    //damage owner as this could be a kimb of an actor
-    if(damagedOwner != nullptr){
-        damagedOwner->takedamage(d);
-    }
+    //damage owner(base method)
+    Super::takedamage(d, surpressed);
 
     //new.
     EntityManagerBase *entityManager = EntityManagerBase::instanceBase();
@@ -114,15 +122,10 @@ void AcustomMeshActor::takedamage(int d, FVector &hitpoint, bool surpressed){
     groundReactionToHitWorld(hitpoint);
     glassreactionToHitWorld(hitpoint); 
     takedamage(d, surpressed);
-
-    /*
-    EntityManager *entityManager = worldLevel::entityManager();
-    if(entityManager != nullptr){
-        //in any case create debree
-        entityManager->createDebree(GetWorld(), hitpoint, materialtypeSet);
-    }*/
-
     createDebreeOnDamage(hitpoint);
+
+    //Ok
+    DebugHelper::showScreenMessage("AcustomMeshActor damage hit registered", FColor::Orange);
 }
 
 void AcustomMeshActor::createDebreeOnDamage(FVector &worldhit){
@@ -153,12 +156,6 @@ void AcustomMeshActor::createDebreeOnDamage(FVector &worldhit){
     
 }
 
-void AcustomMeshActor::setTeam(teamEnum t){
-    this->team = t;
-}
-teamEnum AcustomMeshActor::getTeam(){
-    return team;
-}
 
 void AcustomMeshActor::setHealth(int d){
     if(d <= 0){
@@ -185,10 +182,69 @@ bool AcustomMeshActor::isDestructable(){
 
 
 
+// --- CHUNK PARSER SETUP / UPDATE ---
+void AcustomMeshActor::UpdateMeshDataAndPosition(ChunkParser &parser){
+    //Super: std::map<ELod, ProceduralMeshComponentPair> meshLodContainers;
+    SetActorLocation(parser.GetActorLocation());
+    releaseChunkParserPointer();
+    chunkParserPointer = &parser;
+
+    //copy mesh data
+    for(auto &pair : meshLodContainers){
+        ELod ilod = pair.first;
+        if(MeshDataMap *meshDataMapCache = parser.findMeshDataMap(ilod)){
+            ProceduralMeshComponentPair &currentPair = pair.second;
+            currentPair.overrideMeshDataFromBaseAndUpdateMesh(*meshDataMapCache);
+
+            //needed on first launch
+            currentPair.ApplyAllMaterials();
+
+            parser.addNodesToNavMeshIfNeeded(GetWorld());
+        }
+    }
+
+    
+    /*
+    Created by actor manager already!
+    if(parser.WaterActorNeededFlagged()){
+        FVector waterLocation = parser.GetWaterActorLocation();
+        int scaleCm = terrainConstants::CHUNKSIZE * terrainConstants::ONEMETER;
+        AcustomWaterActor::createWaterPane(
+            worldPointer,
+            location,
+            scaleCm
+        );
+    }*/
+
+    
+    setMaterialBehaiviour(materialEnum::grassMaterial); //no split
+    enableLodListening(); //works as expected now.
+
+    //disableLodListening(); //debug
+    // switchToLodOnBeginPlayOrUpdateMesh();
+    switchToLod(currentLodLevel);
+
+}
+
+
+void AcustomMeshActor::releaseChunkParserPointer(){
+    if(chunkParserPointer){
+        chunkParserPointer->SetUsedMeshDataByActorFlag(false);
+    }
+    chunkParserPointer = nullptr;
+}
+	
 
 
 
 
+
+
+
+
+
+
+// --- deprecated setup ---
 void AcustomMeshActor::createTerrainFrom2DMap(TerrainChunkSetup &package){
 
     thisTerrainType = package.getTerrainType(); //must be set before mesh gen!
@@ -209,7 +265,6 @@ void AcustomMeshActor::createTerrainFrom2DMap(TerrainChunkSetup &package){
         addRandomNodesToNavmesh(touples);
     }
 
-    enableDebug(); //DEBUG WISE FOR MESH DESTRUCTION!
 
     package.createOutPostIfFlagged(GetWorld());
 
@@ -305,7 +360,10 @@ void AcustomMeshActor::createFoliageAndPushNodesAroundFoliageToNavMesh(
     TArray<FVectorTouple> &touples,
     float treeDensitySkalar
 ){
-    
+    //create trees if not in skelleton record debug mode.
+    if(worldLevelBase::DebugSkelletonRecordMode()){
+        return;
+    }
 
     // iterate over touples
     // determine normal angle and apply foliage, rocks, trees accordingly
@@ -414,7 +472,7 @@ void AcustomMeshActor::createTreeAndSaveToMesh(FVector &location){
 
 void AcustomMeshActor::splitIntoAllTriangles(){
     
-    std::vector<MeshDataLod> newLodMeshes;
+    
     std::vector<materialEnum> materials = MaterialEnumHelper::materialVector();
     std::vector<bool> raycastFlags = {true, false};
 
@@ -502,34 +560,44 @@ void AcustomMeshActor::createNewMeshActors(
 
 
 
-void AcustomMeshActor::enableDebug(){
-    DEBUG_enabled = true;
-}
-
 
 
 void AcustomMeshActor::groundReactionToHitWorld(FVector &hitpoint){
-    if(!DEBUG_enabled){
-        return;
-    }
+    
+    DebugHelper::showScreenMessage("AcustomMeshActor ground hit test!", FColor::Orange);
 
     FVector meshHit = worldToLocalHit(hitpoint);
+    DebugHelper::logMessage("AcustomMeshActor mesh hit at", meshHit);
 
     std::vector<materialEnum> hitMaterials = {
         materialEnum::grassMaterial,
-        materialEnum::redsandMaterial
+        materialEnum::redsandMaterial,
+        materialEnum::sandMaterial
     };
+    std::vector<ELod> lods = LodConstants::lodVector();
+    int sizeHole = 200;
+    FVector direction(0, 0, -200); //-20
     for (int i = 0; i < hitMaterials.size(); i++){
+        for (int j = 0; j < lods.size(); j++){
+            ELod lod = lods[j];
+            
+            MeshData &meshdata = findMeshDataReference(hitMaterials[i], lod, true);
+            meshdata.pushInwards(meshHit, sizeHole, direction);
+            ReloadMeshForMaterialByLod(lod, hitMaterials[i]);
+
+
+            debugDrawMeshData(meshdata);
+        }
+
+        /*
         MeshData &meshdata = findMeshDataReference(hitMaterials[i], ELod::lodNear, true);
-        int sizeHole = 100;
-
-        //cut push in
-        FVector direction(0, 0, -25);
         meshdata.pushInwards(meshHit, sizeHole, direction); //error prone!
-
         //meshdata.cutHoleWithInnerExtensionOfMesh(localHit, sizeHole); //cut sphere
+        ReloadMeshForMaterialByLod(ELod::lodNear, hitMaterials[i]);
 
-        ReloadMeshForMaterial(hitMaterials[i]);
+        //debug
+        debugDrawMeshData(meshdata);
+        */
     }
 
 
@@ -600,7 +668,7 @@ void AcustomMeshActor::debugDrawMeshData(MeshData &meshdata){
 /**
  * 
  * 
- * ----- shading function for foliage ------s
+ * ----- shading function for foliage ------ DEPRECATED
  * 
  * 
  */

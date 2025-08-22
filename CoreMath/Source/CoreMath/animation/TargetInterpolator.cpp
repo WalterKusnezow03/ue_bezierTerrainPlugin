@@ -76,13 +76,12 @@ void TargetInterpolator::overrideStart(FRotator fromRotationIn){
 
 void TargetInterpolator::overrideStart(FVector fromtarget, FRotator fromRotationIn){
     overrideStart(fromtarget);
-    fromRotation = fromRotationIn;
+    overrideStart(fromRotationIn);
 }
 void TargetInterpolator::overrideTarget(FVector totarget, FRotator toRotationIn){
     overrideTarget(totarget);
-    toRotation = toRotationIn;
+    overrideTarget(toRotationIn);
 }
-
 
 void TargetInterpolator::overrideTarget(FRotator toRotationIn){
     toRotation = toRotationIn;
@@ -327,27 +326,44 @@ FVector TargetInterpolator::interpolation(FVector fromIn, FVector toIn, float sk
 }
 
 FRotator TargetInterpolator::interpolationRotation(FRotator fromIn, FRotator toIn, float skalar){
-    if(skalar >= 1.0f){
+    if (skalar >= 1.0f)
+    {
         return toIn;
     }
+    
+    //deprecated
+    if(false){
+        FRotator output;
+        output.Roll = fromIn.Roll + skalar * rotationDirectionShorter(fromIn.Roll, toIn.Roll);
+        output.Pitch = fromIn.Pitch + skalar * rotationDirectionShorter(fromIn.Pitch, toIn.Pitch);
+        output.Yaw = fromIn.Yaw + skalar * rotationDirectionShorter(fromIn.Yaw, toIn.Yaw);
 
-    FRotator output;
-    output.Roll = fromIn.Roll + skalar * rotationDirectionShorter(fromIn.Roll, toIn.Roll);
-    output.Pitch = fromIn.Pitch + skalar * rotationDirectionShorter(fromIn.Pitch, toIn.Pitch);
-    output.Yaw = fromIn.Yaw + skalar * rotationDirectionShorter(fromIn.Yaw, toIn.Yaw);
+        if(FMath::IsNaN(output.Roll)){
+            output.Roll = 0.0f;
+        }
+        if(FMath::IsNaN(output.Pitch)){
+            output.Pitch = 0.0f;
+        }
+        if(FMath::IsNaN(output.Yaw)){
+            output.Yaw = 0.0f;
+        }
+        return output;
 
-    if(FMath::IsNaN(output.Roll)){
-        output.Roll = 0.0f;
+    }else{
+        // Convert to quaternions
+        FQuat fromQuat = fromIn.Quaternion();
+        FQuat toQuat = toIn.Quaternion();
+
+        // Use spherical linear interpolation (SLERP)
+        FQuat resultQuat = FQuat::Slerp(fromQuat, toQuat, skalar);
+
+        // Normalize to ensure stability
+        resultQuat.Normalize();
+
+        // Convert back to Rotator if needed
+        return resultQuat.Rotator();
     }
-    if(FMath::IsNaN(output.Pitch)){
-        output.Pitch = 0.0f;
-    }
-    if(FMath::IsNaN(output.Yaw)){
-        output.Yaw = 0.0f;
-    }
-
-
-    return output;
+    
 }
 
 
@@ -371,31 +387,6 @@ float TargetInterpolator::rotationDirectionShorter(float a, float b){
 }
 
 
-/*
-/// @brief creates the shorter rotation direction between two angles a and b which can be signed
-/// but will be clamped from -180 to 180 degrees
-/// @param a 
-/// @param b 
-/// @return signed shorter angle
-float TargetInterpolator::rotationDirectionShorter(float a, float b){
-    
-    a = std::fmod(a + 180.0f, 360.0f) - 180.0f;
-    b = std::fmod(b + 180.0f, 360.0f) - 180.0f;
-
-    float diff = b - a;
-    
-    if (diff > 180.0f) {
-        diff -= 360.0f;
-    }
-    if (diff < -180.0f) {
-        diff += 360.0f;
-    }
-
-    return diff;
-
-
-}
-*/
 
 
 float TargetInterpolator::shorterAngleSum(FRotator &a, FRotator &b){
