@@ -1,0 +1,136 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0" version="28.0.9">
+  <diagram name="Seite-1" id="p1HwtenKjwWo1Y9eWZpg">
+    <mxGraphModel dx="2055" dy="779" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="kBxZ7FBff0Vbr34loK-i-23" target="kBxZ7FBff0Vbr34loK-i-24">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-26" value="Tick()" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="kBxZ7FBff0Vbr34loK-i-25">
+          <mxGeometry y="-2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-23" value="Terrain launcher" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="140" y="80" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-63" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="kBxZ7FBff0Vbr34loK-i-24" target="kBxZ7FBff0Vbr34loK-i-61">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-64" value="try load Header&lt;div&gt;ChunkMap&lt;/div&gt;&lt;div&gt;And Terrain&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="kBxZ7FBff0Vbr34loK-i-63">
+          <mxGeometry x="0.3195" y="2" relative="1" as="geometry">
+            <mxPoint x="1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-74" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="kBxZ7FBff0Vbr34loK-i-24" target="kBxZ7FBff0Vbr34loK-i-73">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="200" y="395" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-75" value="generated or&lt;div&gt;loaded&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="kBxZ7FBff0Vbr34loK-i-74">
+          <mxGeometry x="0.1388" y="2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-80" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="kBxZ7FBff0Vbr34loK-i-24" target="kBxZ7FBff0Vbr34loK-i-30">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="200" y="585" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-81" value="generate Terrain&lt;div&gt;(Fill ChunkParser Map, use TerrainChunkMap&amp;nbsp;&lt;/div&gt;&lt;div&gt;for inner map to smooth with bezier spline)&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="kBxZ7FBff0Vbr34loK-i-80">
+          <mxGeometry x="0.3858" y="4" relative="1" as="geometry">
+            <mxPoint x="6" y="4" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-82" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="kBxZ7FBff0Vbr34loK-i-24" target="kBxZ7FBff0Vbr34loK-i-27">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-83" value="create and provide&lt;div&gt;with ChunkParser MeshData&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="kBxZ7FBff0Vbr34loK-i-82">
+          <mxGeometry x="-0.2451" y="-1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-24" value="ActorManager" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="140" y="210" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-27" value="AcustomMeshActor" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-70" y="370" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-30" value="terrain generator" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="534" y="555" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-33" value="ChunkParser" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="669" y="390" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-47" value="ChunkMapStorageInterface" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="444" y="195" width="210" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-58" value="EntryPoint" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="140" y="50" width="70" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-59" value="TerrainChunkMapStorageInterface" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="444" y="125" width="210" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-60" value="Storage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="860" y="165" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-76" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="kBxZ7FBff0Vbr34loK-i-61" target="kBxZ7FBff0Vbr34loK-i-60">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-77" value="load by world String" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="kBxZ7FBff0Vbr34loK-i-76">
+          <mxGeometry x="-0.0791" y="4" relative="1" as="geometry">
+            <mxPoint x="1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-78" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="kBxZ7FBff0Vbr34loK-i-61" target="kBxZ7FBff0Vbr34loK-i-73">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="722" y="195" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-61" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="414" y="105" width="260" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-66" value="has grid" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startSize=20;startArrow=diamondThin;startFill=1;" edge="1" parent="1" source="kBxZ7FBff0Vbr34loK-i-65" target="kBxZ7FBff0Vbr34loK-i-33">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="604" y="420" />
+              <mxPoint x="604" y="420" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-65" value="ChunkParserMap" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="434" y="390" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-71" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=diamondThin;startFill=1;startSize=20;" edge="1" parent="1" source="kBxZ7FBff0Vbr34loK-i-67" target="kBxZ7FBff0Vbr34loK-i-68">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="644" y="350" />
+              <mxPoint x="644" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-72" value="has grid" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="kBxZ7FBff0Vbr34loK-i-71">
+          <mxGeometry x="-0.2348" y="3" relative="1" as="geometry">
+            <mxPoint x="16" y="3" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-67" value="TerrainChunkMap&lt;div&gt;(header Map)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="434" y="320" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-68" value="TerrainChunkAttributes" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="669" y="320" width="135" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="kBxZ7FBff0Vbr34loK-i-73" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="414" y="310" width="410" height="170" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

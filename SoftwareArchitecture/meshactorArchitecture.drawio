@@ -1,0 +1,117 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0" version="28.1.1">
+  <diagram name="Seite-1" id="AhNDMtuPD8JNVVEZs2kM">
+    <mxGraphModel dx="921" dy="584" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-4" value="get mesh data,&lt;div&gt;copy to ProceduralMesh&lt;/div&gt;&lt;div&gt;ComponentPair&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="iBaBOXg1LtsLeYAmK-z4-1" target="iBaBOXg1LtsLeYAmK-z4-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="370" y="340" />
+              <mxPoint x="370" y="340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-1" value="AcustomMeshActor" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="150" y="310" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="iBaBOXg1LtsLeYAmK-z4-2" target="iBaBOXg1LtsLeYAmK-z4-6">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="430" y="140" as="sourcePoint" />
+            <mxPoint x="640" y="270" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="560" y="110" />
+              <mxPoint x="560" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-10" value="has per ELod&lt;div&gt;map&amp;lt;ELod, Pair&amp;gt;&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="iBaBOXg1LtsLeYAmK-z4-9">
+          <mxGeometry x="-0.2412" y="2" relative="1" as="geometry">
+            <mxPoint x="-81" y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-2" value="AcustomMeshActorBase" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="210" y="80" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-3" value="ChunkParser" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="450" y="310" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=diamondThin;startFill=1;startSize=10;" edge="1" parent="1" source="iBaBOXg1LtsLeYAmK-z4-5" target="iBaBOXg1LtsLeYAmK-z4-17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-19" value="per material&lt;div&gt;and raycast flag&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="iBaBOXg1LtsLeYAmK-z4-18">
+          <mxGeometry x="-0.0857" y="-2" relative="1" as="geometry">
+            <mxPoint x="6" y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-5" value="MeshDataMap" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="660" y="70" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=diamondThin;startFill=0;startSize=20;" edge="1" parent="1" source="iBaBOXg1LtsLeYAmK-z4-6" target="iBaBOXg1LtsLeYAmK-z4-20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-22" value="2&lt;div&gt;(collision on and off)&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="iBaBOXg1LtsLeYAmK-z4-21">
+          <mxGeometry x="0.0411" y="3" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-6" value="UProceduralMeshCompoentPair" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="660" y="240" width="187" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-11" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="iBaBOXg1LtsLeYAmK-z4-6" target="iBaBOXg1LtsLeYAmK-z4-5">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="390" y="290" as="sourcePoint" />
+            <mxPoint x="440" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-12" value="is_a" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="iBaBOXg1LtsLeYAmK-z4-11">
+          <mxGeometry x="0.52" relative="1" as="geometry">
+            <mxPoint y="26" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-13" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="iBaBOXg1LtsLeYAmK-z4-1" target="iBaBOXg1LtsLeYAmK-z4-2">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="784" y="320" as="sourcePoint" />
+            <mxPoint x="750" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-14" value="is_a" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="iBaBOXg1LtsLeYAmK-z4-13">
+          <mxGeometry x="0.52" relative="1" as="geometry">
+            <mxPoint y="26" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-15" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;startArrow=diamondThin;startFill=1;startSize=10;" edge="1" parent="1" source="iBaBOXg1LtsLeYAmK-z4-3" target="iBaBOXg1LtsLeYAmK-z4-5">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="390" y="290" as="sourcePoint" />
+            <mxPoint x="440" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-16" value="has" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="iBaBOXg1LtsLeYAmK-z4-15">
+          <mxGeometry x="0.3" y="-4" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-17" value="MeshData" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="920" y="70" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-20" value="UProceduralMeshComponent" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="240" width="170" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-23" value="generated by AcustomMeshActorBase" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="210" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-24" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="iBaBOXg1LtsLeYAmK-z4-20" target="iBaBOXg1LtsLeYAmK-z4-17">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="990" y="290" as="sourcePoint" />
+            <mxPoint x="1040" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iBaBOXg1LtsLeYAmK-z4-25" value="use" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="iBaBOXg1LtsLeYAmK-z4-24">
+          <mxGeometry x="0.1704" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
