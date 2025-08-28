@@ -248,13 +248,20 @@ public:
 
 	void flipAllTriangles();
 
+	/// @brief update the bounding box if vertex data was manipulated used externally
+	void updateBoundsIfNeeded();
+
 protected:
+	/// @brief finds all indices connected in the triangle buffer to this index and
+	/// pushed into the output vector
+	/// @param index some index
+	/// @param output output vector
 	void findConnectedVerteciesTo(int index, std::vector<int> &output);
 
 
 
 
-	void updateBoundsIfNeeded();
+	
 	void updateBoundsIfNeeded(FVector &other);
 
 	bool isInsideBoundingbox(FVector &other);

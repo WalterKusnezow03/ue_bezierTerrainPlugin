@@ -49,6 +49,8 @@ void TerrainChunkMap::verfiyChunks(int chunksIn){
 }
 
 void TerrainChunkMap::createArray(){
+    innerMap.Empty(); //clean.
+
     innerMap.SetNum(chunks);
     for (int i = 0; i < innerMap.Num(); i++){
         innerMap[i] = TArray<FTerrainChunkAttributes>();

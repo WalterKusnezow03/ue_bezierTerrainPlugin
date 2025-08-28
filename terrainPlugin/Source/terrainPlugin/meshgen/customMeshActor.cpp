@@ -407,7 +407,7 @@ void AcustomMeshActor::createFoliageAndPushNodesAroundFoliageToNavMesh(
 
 
     //add all points around foliage to navmesh to allow the bots to move over the terrain better
-    if (PathFinder *f = PathFinder::instance(GetWorld()))
+    if (APathFinder *f = APathFinder::instance(GetWorld()))
     {
         //um um 90 grad zu drehen, x und y tauschen, einen negieren
         //(a,b) (-b,a) (-a,-b) (b, -a)
@@ -600,8 +600,17 @@ void AcustomMeshActor::groundReactionToHitWorld(FVector &hitpoint){
         */
     }
 
-
-
+    bool debugDrawHit = true;
+    if(debugDrawHit){
+        FVector up = hitpoint + FVector(0, 0, 200);
+        DebugHelper::showLineBetween(
+            GetWorld(),
+            hitpoint,
+            up,
+            FColor::Purple,
+            1.0f
+        );
+    }
 }
 
 
@@ -726,7 +735,7 @@ void AcustomMeshActor::addRandomNodesToNavmesh(TArray<FVectorTouple> &touples){
 
     if(picked.size() > 0){
         // add all normal centers to navmesh to allow the bots to move over the terrain
-        if (PathFinder *f = PathFinder::instance(GetWorld()))
+        if (APathFinder *f = APathFinder::instance(GetWorld()))
         {
             FVector offset(0, 0, 70);
             f->addNewNodeVector(picked, offset);

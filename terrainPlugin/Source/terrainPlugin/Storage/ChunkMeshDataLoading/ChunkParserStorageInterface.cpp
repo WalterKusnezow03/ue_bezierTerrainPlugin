@@ -190,6 +190,7 @@ bool ChunkParserStorageInterface::Load(
                 meshDataCurrent.getTrianglesRef(),
                 bEndReached
             );
+            meshDataCurrent.updateBoundsIfNeeded(); //very important here to update bounds from loaded data
         }
         if(bEndReached){
             break;
@@ -203,8 +204,8 @@ FString ChunkParserStorageInterface::makePath(
     FString worldLevelName, 
     int chunkId
 ){
-    FString fileName = FString::Printf(TEXT("Terrain/%s/chunkMeshData/chunk_%d.bin"), *worldLevelName, chunkId);
-    FString Path = FPaths::ProjectSavedDir() + fileName;
+    FString fileName = FString::Printf(TEXT("Terrain/chunkMeshData/chunk_%d.bin"), chunkId);
+    FString Path = BaseDir(worldLevelName) + fileName;
     return Path;
 }
 

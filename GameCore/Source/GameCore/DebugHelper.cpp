@@ -134,8 +134,9 @@ void DebugHelper::showScreenMessageCompare(FString message, FVector a, FVector b
 }
 
 
-
-
+void DebugHelper::showScreenMessage(FString s, FString t){
+	showScreenMessage(s + t);
+}
 
 void DebugHelper::showScreenMessage(FString s, FVector a, FVector b, FColor color){
 

@@ -120,7 +120,7 @@ private:
     int getUVBytesSize(int count);
     int getTrianglesBytesSize(int count);
 
-    void PrintBinary(TArray<uint8> &bytes);
+    
     void PrintBuffers(
         TArray<FVector> &Vertecies,
         TArray<FVector> &Normals,

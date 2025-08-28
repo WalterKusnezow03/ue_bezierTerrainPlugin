@@ -8,6 +8,7 @@
 #include "AssetPlugin/gameStart/assetEnums/materialEnum.h"
 #include "GameCore/MeshGenBase/MathHelp/baryCentricInterpolator.h"
 
+#include "GameCore/world/worldLevelBase.h"
 
 #include <algorithm>
 #include <set>
@@ -24,6 +25,7 @@ MeshData::MeshData(TArray<FVector> &&verteciesIn, TArray<int> &&trianglesIn){
     setVertecies(MoveTemp(verteciesIn));
     setTriangles(MoveTemp(trianglesIn));
     calculateNormals();
+    updateBoundsIfNeeded();
 }
 
 void MeshData::rebuild(TArray<FVector> &&verteciesIn, TArray<int> &&trianglesIn){
@@ -31,6 +33,7 @@ void MeshData::rebuild(TArray<FVector> &&verteciesIn, TArray<int> &&trianglesIn)
     setVertecies(MoveTemp(verteciesIn));
     setTriangles(MoveTemp(trianglesIn));
     calculateNormals();
+    updateBoundsIfNeeded();
 }
 
 
@@ -149,6 +152,8 @@ void MeshData::calculateNormals(){
 /// @param vertecies veretecies to set, be carefull with overriding
 void MeshData::setVertecies(TArray<FVector> &&verteciesIn){
     vertecies = MoveTemp(verteciesIn);  // Move the data instead of copying, creating an r value
+
+    updateBoundsIfNeeded();
 }
 /// @brief sets the data for all triangles, pass by r value reference
 /// @param trianglesIn triangles to set for the mesh
@@ -194,6 +199,8 @@ void MeshData::join(TArray<FVector> &verteciesRef, TArray<int32> &trianglesRef, 
         FVector &ref = normalsin[i];
         normals.Add(ref);
     }
+
+    updateBoundsIfNeeded();
 }
 
 
@@ -501,7 +508,7 @@ void MeshData::closeMeshAtCenter(FVector &center, int bufferSizeToConnect, bool 
  * --- helper function ---
  */
 
-///@brief searches for the closest index to a vertex and explicitly looks for duplcate vertecies
+///@brief searches for the closest index to a vertex and explicitly looks for duplicate vertecies
 std::vector<int> MeshData::findClosestIndexWithVertexDuplicatesTo(
     FVector &vertex
 ){
@@ -1117,14 +1124,6 @@ bool MeshData::solveIsInTriangle(
         FVector BCnormal = FVector(0, BC.Z * -1.0f, BC.Y);
         FVector CAnormal = FVector(0, CA.Z * -1.0f, CA.Y);
 
-        /*
-        ABnormal = ABnormal.GetSafeNormal();
-        BCnormal = BCnormal.GetSafeNormal();
-        CAnormal = CAnormal.GetSafeNormal();
-        localA = localA.GetSafeNormal();
-        localB = localB.GetSafeNormal();
-        localC = localC.GetSafeNormal();
-        */
 
         //since the triangle is projected on the yz pane, x is not needed
         float dot0 = localA.Y * ABnormal.Y + localA.Z * ABnormal.Z;
@@ -1242,8 +1241,14 @@ void MeshData::flipAllTriangles(){
 
 ///@brief removes out a vertex from the mesh
 void MeshData::removeVertex(int index){
-    std::vector<int> ignored;
-    removeVertex(index, ignored);
+    if(isValidVertexIndex(index)){
+        std::vector<int> connected;
+        findConnectedVerteciesTo(index, connected);
+        removeVertex(index, connected);
+    }
+    
+    
+    
 }
 
 ///@brief removes out a vertex from the mesh data by index and:
@@ -1276,6 +1281,8 @@ void MeshData::removeVertex(int index, std::vector<int>& connectedvertecies){
                 connectedvertecies[i] = index; //update weil swap
             }
         }
+
+        updateBoundsIfNeeded();
     }
 }
 
@@ -1338,21 +1345,54 @@ bool MeshData::contains(std::vector<int> &ref, int index){
  * 
  */
 void MeshData::pushInwards(FVector &location, int radius, FVector scaleddirection){
+    bool bLogEnabled = true;
+
     if(vertecies.Num() == 0){
-        DebugHelper::logMessage("MeshData PushInwards: Empty Vertex Count");
+        if(bLogEnabled){
+            DebugHelper::logMessage("MeshData PushInwards: Empty Vertex Count");
+            DebugHelper::showScreenMessage("MeshData PushInwards: Empty Vertex Count");
+        }
         return;
     }
 
-    radius = std::abs(radius);
+    //quits here every time.
+    if(!isInsideBoundingbox(location)){
+        if(bLogEnabled){
 
-    std::vector<int> connected;
+            FString oobString = bounds.ToString() + location.ToString();
+            DebugHelper::logMessage(
+                "MeshData PushInwards: Vertex Location Out of bounding box", 
+                oobString
+            );
+            DebugHelper::showScreenMessage(
+                "MeshData PushInwards: Vertex Location Out of bounding box", 
+                oobString
+            );
+
+            
+
+
+        }
+        return;
+    }
+
+
+    radius = std::abs(radius);
+    int radiusSquard = radius * radius;
+
     int index = findClosestIndexTo(location);
     if(!isValidVertexIndex(index)){
-        DebugHelper::logMessage("MeshData PushInwards: No Index Found Closest");
+        if(bLogEnabled){
+            DebugHelper::logMessage("MeshData PushInwards: No Index Found Closest");
+            DebugHelper::showScreenMessage("MeshData PushInwards: No Index Found Closest");
+        }
         return;
     }
     FVector foundLocation = vertecies[index];
 
+    //all vertecies in radius connected to the closest location and neighbors 
+    //more degrees away
+    std::vector<int> connected;
     findConnectedVerteciesTo(index, connected);
 
     //recursivly find all connected vertecies from the triangle buffer
@@ -1363,8 +1403,8 @@ void MeshData::pushInwards(FVector &location, int radius, FVector scaleddirectio
             int currentIndex = connected[i];
             if(isValidVertexIndex(currentIndex)){
                 FVector &currentVertex = vertecies[currentIndex];
-                float dist = FVector::Dist(currentVertex, foundLocation);
-                if(dist < radius){
+                float dist = FVector::DistSquared(currentVertex, foundLocation);
+                if(dist < radiusSquard){
                     findConnectedVerteciesTo(currentIndex, connected);
                     size = connected.size();
                 }
@@ -1382,40 +1422,41 @@ void MeshData::pushInwards(FVector &location, int radius, FVector scaleddirectio
         int currentIndex = connected[j];
         if (isValidVertexIndex(currentIndex))
         {
-            DebugHelper::logMessage("MeshData Vertex Push in Index", currentIndex);
             FVector &vertex = vertecies[currentIndex];
-            if(isInsideBoundingbox(vertex)){
-                vertex += scaleddirection;
+            vertex += scaleddirection;
 
 
-                //debug
+            //debug
+            if(bLogEnabled){
+                DebugHelper::logMessage("MeshData Vertex Push in Index", currentIndex);
                 DebugHelper::logMessage("MeshData Vertex Push in", vertex);
             }
-            
         }
     }
 
+    updateBoundsIfNeeded();
 }
 
 void MeshData::findConnectedVerteciesTo(int index, std::vector<int> &output){
-    
-    for (int i = 0; i < triangles.Num() - 3; i += 3)
-    {
-        int v0 = triangles[i];
-        int v1 = triangles[i+1];
-        int v2 = triangles[i+2];
-        if(v0 == index || v1 == index || v2 == index){
-            if (!contains(output, v0)){
-                output.push_back(v0);
-            }
-            if (!contains(output, v1)){
-                output.push_back(v1);
-            }
-            if (!contains(output, v2)){
-                output.push_back(v2);
+    if(isValidVertexIndex(index)){
+        for (int i = 0; i < triangles.Num() - 3; i += 3)
+        {
+            int v0 = triangles[i];
+            int v1 = triangles[i+1];
+            int v2 = triangles[i+2];
+            if(v0 == index || v1 == index || v2 == index){
+                if (!contains(output, v0)){
+                    output.push_back(v0);
+                }
+                if (!contains(output, v1)){
+                    output.push_back(v1);
+                }
+                if (!contains(output, v2)){
+                    output.push_back(v2);
+                }
             }
         }
-    }
+    }   
 }
 
 
@@ -1690,7 +1731,7 @@ void MeshData::generate(int sizeX, int sizeY, int distanceXY){
 
         }
     }
-
+    updateBoundsIfNeeded();
 }
 
 

@@ -13,12 +13,18 @@ class TERRAINPLUGIN_API ATerrainLauncher : public AActor{
 public:
     ATerrainLauncher();
 
-    static void makeInstance(UWorld *world);
+    static ATerrainLauncher* makeInstance(UWorld *world, FString WorldLevelName);
 
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void Tick(float deltatime) override;
 
+    //external play and end - does not kill this instance, aactors can be reused for loading another level!
+    void BeginAndLoad(FString WorldLevelName);
+    void EndAndSave();
+
 private:
+    
+
     ActorManager actorManager;
 };

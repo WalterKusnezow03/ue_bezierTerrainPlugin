@@ -49,6 +49,9 @@ void ActorManager::EndPlay(){
     //save world
     chunkMeshDataParserMap.saveWorldLevel();
 
+    //mark all pointers as free, game doesnt need to end,
+    //just terrain cleared.
+    markAllActorsAsFree();
 }
 
 void ActorManager::loadWorldMeshData(FString worldLevelString){
@@ -153,6 +156,18 @@ AcustomMeshActor *ActorManager::PopMeshActorFromFreeList(){
     //create terrain mesh actor
     actor = AcustomMeshActor::makeInstance(worldContext);
     return actor;
+}
+
+void ActorManager::markAllActorsAsFree(){
+    for (int i = 0; i < inUse.Num(); i++){
+        AcustomMeshActor *current = inUse[i];
+        if(current){
+            if(!markedFreeForUse.Contains(current)){
+                markedFreeForUse.Add(current);
+            }
+        }
+    }
+    inUse.Empty();
 }
 
 void ActorManager::Tick(float deltatime){

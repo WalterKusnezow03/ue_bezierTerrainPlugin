@@ -21,6 +21,8 @@ public:
     void Tick(float deltatime);
 
 private:
+    void markAllActorsAsFree();
+
     int chunksForGame = 10; //fixed size for this world, ONE AXIS
     bool instantTerrainActorApply = true;
     bool terrainHeaderFileWasFound = false;

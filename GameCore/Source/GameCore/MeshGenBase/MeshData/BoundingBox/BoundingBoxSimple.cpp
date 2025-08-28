@@ -66,3 +66,14 @@ FVector BoundingBoxSimple::bottomLeftNearVertex(){
 FVector BoundingBoxSimple::topRightLeftVertex(){
     return topRightLeft;
 }
+
+
+
+FString BoundingBoxSimple::ToString(){
+    FString message = FString::Printf(
+        TEXT("BoundingBoxSimple To String: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f)"),
+        bottomLeftNear.X, bottomLeftNear.Y, bottomLeftNear.Z,
+        topRightLeft.X, topRightLeft.Y, topRightLeft.Z
+    );
+    return message;
+}

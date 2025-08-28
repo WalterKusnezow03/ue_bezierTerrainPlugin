@@ -41,7 +41,7 @@ void StorageInterfaceMeshData::SaveMeshData(
     AppendIntoByteBuffer(Bytes, Vertecies, Normals, UV0, Triangles);
 
     //debug
-    PrintBinary(Bytes);
+    PrintBinary(Bytes, "MeshData Saved");
 
     // Save
     SaveBinaryData(
@@ -103,14 +103,12 @@ void StorageInterfaceMeshData::AppendIntoByteBuffer(
         Normals.Num(),
         UV0.Num(),
         Triangles.Num(),
-        Ptr
-    ); //at offset of previous bytes!
+        Ptr //at offset of previous bytes but increased!
+    ); 
     
 
     // ---- write mesh data ---- 
     
-    //Ptr += infoBytesSize; // get to offset adress after info data!
-
     /*
     FMemory::Memcpy ( 
         void* Dest,
@@ -131,22 +129,7 @@ void StorageInterfaceMeshData::AppendIntoByteBuffer(
     //Ptr += trianglesByteSize; //increase pointer adress not be needed, end of data!!
     
 
-
-
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -251,16 +234,16 @@ void StorageInterfaceMeshData::LoadMeshData(
         SIZE_T Count
     )
     */
-    TArray<uint8> bytes;
-    if(!LoadBinaryData(path, bytes)){
+    TArray<uint8> Bytes;
+    if(!LoadBinaryData(path, Bytes)){
         DebugHelper::logMessage("Storage Interface mesh data ERROR LOADING BIN DATA");
     }
-    PrintBinary(bytes);
+    PrintBinary(Bytes, "MeshData Loaded");
 
     bool endReachedIgnore = false;
-    uint8 *Ptr = bytes.GetData(); // at 0 offset.
+    uint8 *Ptr = Bytes.GetData(); // at 0 offset.
     LoadIntoMeshBuffers(
-        bytes,
+        Bytes,
         Ptr,
         Vertecies,
         Normals,
@@ -304,7 +287,7 @@ void StorageInterfaceMeshData::LoadIntoMeshBuffers(
     UV0.SetNumUninitialized(uvCount);
     Triangles.SetNumUninitialized(triangleCount);
 
-    //copy mesh data based on infoData (make void* its cooler)
+    //copy mesh data based on infoData
     int infoBytesSize = getInfoBytesSize();
 
 
@@ -414,7 +397,7 @@ FString StorageInterfaceMeshData::makePath(
     int lod
 ){
     FString fileName = FString::Printf(TEXT("Terrain/Chunk_%.d_Layer_%.d_Lod_%d.bin"), chunkId, layer, lod);
-    FString Path = FPaths::ProjectSavedDir() + fileName;
+    FString Path = BaseDir(TEXT("debugPathfromMeshData")) + fileName;
     return Path;
 }
 
@@ -541,14 +524,6 @@ void StorageInterfaceMeshData::PrintBuffers(
 }
 
 
-void StorageInterfaceMeshData::PrintBinary(TArray<uint8>&bytes){
-    FString byteString = TEXT("Storage Interface Meshdata bin: ");
-    for (int i = 0; i < bytes.Num(); i++){
-        byteString += FString::FromInt((int32)bytes[i]);
-    }
-
-    DebugHelper::logMessage(byteString);
-}
 
 /// ----- nachschlage werk -------
 /*

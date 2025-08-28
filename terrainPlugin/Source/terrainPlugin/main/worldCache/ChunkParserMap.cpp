@@ -79,6 +79,15 @@ bool ChunkParserMap::loadWorldLevel(FString name, TerrainChunkMap &loadedHeaderM
     FString message = FString::Printf(TEXT("Storage Interface Loaded World: (%d / %d)"), loadedSuccesfully, countChunksToLoad);
     DebugHelper::logMessage(message);
 
+    /*
+    ACHTUNG: TODO:
+
+    Achtung: Wenn chunks asynchron generiert werden und nicht zwingend alle direkt generiert werden:
+    So gilt dass die (loadedSuccesfully == countChunksToLoad) nur gilt,
+    wenn alle generiert wurden und alle geladen werden sollen!
+    */
+
+
     return loadedSuccesfully == countChunksToLoad;
 }
 

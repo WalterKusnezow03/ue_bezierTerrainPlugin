@@ -24,6 +24,8 @@ public:
 
     bool isInsideBoundingbox(FVector &other);
 
+    FString ToString();
+
 private:
     FVector bottomLeftNear;
     FVector topRightLeft;

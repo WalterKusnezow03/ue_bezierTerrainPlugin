@@ -373,7 +373,7 @@ void ChunkParser::addNodesToNavMeshIfNeeded(UWorld *world){
     }
 
     // add all normal centers to navmesh to allow the bots to move over the terrain
-    if (PathFinder *f = PathFinder::instance(world))
+    if (APathFinder *f = APathFinder::instance(world))
     {
         FVector offset(0, 0, 70);
         f->addNewNodeVector(navmeshNodes, offset);
