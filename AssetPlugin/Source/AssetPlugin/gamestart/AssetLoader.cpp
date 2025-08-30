@@ -5,6 +5,9 @@
 #include "AssetPlugin/gamestart/assetManager.h"
 #include "AssetPlugin/gamestart/assetEnums/materialEnum.h"
 
+#include "AssetPlugin/gamestart/PathMaker/AssetPathMaker.h"
+#include "AssetPlugin/gamestart/PathMaker/enum/EAssetType.h"
+
 
 
 AssetLoader::AssetLoader(UWorld *worldIn)
@@ -32,7 +35,7 @@ void AssetLoader::loadAssets()
     loadParticles();
     
     loadTextures();
-    loadUI();
+    
 
     loadDebugCube();
 }
@@ -142,11 +145,18 @@ UMaterial *AssetLoader::loadMaterial(FString path){
 
 void AssetLoader::loadWeaponAttachments(){
     if(assetManager *a = assetManager::instance()){
-        
-        
-        FString reddotString = FString::Printf(TEXT(
+        AssetPathMaker maker;
+
+        /*FString reddotString = FString::Printf(TEXT(
             "Blueprint'/Game/Prefabs/Weapons/attachments/reddotBp.reddotBp_C'"
-        ));
+        ));*/
+        FString reddotString = maker.makeAssetPath(
+            EAssetType::EUClassBlueprint,
+            "Game",
+            "Prefabs/Weapons/attachments",
+            "reddotBp"
+        );
+
         UClass *bp = loadUClassBluePrint(reddotString);
         a->addBp(weaponEnum::assaultRifle, weaponAttachmentEnum::reddot, bp);
     
@@ -360,15 +370,7 @@ void AssetLoader::loadMaterials(){
 
 
 
-void AssetLoader::loadUI(){
-    if(assetManager *am = assetManager::instance()){
 
-        am->addUiBp(
-            loadUClassBluePrint(TEXT("Blueprint'/Game/Prefabs/ui/playerUiBaseBp.playerUiBaseBp_C'"))
-        );
-
-    }
-}
 
 void AssetLoader::loadTextures(){
     if(assetManager *am = assetManager::instance()){

@@ -19,7 +19,7 @@ public:
 
 	///@brief Example path: TEXT("Blueprint'/Game/Prefabs/terrain/materials/texturedMaterial.texturedMaterial'")
 	/// or
-	/// TEXT("Texture2D'/Game/Prefabs/textures/partone'");
+	/// TEXT("Texture2D'/Game/Prefabs/textures/partone.partone'");
 	/// TEXT("<DT>"'path/to/asset'");
 	template <typename T>
 	static T* loadAsset(FString path){
@@ -53,7 +53,7 @@ private:
 	void loadThrower();
 	void loadParticles();
 	void loadMaterials();
-	void loadUI();
+	
 	void loadTextures();
 
 	void loadDebugCube();

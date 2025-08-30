@@ -6,9 +6,13 @@
 #include <map>
 
 /**
+ * Pointers are added to root, and tracked until this object is killed.
+ * 
+ * 
  * will save assets in a map and provide nessecarry methods
  * THIS CLASS WILL ONLY RETURN POINTERS AND IS DESIGNED TO HOLD THESE
- * FOR EXAMPLE FOR UCLASS* or UMATERIAL*
+ * FOR EXAMPLE FOR UCLASS* or UMATERIAL*, cannot mark as uproperty, because unreal doesnt support
+ * template uobjects!
  * E is recommended to be an enum!
  * T is recommended to be a UClass type!
  * 
@@ -17,17 +21,52 @@
 template <typename E, typename T>
 class ASSETPLUGIN_API assetManagerGeneric
 {
-	static_assert(std::is_enum<E>::value, "must be an enum");
+	//static_assert(std::is_enum<E>::value, "must be an enum");
 	static_assert(std::is_base_of<UObject, T>::value, "must be an UObject");
+
+protected:
+	void protectFromGC(T *t){
+		if(t){
+			t->AddToRoot();
+		}
+	}
+
+	void allowGC(T *t){
+		if(t){
+			t->RemoveFromRoot();
+		}
+	}
 
 public:
 	assetManagerGeneric(){
 
 	}
+
+	/// @brief destructor will release all ptrs to garbage collection!
 	~assetManagerGeneric(){
-		map.Empty();
-		//DebugHelper::logMessage("map cleared");
+		//remove all Assets from root
+		for(auto& Pair : map){
+			E Key = Pair.Key;
+			T* Value = Pair.Value;
+			if (Value){
+				allowGC(Value); // add back to GC
+			}
+		}
 	}
+
+
+	void addRaw(E e, UObject *ptr){
+		if(ptr){
+			T *casted = Cast<T>(ptr);
+			if(casted){
+				addBp(e, casted);
+			}
+		}
+	}
+
+	
+
+	// --- ADDING / READING ASSETS ---
 
 	void addBp(E e, T *t){
 		if(t != nullptr){
@@ -35,6 +74,9 @@ public:
 			T **found = map.Find(e);
 			if(found == nullptr){
 				map.Add(e, t);
+
+				//remove from Unreal GC
+				protectFromGC(t);
 			}
 		}
 	}
