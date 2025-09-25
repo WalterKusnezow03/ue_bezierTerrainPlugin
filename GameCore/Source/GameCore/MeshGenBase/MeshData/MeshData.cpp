@@ -1170,7 +1170,7 @@ int MeshData::removeTriangleSimilarTo(int v0, int v1, int v2){
                     triangles.Pop();
                     limit = triangles.Num();
 
-                    DebugHelper::logMessage("debugTriangle removed, new size: ", triangles.Num());
+                    //DebugHelper::logMessage("debugTriangle removed, new size: ", triangles.Num());
 
                     removed++;
                 }
@@ -1345,7 +1345,7 @@ bool MeshData::contains(std::vector<int> &ref, int index){
  * 
  */
 void MeshData::pushInwards(FVector &location, int radius, FVector scaleddirection){
-    bool bLogEnabled = true;
+    bool bLogEnabled = false;
 
     if(vertecies.Num() == 0){
         if(bLogEnabled){
@@ -1414,7 +1414,8 @@ void MeshData::pushInwards(FVector &location, int radius, FVector scaleddirectio
         i++;
     }
 
-    DebugHelper::logMessage("MeshData PushInwards: Connected Vertecies", connected.size());
+    if(bLogEnabled)
+        DebugHelper::logMessage("MeshData PushInwards: Connected Vertecies", connected.size());
 
     // apply scaled offset direction
     for (int j = 0; j < connected.size(); j++)
@@ -1822,4 +1823,12 @@ void MeshData::debugDrawMesh(MMatrix &transform, UWorld *world){
 
 
 
+void MeshData::VerticalRangeOfBounds(float &a, float &b){
 
+
+    FVector bl = bounds.bottomLeftNearVertex();
+    FVector tr = bounds.topRightLeftVertex();
+
+    a = std::min(bl.Z, tr.Z);
+    b = std::max(bl.Z, tr.Z);
+}

@@ -19,6 +19,7 @@ public:
     FVector bottomLeftNearVertex();
     FVector topRightLeftVertex();
 
+
     void updateBoundsIfNeeded(TArray<FVector> &vertecies);
     void updateBoundsIfNeeded(FVector &other);
 

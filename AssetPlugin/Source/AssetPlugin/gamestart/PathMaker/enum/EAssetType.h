@@ -7,5 +7,6 @@ enum class EAssetType
 {
     EUTexture2D,
     EUClassBlueprint,
-    EUMaterial
+    EUMaterial,
+    EUStaticMesh
 };

@@ -6,8 +6,10 @@
 
 
 /// @brief will store a uprocedural mesh with raycast and without including their mesh
-/// data for all layers
+/// data for all layers of ameshactor base
 class GAMECORE_API ProceduralMeshComponentPair : public MeshDataMap {
+private:
+    bool bLogMessage = false;
 
 public:
     ProceduralMeshComponentPair();
@@ -96,4 +98,11 @@ private:
 		UProceduralMeshComponent *ProceduralMeshComponent,
 		materialEnum type
 	);
+
+
+
+
+    ///returns a instance dynamic from a material if a expression was found from material
+    ///plugin or does not.
+    UMaterialInstanceDynamic *ApplyExpressionData(UMaterial *material);
 };

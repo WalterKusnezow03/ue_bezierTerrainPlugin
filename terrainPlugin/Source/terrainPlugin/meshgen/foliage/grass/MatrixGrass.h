@@ -1,0 +1,18 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "CoreMath/Matrix/MMatrix.h"
+#include "GameCore/MeshGenBase/MeshData/MeshData.h"
+
+///will generate grass mesh data for editor asset.
+class TERRAINPLUGIN_API MatrixGrass {
+
+public:
+    MatrixGrass();
+    ~MatrixGrass();
+
+    MeshData Generate(int sizecm, int density);
+
+private:
+    void CreateSingleStraw(MeshData &dataAppend, MMatrix &transform);
+};

@@ -212,7 +212,7 @@ void ChunkParser::createFoliageAndPushNodesAroundFoliageToNavMesh(
     float treeDensitySkalar
 ){
     //create trees if not in skelleton record debug mode.
-    if(worldLevelBase::DebugSkelletonRecordMode()){
+    if(AworldLevelBase::DebugSkelletonRecordMode()){
         return;
     }
 
@@ -373,7 +373,7 @@ void ChunkParser::addNodesToNavMeshIfNeeded(UWorld *world){
     }
 
     // add all normal centers to navmesh to allow the bots to move over the terrain
-    if (APathFinder *f = APathFinder::instance(world))
+    if (APathFinder *f = APathFinder::instance())
     {
         FVector offset(0, 0, 70);
         f->addNewNodeVector(navmeshNodes, offset);

@@ -1,28 +1,34 @@
 #include "worldLevelBase.h"
 
-/// @brief world pointer to use for easier UWorld pointer from non aactor derived classes.
-UWorld *worldLevelBase::worldPointer = nullptr;
+AworldLevelBase *AworldLevelBase::Instance = nullptr;
 
-TArray<FVector> worldLevelBase::outpostsToCreate;
+AworldLevelBase::AworldLevelBase(){
+    PrimaryActorTick.bCanEverTick = true; 
+}
 
-void worldLevelBase::addOutpostAt(FVector &pos){
-    outpostsToCreate.Add(pos);
+void AworldLevelBase::MakeInstanceBase(UWorld *world){
+    if(!Instance && world){
+        AworldLevelBase *made = Make<AworldLevelBase>(world);
+    }
+}
+
+void AworldLevelBase::BeginPlay(){
+    Instance = this;
+}
+
+void AworldLevelBase::Tick(float deltatime){
+    Super::Tick(deltatime);
+}
+
+void AworldLevelBase::EndPlay(const EEndPlayReason::Type EndPlayReason){
+    Instance = nullptr;
+    Super::EndPlay(EndPlayReason);
 }
 
 
-// ---- TODO! ---- ALSO INIT MUSt Be DERIVED!
-void worldLevelBase::EndPlay(){
-    ResetWorld(); 
+void AworldLevelBase::addOutpostAt(FVector &pos){
+    if(Instance){
+        Instance->outpostsToCreate.Add(pos);
+    }
 }
 
-void worldLevelBase::SetWorld(UWorld *world){
-    worldPointer = world;
-}
-
-void worldLevelBase::ResetWorld(){
-    worldPointer = nullptr;
-}
-
-UWorld *worldLevelBase::GetWorld(){
-    return worldPointer;
-}

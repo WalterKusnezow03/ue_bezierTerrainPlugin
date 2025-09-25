@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 
 /**
- * 
+ * Matrix 4x4 (Transform.) Supports funny things like rotations from vectors.
  */
 class COREMATH_API MMatrix
 {

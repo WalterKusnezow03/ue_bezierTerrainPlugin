@@ -35,13 +35,16 @@ private:
     //will write the chunk info data into the byte array
     void WriteChunkInfoData(
         TArray<uint8> &bytes,
-        ChunkParser &chunkData
+        ChunkParser &chunkData,
+        int32 numLayers
     );
 
     //will load the chunk info data into the chunkdata object, from the given pointer(should be at 0)
     //pointer will be increased for later use!
     void LoadChunkInfoData(
         uint8 *&Ptr, 
-        ChunkParser &chunkData
+        ChunkParser &chunkData,
+        int32 &numLayersOut
     );
+    bool CanLoadChunkInfoData(TArray<uint8> &bytes);
 };

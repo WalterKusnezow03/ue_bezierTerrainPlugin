@@ -24,6 +24,9 @@
  * Saves assets of any UEnum to any UObject derived class. Supports any enum out of any plugin!
  * To Add Assets by an Enum,
  * Simply use the Track<E> method to track a UEnum.
+ * (If Using Find and Add method, the template types E and F must be UEnums, but are
+ * tracked automatically!)
+ * 
  * Afterwards you can add or load assets. Make sure you track only assets of a single type
  * by enum, the add and find method will NOT prevent you from adding and loading anything,
  * it will cast anything. If you mix UTexture and Umaterials, thats not my problem.
@@ -40,38 +43,6 @@ public:
 	static assetManager *instance();
 	~assetManager();
 
-
-	//entity
-	UClass *findBp(entityEnum type);
-	void addBp(entityEnum type, UClass *asset);
-
-
-	//weapon
-	UClass *findBp(weaponEnum type);
-	void addBp(weaponEnum type, UClass *asset);
-
-	//throwables
-	UClass *findBp(throwableEnum type);
-	void addBp(throwableEnum type, UClass *asset);
-
-	//particles
-	UClass *findBp(particleEnum type);
-	void addBp(particleEnum type, UClass *asset);
-
-
-	//all materials
-	UMaterialInterface *findMaterial(materialEnum type);
-	void addMaterial(materialEnum type, UMaterialInterface *material);
-
-	//weapon attachments
-	UClass *findBp(weaponEnum weapon, weaponAttachmentEnum weaponAttachment);
-	void addBp(weaponEnum weapon, weaponAttachmentEnum weaponAttachment, UClass *uclass);
-
-
-	//ui
-
-	UTexture2D *findTexture(textureEnum type);
-	void addTexture(textureEnum type, UTexture2D *texture);
 
 
 
@@ -145,6 +116,12 @@ public:
 		}
 	}
 
+	/// @brief finds a T by an Enum E, note that T will be tried to be casted,
+	/// use same type as added.
+	/// @tparam E 
+	/// @tparam T 
+	/// @param e 
+	/// @return 
 	template<typename E, typename T> 
 	T* Find(E e){
 		static_assert(std::is_base_of<UObject, T>::value, "must be an UObject");
@@ -295,13 +272,13 @@ private:
 
 
 	//tracked FNamedEnum List
-	std::map<FString, FNamedEnumBase *> TrackedEnums;
+	std::map<FString, FNamedEnumBase *> TrackedEnums; //saving base pointer because RTTI is NOT ALLOWED!
 	std::map<FString, assetManagerGeneric<FString, UObject>*> TrackedMap;
 	std::map<FString, assetManagerTwoGeneric<FString, FString, UObject> *> TrackedDoubleKeyMap;
 	void setupDefaultTracker();
 	void Clear();
 
-	bool bLogEnabled = true;
+	bool bLogEnabled = false;
 
 	//---- FAKE RTTI SECTION END ----
 

@@ -165,6 +165,8 @@ public:
 		int scaleZ
 	);
 
+	void VerticalRangeOfBounds(float &a, float &b);
+
 protected:
 	float MIN_SPLITDISTANCE = 50.0f;
 

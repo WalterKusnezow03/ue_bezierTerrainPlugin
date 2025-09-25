@@ -237,8 +237,12 @@ void StorageInterfaceMeshData::LoadMeshData(
     TArray<uint8> Bytes;
     if(!LoadBinaryData(path, Bytes)){
         DebugHelper::logMessage("Storage Interface mesh data ERROR LOADING BIN DATA");
+        return;
     }
     PrintBinary(Bytes, "MeshData Loaded");
+    if(Bytes.Num() <= 0){
+        return;
+    }
 
     bool endReachedIgnore = false;
     uint8 *Ptr = Bytes.GetData(); // at 0 offset.
@@ -263,13 +267,25 @@ void StorageInterfaceMeshData::LoadIntoMeshBuffers(
     TArray<int32> &Triangles,
     bool &endReached
 ){
-    //load info data
+    //check if ptr valid
+    uint8 *checkEnd = Bytes.GetData() + sizeof(uint8) * Bytes.Num();
+    if (Ptr >= checkEnd){
+        endReached = true;
+        DebugHelper::logMessage(TEXT("StorageInterfaceMeshData Ptr already oob!"));
+        return;
+    }
+
+    // load info data
     int32 vertexCount = 0;
     int32 normalCount = 0;
     int32 uvCount = 0;
     int32 triangleCount = 0;
 
     loadInfoData(Ptr, vertexCount, normalCount, uvCount, triangleCount);
+
+    if(vertexCount > Bytes.Num() / sizeof(FVector)){
+        return;
+    }
 
     //debug
     if(debugLog){
@@ -313,6 +329,7 @@ void StorageInterfaceMeshData::LoadIntoMeshBuffers(
     }
     if(totalSize == sizeof(uint8) * Bytes.Num()){
         endReached = true;
+        return;
     }
 
     /*

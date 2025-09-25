@@ -36,21 +36,35 @@ public:
         return ref.getCollisonParams();
     }
 
-    /// @brief gets the collision params without respect to template type
+    /// @brief gets the collision params without respect to template type, All of them!
     FCollisionQueryParams getAllCollisonParams(){
         TArray<AActor *> allActors;
         for(auto &pair : collisionTrackerMap){
             CollisionTracker &current = pair.second;
+            CollisionTracker::MergeInto(allActors, current);
+            /*
             TArray<AActor *> currentPtrs = current.copyTracked();
             for (int i = 0; i < currentPtrs.Num(); i++){
                 AActor *actor = currentPtrs[i];
                 if(actor && !allActors.Contains(actor)){
                     allActors.Add(actor);
                 }
-            }
+            }*/
         }
         return CollisionTracker::makeParams(allActors);
     }
+
+    FCollisionQueryParams getAllCollisionParamsMergedWith(const CollisionTracker &other){
+        TArray<AActor *> allActors;
+        for(auto &pair : collisionTrackerMap){
+            CollisionTracker &current = pair.second;
+            CollisionTracker::MergeInto(allActors, current);
+        }
+        CollisionTracker::MergeInto(allActors, other);
+        return CollisionTracker::makeParams(allActors);
+    }
+
+
 
 private:
 

@@ -47,8 +47,14 @@ protected:
 	//tracks input for steering vehicles, and unseat
 	InputContainer playerInputContainer;
 
+	/// @brief should be overriden!
+	virtual bool IsPaused();
+
 public:	
 	// Called every frame
+	///@brief processPendingRecoil called,
+	/// PlayerInfo::Update called
+	/// UpdateCursorVisibilityBasedOnPause
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
@@ -109,9 +115,18 @@ protected:
 	int health;
 
 
-	bool isPaused = false;
+	
 
 	void processPendingRecoil();
 	void addPendingRecoil(float value);
 	float pendingRecoil = 0.0f;
+
+
+private:
+	//fall back flag! 
+	bool isPausedFlag = false;
+
+
+	void UpdateCursorVisibilityBasedOnPause();
+	bool cursorVisibleFlag = false;
 };

@@ -43,7 +43,8 @@ public class terrainPlugin : ModuleRules
 				"Slate",
 				"SlateCore",
 				"ProceduralMeshComponent",
-				"StoragePlugin"
+				"StoragePlugin",
+				"AssetMakerEditorPlugin",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

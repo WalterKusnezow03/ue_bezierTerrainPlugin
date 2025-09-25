@@ -11,11 +11,12 @@
 #include <map>
 #include "ETreeType.h"
 
-/**
- * 
- */
+///will generate tree mesh data split up into lead and stem mesh data.
 class TERRAINPLUGIN_API MatrixTree
 {
+private:
+	int countLog = 20;
+
 public:
 	MatrixTree();
 	~MatrixTree();

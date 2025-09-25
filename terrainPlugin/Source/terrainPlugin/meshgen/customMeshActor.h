@@ -16,8 +16,11 @@
 #include "terrainPlugin/meshgen/foliage/MatrixTree/MatrixTree.h"
 #include <map>
 
+//data coming from:
 #include "terrainPlugin/meshgen/generation/TerrainCreator/TerrainMeshDataParser/ChunkParser.h"
 
+//grass instancing
+#include "terrainPlugin/FoliageInstancing/MovingFoliageInstancerComponent.h"
 
 #include "customMeshActor.generated.h"
 
@@ -65,13 +68,17 @@ public:
 	//material behaviour to damage 
 	void setMaterialBehaiviour(materialEnum mat);
 
-	void addRandomNodesToNavmesh(TArray<FVectorTouple> &touples);
 
 	void splitIntoAllTriangles();
 	void createNewMeshActors(std::vector<MeshData> &meshes, materialEnum material);
 
-	void createTerrainFrom2DMap(TerrainChunkSetup &package);
+	
+	//void createTerrainFrom2DMap(TerrainChunkSetup &package);
 
+
+
+
+	// -- create cube external fast helpers to create meshes --
 	void createCube(
 		FVector &a,
 		FVector &b,
@@ -106,23 +113,28 @@ public:
 		FVector &d1,
 		MeshData &cubeMesh
 	);
-
+	// -- create cube external fast helpers to create meshes --
 	
 	
 
 protected:
 
-	//cunk parser reference for flag free
+	///cunk parser reference (signal flag free if nullptr)
 	ChunkParser *chunkParserPointer = nullptr;
 
+
+
+
+
+	void CreateFoliageInstanceComponent();
+	void UpdateFoliageInstanceComponent();
+	UStaticMesh *StaticMeshForInstancer();
 	
-	
+	UPROPERTY()
+	UMovingFoliageInstancerComponent *grassInstancer = nullptr;
 
-
-
-
-	MatrixTree tree; //depracated to chunk parser
-
+	/// @brief called when lod is switched.
+	void OnLodSwitch() override;
 
 	void groundReactionToHitWorld(FVector &hitpoint);
 
@@ -136,19 +148,10 @@ protected:
 
 
 
-
-	void createFoliageAndPushNodesAroundFoliageToNavMesh(
-		TArray<FVectorTouple> &touples,
-		float percentDensity
-	);
-
-	void createTreeAndSaveToMesh(FVector &location);
-
 	materialEnum materialtypeSet = materialEnum::grassMaterial;
 
 
-	//shader
-	std::vector<materialEnum> foliageMaterials();
+	
 
 	void glassreactionToHitWorld(FVector &hitWorld);
 	void glassreactionToHitLocal(FVector &hitlocal);

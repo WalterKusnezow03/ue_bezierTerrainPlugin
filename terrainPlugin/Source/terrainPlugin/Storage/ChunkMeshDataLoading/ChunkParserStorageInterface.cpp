@@ -19,11 +19,13 @@ void ChunkParserStorageInterface::Save(
     
     TArray<uint8> Bytes;
 
-    //append actor data
-    WriteChunkInfoData(Bytes, chunkData);
 
     //append mesh data
     TArray<MeshData *> meshDataArray = MeshDataOrderedForSavingAndLoading(chunkData);
+    //append actor data
+    WriteChunkInfoData(Bytes, chunkData, meshDataArray.Num());
+
+   
     for (int i = 0; i < meshDataArray.Num(); i++){
         
         MeshData *currentPointer = meshDataArray[i];
@@ -56,8 +58,10 @@ void ChunkParserStorageInterface::Save(
 //write at FRONT
 void ChunkParserStorageInterface::WriteChunkInfoData(
     TArray<uint8> &bytes,
-    ChunkParser &chunkData
+    ChunkParser &chunkData,
+    int32 numLayers
 ){
+    //Bin layout [actorLocation, waterLocation, waterFlag, outpostFlag]
     bytes.SetNumUninitialized(bytes.Num() + headerInfoDataSize()); //set new byte num (should not be needed, count 0)
     uint8 *Ptr = bytes.GetData();
     /*
@@ -82,15 +86,27 @@ void ChunkParserStorageInterface::WriteChunkInfoData(
     
     bool flagOutpostNeeded = chunkData.OutpostFlagCreationNeeded();
     FMemory::Memcpy(Ptr, &flagOutpostNeeded, sizeof(bool));
-    //Ptr += sizeof(bool); //not needed, ptr is not used outside
+    Ptr += sizeof(bool); 
+    
+    //num layers of mesh data
+    FMemory::Memcpy(Ptr, &numLayers, sizeof(int32));
+    //Ptr += sizeof(int); ////not needed, ptr is not used outside
+}
+
+
+
+bool ChunkParserStorageInterface::CanLoadChunkInfoData(TArray<uint8> &bytes){
+    return headerInfoDataSize() <= bytes.Num();
 }
 
 //read at FRONT, increases the pointer to end!
 void ChunkParserStorageInterface::LoadChunkInfoData(
     uint8* &Ptr,
-    ChunkParser &chunkData
+    ChunkParser &chunkData,
+    int32 &numLayersOut
 ){
 
+    //Bin layout [actorLocation, waterLocation, waterFlag, outpostFlag]
     /*
     FMemory::Memcpy ( 
         void* Dest,
@@ -120,7 +136,9 @@ void ChunkParserStorageInterface::LoadChunkInfoData(
     chunkData.SetOutpostFlagNeeded(outpostFlag);
 
 
-
+    //num layers of mesh data
+    FMemory::Memcpy(&numLayersOut, Ptr, sizeof(int32));
+    Ptr += sizeof(int32); ////NEEDED ptr is not used outside
 }
 
 int ChunkParserStorageInterface::headerInfoDataSize(){
@@ -128,7 +146,8 @@ int ChunkParserStorageInterface::headerInfoDataSize(){
     sizeof(FVector) + //actor location
     sizeof(FVector) + //water location
     sizeof(bool) + //water flag
-    sizeof(bool); //outpost flag
+    sizeof(bool) + //outpost flag
+    sizeof(int32); //count layers
 }
 
 
@@ -169,30 +188,44 @@ bool ChunkParserStorageInterface::Load(
         FString message = FString::Printf(TEXT("Storage Interface chunk parser SUCCESS LOADING BIN DATA (%s)"), *path);
         DebugHelper::logMessage(message);
     }
+
+    if(!CanLoadChunkInfoData(Bytes)){
+        FString message = FString::Printf(
+            TEXT("Storage Interface chunk parser ERROR LOADING BIN HEADER DATA (%s)"), *path
+        );
+        DebugHelper::logMessage(message);
+        return false;
+    }
+
     uint8 *Ptr = Bytes.GetData(); //global pointer for loading, because meshdata is concatenated
 
     //load actor data
-    LoadChunkInfoData(Ptr, chunkData);
+    int numLayersFound = 0;
+    LoadChunkInfoData(Ptr, chunkData, numLayersFound);
 
     //load mesh data
     TArray<MeshData *> meshDataArray = MeshDataOrderedForSavingAndLoading(chunkData);
     for (int i = 0; i < meshDataArray.Num(); i++){
         bool bEndReached = false;
-        MeshData *currentPointer = meshDataArray[i];
-        if(currentPointer){
-            MeshData &meshDataCurrent = *currentPointer;
-            LoadIntoMeshBuffers(
-                Bytes, // buffer size is increased after append!
-                Ptr,   // is increased after append, must be at correct offset starting with header bytes!
-                meshDataCurrent.getVerteciesRef(),
-                meshDataCurrent.getNormalsRef(),
-                meshDataCurrent.getUV0Ref(),
-                meshDataCurrent.getTrianglesRef(),
-                bEndReached
-            );
-            meshDataCurrent.updateBoundsIfNeeded(); //very important here to update bounds from loaded data
-        }
-        if(bEndReached){
+        if(i < numLayersFound){
+            MeshData *currentPointer = meshDataArray[i];
+            if(currentPointer){
+                MeshData &meshDataCurrent = *currentPointer;
+                LoadIntoMeshBuffers(
+                    Bytes, // buffer size is increased after append!
+                    Ptr,   // is increased after append, must be at correct offset starting with header bytes!
+                    meshDataCurrent.getVerteciesRef(),
+                    meshDataCurrent.getNormalsRef(),
+                    meshDataCurrent.getUV0Ref(),
+                    meshDataCurrent.getTrianglesRef(),
+                    bEndReached
+                );
+                meshDataCurrent.updateBoundsIfNeeded(); //very important here to update bounds from loaded data
+            }
+            if(bEndReached){
+                break;
+            }
+        }else{
             break;
         }
     }
@@ -225,7 +258,7 @@ TArray<MeshData *> ChunkParserStorageInterface::MeshDataOrderedForSavingAndLoadi
     //Ganz einfaches system.
     std::vector<bool> raycastFlags = {true, false};
     std::vector<ELod> lods = LodConstants::lodVector();
-    std::vector<materialEnum> materials = MaterialEnumHelper::materialVector();
+    std::vector<materialEnum> materials = MaterialEnumHelper::materialVector(); //issue here when no mesh data added ?
   
     for (int b = 0; b < raycastFlags.size(); b++){
         bool bRaycastFlag = raycastFlags[b];

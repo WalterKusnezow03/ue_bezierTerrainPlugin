@@ -24,8 +24,8 @@ FVectorShape::FVectorShape(const FVectorShape &other){
 FVectorShape::FVectorShape(const FVectorShape &other, MMatrix &applyOffset){
     if(&other != this){
         *this = other;
+        moveVerteciesWith(applyOffset);
     }
-    moveVerteciesWith(applyOffset);
 }
 
 FVectorShape &FVectorShape::operator=(const FVectorShape &other){

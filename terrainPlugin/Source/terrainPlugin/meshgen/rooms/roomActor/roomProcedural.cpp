@@ -483,15 +483,15 @@ void AroomProcedural::spawnWindowMeshFromBounds(
 	FVector &offset
 ){
 
-	assetManager *assetManagerPointer = assetManager::instance();
-	EntityManagerBase *e = EntityManagerBase::instanceBase();
+	
+	EntityManagerBase *entityManager = EntityManagerBase::instanceBase();
 
-	if (assetManagerPointer != nullptr && e != nullptr)
+	if (entityManager != nullptr)
 	{
 		for (int i = 1; i < windowTouples.size(); i += 2){
 
 			//AcustomMeshActor *newActor = e->spawnAcustomMeshActor(GetWorld(), offset);
-			AcustomMeshActor *newActor = e->requestByEnum<AcustomMeshActor>(
+			AcustomMeshActor *newActor = entityManager->requestByEnum<AcustomMeshActor>(
 				ETrackedActors::EMeshActor,
 				GetWorld()
 			);

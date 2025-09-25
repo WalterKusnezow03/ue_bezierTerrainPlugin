@@ -103,9 +103,14 @@ void AcustomMeshActorBase::Tick(float DeltaTime)
 }
 
 void AcustomMeshActorBase::disablePhysicscollision(){
+    if(meshLodContainers.find(ELod::lodNear) != meshLodContainers.end()){
+        meshLodContainers[ELod::lodNear].setCollisionEnabled(false);
+    }
+    
+    /*
     if(Mesh){
         Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    }
+    }*/
 }
 
 
@@ -375,7 +380,11 @@ void AcustomMeshActorBase::changeLodBasedOnPlayerPosition(){
     ELod lod = lodLevelByDistanceTo(locationOfPlayer);
     if(lod != currentLodLevel){
         switchToLod(lod);
-        DebugHelper::showScreenMessage("Tick Lod Update");
+
+        if(false){
+            DebugHelper::showScreenMessage("Tick Lod Update");
+        }
+        
     }
     return;
 
@@ -459,15 +468,17 @@ UProceduralMeshComponent *AcustomMeshActorBase::MeshNoRaycastForLod(ELod lod){
 void AcustomMeshActorBase::switchToLod(ELod lod){
     currentLodLevel = lod;
 
-    FString lodString;
-    if(currentLodLevel == ELod::lodNear)
-        lodString = TEXT("switch to lod near");
-    if(currentLodLevel == ELod::lodMiddle)
-        lodString = TEXT("switch to lod middle");
-    if(currentLodLevel == ELod::lodFar)
-        lodString = TEXT("switch to lod far");
-
-    DebugHelper::showScreenMessage(lodString);
+    if(false){
+        FString lodString;
+        if(currentLodLevel == ELod::lodNear)
+            lodString = TEXT("switch to lod near");
+        if(currentLodLevel == ELod::lodMiddle)
+            lodString = TEXT("switch to lod middle");
+        if(currentLodLevel == ELod::lodFar)
+            lodString = TEXT("switch to lod far");
+        DebugHelper::showScreenMessage(lodString);
+    }
+    
 
     for(auto &pair : meshLodContainers){
         ELod pairLod = pair.first;
@@ -476,7 +487,15 @@ void AcustomMeshActorBase::switchToLod(ELod lod){
         ref.setHiddenInGame(hide);
     }
 
+    OnLodSwitch();
 }
+
+void AcustomMeshActorBase::OnLodSwitch(){
+
+}
+
+
+
 
 /// @brief updates mesh section completely and apply material
 /// @param lod 
@@ -643,7 +662,12 @@ void AcustomMeshActorBase::ApplyMaterial(
     int layer = AcustomMeshActorBase::layerByMaterialEnum(type);
     if (assetManager *e = assetManager::instance())
     {
-        ApplyMaterial(ProceduralMeshComponent, e->findMaterial(type), layer);
+        ApplyMaterial(
+            ProceduralMeshComponent,
+            e->Find<materialEnum, UMaterial>(type),
+
+            //e->findMaterial(type),
+            layer);
     }
 }
 

@@ -12,6 +12,8 @@ public:
     CollisionTracker();
     ~CollisionTracker();
 
+    void Clear();
+
     /// @brief adds a actor to the raycast params if not nullptr
     /// @param actor 
     void AddIgnoredActor(AActor *actor);
@@ -23,12 +25,21 @@ public:
     /// @brief gets the collison params with ignored actor list internal
     FCollisionQueryParams getCollisonParams();
 
+    ///@brief gets collision params merged with another params object
+    FCollisionQueryParams getMergedCollisionParams(const CollisionTracker &other);
+
     /// @brief copies the tracked actor array
     TArray<AActor *> copyTracked();
 
+    TArray<AActor *> MakeMergedArray(const CollisionTracker &other);
+
+
+    static void MergeInto(TArray<AActor *> &appendTo, const CollisionTracker &other);
+    static void MergeInto(TArray<AActor *> &appendTo, const TArray<AActor *> &other);
+
     /// @brief creates raycast params with passed ignored actors
     /// @param actors actors to ignore 
-    static FCollisionQueryParams makeParams(TArray<AActor *> &actors);
+    static FCollisionQueryParams makeParams(const TArray<AActor *> &actors);
 
 private:
     TArray<AActor *> tracked;

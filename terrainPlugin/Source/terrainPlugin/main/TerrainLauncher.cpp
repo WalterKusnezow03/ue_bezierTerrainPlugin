@@ -1,10 +1,12 @@
 #include "TerrainLauncher.h"
+#include "terrainPlugin/AssetEditorCreation/TerrainPluginAssetLoader.h"
 
 ATerrainLauncher::ATerrainLauncher(){
     PrimaryActorTick.bCanEverTick = true; //needed for tick update
 }
 
 ATerrainLauncher* ATerrainLauncher::makeInstance(UWorld *world, FString WorldLevelName){
+    TerrainPluginAssetLoader::LoadGrassAssetOnBeginPlay(); //happens only once anyway.
     if(world != nullptr){
 
         UClass *toSpawn = ATerrainLauncher::StaticClass();

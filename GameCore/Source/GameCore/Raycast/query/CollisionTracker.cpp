@@ -6,6 +6,10 @@ CollisionTracker::CollisionTracker(){
 }
 
 CollisionTracker::~CollisionTracker(){
+    Clear();
+}
+
+void CollisionTracker::Clear(){
     tracked.Empty();
 }
 
@@ -48,11 +52,36 @@ FCollisionQueryParams CollisionTracker::getCollisonParams(){
     return makeParams(tracked);
 }
 
-FCollisionQueryParams CollisionTracker::makeParams(TArray<AActor *> &actors){
+///@brief gets collision params merged with another params object
+FCollisionQueryParams CollisionTracker::getMergedCollisionParams(const CollisionTracker &other){
+    TArray<AActor *> merged = MakeMergedArray(other);
+    return makeParams(merged);
+}
+
+TArray<AActor *> CollisionTracker::MakeMergedArray(const CollisionTracker &other){
+    TArray<AActor *> copy = tracked;
+    MergeInto(copy, other);
+    return copy;
+}
+
+void CollisionTracker::MergeInto(TArray<AActor *> &appendTo, const CollisionTracker &other){
+    MergeInto(appendTo, other.tracked);
+}
+
+void CollisionTracker::MergeInto(TArray<AActor *> &appendTo, const TArray<AActor *> &other){
+    for (int i = 0; i < other.Num(); i++){
+        AActor *current = other[i];
+        if(current && !appendTo.Contains(current)){
+            appendTo.Add(current);
+        }
+    }
+}
+
+FCollisionQueryParams CollisionTracker::makeParams(const TArray<AActor *> &other){
     FCollisionQueryParams Params;
     Params.bTraceComplex = false;
-    for (int i = 0; i < actors.Num(); i++){
-        if(AActor *current = actors[i]){
+    for (int i = 0; i < other.Num(); i++){
+        if(AActor *current = other[i]){
             Params.AddIgnoredActor(current);
         }
     }

@@ -33,10 +33,10 @@ void ADoorBase::BeginPlay(){
 void ADoorBase::Tick(float DeltaTime){
     Super::Tick(DeltaTime);
     if(!canChangeStateNow()){
-        FRotator rot = interpolator.interpolateRotationOnly(DeltaTime);
+        FRotator rot = interpolator.interpolate(DeltaTime);
         SetActorRotation(rot);
 
-        if(interpolator.hasReachedTarget()){
+        if(canChangeStateNow()){
             bIsOpenState = !bIsOpenState; //flip
         }
     }
@@ -85,7 +85,7 @@ void ADoorBase::open(){
         FRotator nextState = currentRotation;
         nextState.Yaw += 90.0f;
 
-        interpolator.setNewTimeToFrame(timeOfAnimation);
+        interpolator.overrideTime(timeOfAnimation);
         interpolator.overrideStart(currentRotation);
         interpolator.overrideTarget(nextState);
         
@@ -99,7 +99,7 @@ void ADoorBase::close(){
         FRotator nextState = currentRotation;
         nextState.Yaw -= 90.0f;
 
-        interpolator.setNewTimeToFrame(timeOfAnimation); // resets reached flag too
+        interpolator.overrideTime(timeOfAnimation); // resets reached flag too
         interpolator.overrideStart(currentRotation);
         interpolator.overrideTarget(nextState);
 

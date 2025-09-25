@@ -58,6 +58,10 @@ APlayerControllerBase::APlayerControllerBase()
 
 }
 
+bool APlayerControllerBase::IsPaused(){
+    return isPausedFlag;
+}
+
 // Called when the game starts or when spawned
 void APlayerControllerBase::BeginPlay()
 {
@@ -104,6 +108,7 @@ void APlayerControllerBase::SetupPlayerInputComponent(UInputComponent* PlayerInp
 void APlayerControllerBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
     processPendingRecoil();
 
     PlayerInfo::Update(
@@ -111,10 +116,9 @@ void APlayerControllerBase::Tick(float DeltaTime)
         cameraRotation(),
         playerLookDir()
     );
-    
+
+    UpdateCursorVisibilityBasedOnPause();
 }
-
-
 
 /**
  * Implemented take damage method from interface, need to override it, this method is not valid yet
@@ -162,13 +166,13 @@ void APlayerControllerBase::MoveForward(float Value)
 
         const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
-        if(true){
-            AddMovementInput(Direction, Value);
-        }
+       
+        AddMovementInput(Direction, Value);
+        
     
         isWalking = true;
 
-
+        //DebugHelper::showScreenMessage("PlayerControllerBase: Forward", FColor::Green);
     }
 }
 
@@ -189,7 +193,7 @@ void APlayerControllerBase::MoveRight(float Value)
 
 void APlayerControllerBase::TurnAtRate(float Rate)
 {
-    if(isPaused){
+    if(IsPaused()){
         return;
     }
     float yawRate = Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds();
@@ -199,7 +203,7 @@ void APlayerControllerBase::TurnAtRate(float Rate)
 
 void APlayerControllerBase::LookUpAtRate(float Rate)
 {
-    if(isPaused){
+    if(IsPaused()){
         return;
     }
 
@@ -236,7 +240,7 @@ void APlayerControllerBase::processPendingRecoil(){
 }   
 
 void APlayerControllerBase::Jump(){
-    if(isPaused){
+    if(IsPaused()){
         return;
     }
 
@@ -338,7 +342,6 @@ void APlayerControllerBase::leftMouseUp(){
 
 void APlayerControllerBase::setTeam(teamEnum teamIn){
     this->team = teamIn;
-    // referenceManager::verifyTeam(teamIn);
 }
 
 teamEnum APlayerControllerBase::getTeam(){
@@ -375,18 +378,28 @@ void APlayerControllerBase::showCursor(bool show){
         //game only custom dispatch no ui - CUSTOM DIPATCH CLICKS
         FInputModeGameOnly InputMode;
         PlayerController->SetInputMode(InputMode);
-        
-        
     }
-
 }
 
+void APlayerControllerBase::UpdateCursorVisibilityBasedOnPause(){
+    //based whether is paused or not
+    bool isPausedCurrent = IsPaused();
+    bool changed = isPausedCurrent != cursorVisibleFlag;
+
+    if(changed){
+        showCursor(!cursorVisibleFlag);
+        cursorVisibleFlag = !cursorVisibleFlag;
+    }
+}
+
+
+
 void APlayerControllerBase::setPaused(bool in){
-    isPaused = in;
+    isPausedFlag = in;
 }
 
 void APlayerControllerBase::openPauseMenu(){
-
+    //to be overriden!
 }
 
 

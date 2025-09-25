@@ -153,7 +153,7 @@ void AcustomWaterActor::createWaterPane(int vertexCountIn, int detail){
 
     //exclude this for bone controller raycast
     /*
-    EntityManager *entityManagerPointer = worldLevel::entityManager();
+    EntityManager *entityManagerPointer = AworldLevel::entityManager();
     if(entityManagerPointer){
         entityManagerPointer->addActorToIgnoredAllParams(this);
     }*/

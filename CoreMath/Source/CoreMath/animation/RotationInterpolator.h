@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 
+/// @brief Marked for removal, still might be needed.
 class COREMATH_API RotationInterpolator {
 
 public:

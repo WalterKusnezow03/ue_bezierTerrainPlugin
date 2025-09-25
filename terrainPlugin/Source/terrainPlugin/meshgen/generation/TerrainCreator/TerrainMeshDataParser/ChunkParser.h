@@ -39,6 +39,7 @@ public:
     /// @param package 
     void createTerrainFrom2DMap(FVector &positionChunkActorLocation, TerrainChunkSetup &package);
 
+    /// @brief targeted actor location for custom mesh actor
     FVector GetActorLocation();
 
     //set id for meshdata saving!
@@ -103,7 +104,9 @@ private:
     ETerrainType thisTerrainType;
     MatrixTree tree;
 
-    // MUST BE REFACTURED WITHOUT COMPONENT PTR; A BASE CLASS!
+    //Is the same class as in CustomMeshActor base but without 
+    //Procedural mesh component ptrs, just saves mesh data per Lod and 
+    //each material.
     std::map<ELod, MeshDataMap> meshLodContainers;
 
     void createTerrainFrom2DMap(

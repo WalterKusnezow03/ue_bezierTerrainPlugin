@@ -14,6 +14,7 @@ enum class materialEnum
     redsandMaterial,
     treeMaterial,
     palmLeafMaterial,
+    CactusMaterial,
     waterMaterial,
     snowMaterial,
     prop_alarmBoxMaterial,

@@ -124,7 +124,7 @@ bool TerrainChunkSetup::BuildingFlagged(){
 void TerrainChunkSetup::createOutPostIfFlagged(UWorld *world){
     if(world && createOutpost){
         //might not work when using Plugin! - nothing will happen.
-        worldLevelBase::addOutpostAt(outpostLocation);
+        AworldLevelBase::addOutpostAt(outpostLocation);
     }
 }
 

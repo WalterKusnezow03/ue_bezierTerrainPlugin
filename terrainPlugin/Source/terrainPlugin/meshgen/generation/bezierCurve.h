@@ -7,7 +7,7 @@
 
 
 /**
- * 
+ * b-Spline generator.
  */
 class TERRAINPLUGIN_API bezierCurve
 {

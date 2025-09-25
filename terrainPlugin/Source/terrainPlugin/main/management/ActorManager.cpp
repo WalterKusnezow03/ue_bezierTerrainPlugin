@@ -113,7 +113,7 @@ void ActorManager::applyChunkmeshDataCompletly(){
             //single fire create outpost, once!
             if(currentParserPackage->OutpostFlagCreationNeeded()){
                 FVector outpostLocation = currentParserPackage->GetActorLocation();
-                worldLevelBase::addOutpostAt(outpostLocation);
+                AworldLevelBase::addOutpostAt(outpostLocation);
             }
 
             //create water
@@ -196,6 +196,7 @@ void ActorManager::Tick(float deltatime){
     //request list as TArray<ChunkParser> request list -----> will provide mesh data map 
     //to ameshactor instance!
 
+    //is not tested at all
     if(!instantTerrainActorApply){
         UpdateMeshActorLists();
         updateMeshActorsBasedOnPlayerLocation(playerLocationChunkSpace);

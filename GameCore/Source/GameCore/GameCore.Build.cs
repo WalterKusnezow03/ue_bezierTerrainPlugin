@@ -19,7 +19,7 @@ public class GameCore : ModuleRules
 			new string[] {
 				// ... add other private include paths required here ...
 			}
-			);
+		);
 			
 		
 		PublicDependencyModuleNames.AddRange(
@@ -42,10 +42,9 @@ public class GameCore : ModuleRules
 				"Slate",
 				"SlateCore",
 				"ProceduralMeshComponent"
-				// ... add private dependencies that you statically link with here ...	
 			}
-			);
-		
+		);
+				
 		
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[]

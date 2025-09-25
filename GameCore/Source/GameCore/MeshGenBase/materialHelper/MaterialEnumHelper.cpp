@@ -18,6 +18,7 @@ FString MaterialEnumHelper::toString(materialEnum typein){
     map[materialEnum::prop_alarmBoxMaterial] = TEXT("prop_alarmBoxMaterial");
     map[materialEnum::grassMaterial] = TEXT("grassMaterial");
     map[materialEnum::wingMaterial] = TEXT("wingMaterial");
+    map[materialEnum::CactusMaterial] = TEXT("CactusMaterial");
 
     if(map.find(typein) != map.end()){
         return map[typein];
@@ -40,7 +41,8 @@ std::vector<materialEnum> MaterialEnumHelper::materialVector(){
         materialEnum::beigeStoneMaterial,
         materialEnum::prop_alarmBoxMaterial,
         materialEnum::_texturedMaterial,
-        materialEnum::wingMaterial
+        materialEnum::wingMaterial,
+        materialEnum::CactusMaterial
     };
     return types;
 }
