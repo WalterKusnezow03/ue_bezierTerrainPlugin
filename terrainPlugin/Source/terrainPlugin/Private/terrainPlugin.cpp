@@ -8,6 +8,13 @@ void FterrainPluginModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 	InitAssetMeshes();
+
+	static FAutoConsoleCommand Cmd(
+		TEXT("terrainPluginModule.StaticLaunchMeshAssetCreation"),
+		TEXT("Test Static Launch"),
+		FConsoleCommandDelegate::CreateStatic(&FterrainPluginModule::InitAssetMeshes)
+	);
+
 }
 
 void FterrainPluginModule::ShutdownModule()

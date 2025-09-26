@@ -171,12 +171,18 @@ void MeshData::append(MeshData &other)
     TArray<FVector> &verteciesRef = other.getVerteciesRef();
     TArray<int32> &trianglesRef = other.getTrianglesRef();
     TArray<FVector> &normalsRef = other.getNormalsRef();
-    join(verteciesRef, trianglesRef, normalsRef);
+    TArray<FVector2D> &uvref = other.getUV0Ref();
+    join(verteciesRef, trianglesRef, normalsRef, uvref);
 
     updateBoundsIfNeeded();
 }
 
-void MeshData::join(TArray<FVector> &verteciesRef, TArray<int32> &trianglesRef, TArray<FVector> &normalsin){
+void MeshData::join(
+    TArray<FVector> &verteciesRef, 
+    TArray<int32> &trianglesRef, 
+    TArray<FVector> &normalsin,
+    TArray<FVector2D> &uvrefin
+){
     int triangleOffset = vertecies.Num(); //beim vertex count offset starten!
 
     //copy triangles, apply offset
@@ -188,7 +194,10 @@ void MeshData::join(TArray<FVector> &verteciesRef, TArray<int32> &trianglesRef, 
         triangles.Add(copy);
     }
 
+    // --- will introduce resize overhead. Dont use this method. ---
+
     //copy vertecies
+    /*
     for(int i = 0; i < verteciesRef.Num(); i++){
         FVector &ref = verteciesRef[i];
         vertecies.Add(ref);
@@ -199,6 +208,42 @@ void MeshData::join(TArray<FVector> &verteciesRef, TArray<int32> &trianglesRef, 
         FVector &ref = normalsin[i];
         normals.Add(ref);
     }
+
+    //copy uvs
+    for(int i = 0; i < uvrefin.Num(); i++){
+        UV0.Add(uvrefin[i]);
+    }*/
+
+    if(verteciesRef.Num() > 0){
+        int32 sizebuffer = vertecies.Num();
+        vertecies.SetNum(sizebuffer + verteciesRef.Num());
+        for (int i = 0; i < verteciesRef.Num(); i++)
+        {
+            FVector &ref = verteciesRef[i];
+            vertecies[sizebuffer + i] = ref;
+        }
+    }
+
+    if(normalsin.Num() > 0){
+        int32 sizebuffer = normals.Num();
+        normals.SetNum(sizebuffer + normalsin.Num());
+        for (int i = 0; i < normalsin.Num(); i++)
+        {
+            FVector &ref = normalsin[i];
+            normals[sizebuffer + i] = ref;
+        }
+    }
+
+    if(uvrefin.Num() > 0){
+        int32 sizebuffer = UV0.Num();
+        UV0.SetNum(sizebuffer + uvrefin.Num());
+        for (int i = 0; i < uvrefin.Num(); i++)
+        {
+            FVector2D &ref = uvrefin[i];
+            UV0[sizebuffer + i] = ref;
+        }
+    }
+    
 
     updateBoundsIfNeeded();
 }
@@ -303,7 +348,43 @@ void MeshData::buildTriangle(
     output.Add(c);
 }
 
+void MeshData::appendUvs(
+    FVector2D &a,
+    FVector2D &b,
+    FVector2D &c
+){
+    UV0.Add(a);
+    UV0.Add(b);
+    UV0.Add(c);
+}
 
+void MeshData::appendUvs(
+    FVector2D &a,
+    FVector2D &b,
+    FVector2D &c,
+    FVector2D &d
+){
+    appendUvs(a, b, c);
+    appendUvs(a, c, d);
+}
+
+void MeshData::appendUvsDoubleSided(
+    FVector2D &a,
+    FVector2D &b,
+    FVector2D &c
+){
+    appendUvs(a, b, c);
+    appendUvs(a, c, b);
+}
+void MeshData::appendUvsDoubleSided(
+    FVector2D &a,
+    FVector2D &b,
+    FVector2D &c,
+    FVector2D &d
+){
+    appendUvsDoubleSided(a, b, c);
+    appendUvsDoubleSided(a, c, d);
+}
 
 /// @brief offsets all vertecies in a given direction
 /// @param offset 

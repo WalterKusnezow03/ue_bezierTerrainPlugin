@@ -11,8 +11,9 @@ public:
     MatrixGrass();
     ~MatrixGrass();
 
-    MeshData Generate(int sizecm, int density);
+    MeshData Generate(int sizecm, int density, FVector2D pivotUv = FVector2D(0,0));
 
 private:
     void CreateSingleStraw(MeshData &dataAppend, MMatrix &transform);
+    void CreateSprite(MeshData &dataAppend, MMatrix &transform);
 };

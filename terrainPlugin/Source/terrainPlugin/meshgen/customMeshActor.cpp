@@ -569,9 +569,14 @@ void AcustomMeshActor::UpdateFoliageInstanceComponent(){
             currentLodLevel, //ELod::lodNear, //kleiner test :-)
             raycastOnLayer
         );
-        const TArray<FVector> &positions = data.getVerteciesRef();
-        grassInstancer->Update(positions, currentLodLevel);
+        //const TArray<FVector> &positions = data.getVerteciesRef();
+        grassInstancer->Update(
+            data.getVerteciesRef(), 
+            data.getNormalsRef(), 
+            currentLodLevel
+        );
 
+        /*
         FString message = FString::Printf(
             TEXT("AcustomMeshActor::UpdateFoliageInstanceComponent count %d"),
             positions.Num()
@@ -584,6 +589,6 @@ void AcustomMeshActor::UpdateFoliageInstanceComponent(){
             GetActorLocation() + FVector(0, 0, 800),
             FColor::Black,
             10.0f
-        );
+        );*/
     }
 }

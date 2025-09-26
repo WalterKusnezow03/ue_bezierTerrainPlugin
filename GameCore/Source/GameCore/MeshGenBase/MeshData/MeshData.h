@@ -93,6 +93,35 @@ public:
 		std::vector<FVector> &buffer
 	);
 
+	//uv append
+	void appendUvs(
+		FVector2D &a,
+		FVector2D &b,
+		FVector2D &c
+	);
+	void appendUvs(
+		FVector2D &a,
+		FVector2D &b,
+		FVector2D &c,
+		FVector2D &d
+	);
+
+
+	void appendUvsDoubleSided(
+		FVector2D &a,
+		FVector2D &b,
+		FVector2D &c
+	);
+	void appendUvsDoubleSided(
+		FVector2D &a,
+		FVector2D &b,
+		FVector2D &c,
+		FVector2D &d
+	);
+
+
+
+
 	void rebuild(TArray<FVector> &&verteciesIn, TArray<int> &&trianglesIn);
 
 	void clearMesh();
@@ -198,7 +227,12 @@ protected:
 	int findClosestIndexToAndAvoid(FVector &vertex, int indexAvoid);
 	int findClosestIndexToAndAvoid(FVector &vertex, std::vector<int> &avoid);
 
-	void join(TArray<FVector> &vertecies, TArray<int32> &triangles, TArray<FVector> &normalsin);
+	void join(
+		TArray<FVector> &vertecies, 
+		TArray<int32> &triangles, 
+		TArray<FVector> &normalsin, 
+		TArray<FVector2D> &uvrefin
+	);
 
 	bool isValidVertexIndex(int i);
 	bool isValidVertexIndex(int i, int j, int n);

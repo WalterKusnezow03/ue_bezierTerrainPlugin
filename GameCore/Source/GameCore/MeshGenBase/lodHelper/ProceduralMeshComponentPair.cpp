@@ -349,7 +349,7 @@ void ProceduralMeshComponentPair::ApplyMaterial(
     int layer = layerByMaterialEnum(type);
     if (assetManager *e = assetManager::instance())
     {
-        /*
+        
         UMaterial *materialFound = e->Find<materialEnum, UMaterial>(type);
         if(materialFound){
             if(UMaterialInstance *dynamic = ApplyExpressionData(materialFound)){
@@ -366,18 +366,18 @@ void ProceduralMeshComponentPair::ApplyMaterial(
                     layer
                 );
             }
-        }*/
+        }
 
 
 
-
+        /*
         //old default Apply
         ApplyMaterial(
             ProceduralMeshComponent, 
             e->Find<materialEnum, UMaterial>(type),
             //e->findMaterial(type), 
             layer
-        );
+        );*/
     }
 }
 
@@ -385,6 +385,9 @@ void ProceduralMeshComponentPair::ApplyMaterial(
 
 
 UMaterialInstanceDynamic* ProceduralMeshComponentPair::ApplyExpressionData(UMaterial *material){
+    //debug
+    return nullptr;
+
     UObject *parent = raycastMesh; //outer object for instance dynamic needed.
     if(!parent){
         parent = noraycastMesh;

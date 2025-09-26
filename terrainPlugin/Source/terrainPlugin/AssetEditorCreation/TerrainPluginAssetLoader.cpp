@@ -56,10 +56,14 @@ void TerrainPluginAssetLoader::InitGrassAssets(){
 		if(!asset){
 			//still not found create
             MatrixGrass instancer;
-            MeshData generated = instancer.Generate(100, 10);
+            MeshData generatedMeshData = instancer.Generate(100, 10);
 
             MeshDataAssetTask task;
-            task.Update(generated.getVerteciesRef(), generated.getTrianglesRef());
+            task.Update(
+                generatedMeshData.getVerteciesRef(), 
+                generatedMeshData.getTrianglesRef(),
+                generatedMeshData.getUV0Ref()
+            );
             task.UpdatePathAndName(TEXT("/terrainPlugin/Prefabs/foliage/"), TEXT("grassAssetDefault"));
             UEditorMeshDataToStaticMeshTool::AppendTask(task);
             //UEditorMeshDataToStaticMeshTool::Launch();

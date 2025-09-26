@@ -37,6 +37,7 @@ void UMovingFoliageInstancerComponent::Init(int countChilds, UStaticMesh *someMe
 
 void UMovingFoliageInstancerComponent::Update(
     const TArray<FVector> &positions,
+    const TArray<FVector> &normals,
     ELod lodLevelcurrent
 ){
     if(instancer){
@@ -50,7 +51,7 @@ void UMovingFoliageInstancerComponent::Update(
         }
 
         SetHiddenInGame(false);
-        UpdateTransformArray(positions);
+        UpdateTransformArray(positions, normals);
         int32 StartInstanceIndex = 0;
         bool bMarkRenderStateDirty = true;
         bool bTeleport = true;
@@ -86,7 +87,8 @@ void UMovingFoliageInstancerComponent::Update(
 
 
 void UMovingFoliageInstancerComponent::UpdateTransformArray(
-    const TArray<FVector> &positions
+    const TArray<FVector> &positions,
+    const TArray<FVector> &normals
 ){
     int limit = std::min(positions.Num(), transformChilds.Num());
     for (int i = 0; i < limit; i++)
@@ -106,10 +108,7 @@ void UMovingFoliageInstancerComponent::UpdateTransformArray(
                 1000.0f
             );
         }*/
-
-
     }
-
     //make others dissappear
     if(limit < transformChilds.Num()){
         for (int i = limit; i < transformChilds.Num(); i++)
@@ -119,9 +118,40 @@ void UMovingFoliageInstancerComponent::UpdateTransformArray(
             current.SetTranslation(pos);
         }
     }
+
+    //apply rotation
+    int normallimit = std::min(normals.Num(), transformChilds.Num());
+    for (int n = 0; n < normallimit; n++){
+
+        //TTransform::SetRotation ( const TQuat< T >& NewRotation)
+        FQuat asQaut = RotataionForSurfaceNormal(normals[n]);
+        FTransform &transform = transformChilds[n];
+        transform.SetRotation(asQaut);
+
+
+
+        /*
+        if(parentPtr && n < positions.Num()){
+            DebugHelper::showLineBetween(
+                parentPtr->GetWorld(),
+                parentPtr->GetActorLocation() + positions[n],
+                parentPtr->GetActorLocation() + positions[n] + normals[n] * 100,
+                FColor::Red,
+                1000.0f
+            );
+        }*/
+    }
 }
 
+FQuat UMovingFoliageInstancerComponent::RotataionForSurfaceNormal(const FVector &normal){
+    FRotator asRotation = normal.Rotation();
+    asRotation.Pitch -= 90.0f; 
+    //the x axis looks forward but normal logically UP! Towards Z!
+    //Rotate x axis to look up is +90 counter clock wise!, thats what i thought, its the other way around.
 
+    FQuat asQaut(asRotation);
+    return asQaut;
+}
 
 /// @brief moves all instances away and hides this component
 void UMovingFoliageInstancerComponent::HideAll(){

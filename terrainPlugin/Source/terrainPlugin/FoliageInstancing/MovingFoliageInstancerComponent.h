@@ -20,6 +20,7 @@ public:
     /// @param positions 
     void Update(
         const TArray<FVector> &positions,
+        const TArray<FVector> &normals,
         ELod lodLevelcurrent
     );
 
@@ -32,7 +33,10 @@ protected:
     /// @brief updates the transform array with the given position until reached max size.
     /// or remove from visibility
     /// @param positions 
-    void UpdateTransformArray(const TArray<FVector> &positions);
+    void UpdateTransformArray(
+        const TArray<FVector> &positions,
+        const TArray<FVector> &normals
+    );
 
     UPROPERTY()
     UInstancedStaticMeshComponent *instancer = nullptr;
@@ -42,6 +46,7 @@ protected:
     bool bWorldSpaceFlag = false;
     TArray<FTransform> transformChilds;
 
+    FQuat RotataionForSurfaceNormal(const FVector &normal);
 };
 
 

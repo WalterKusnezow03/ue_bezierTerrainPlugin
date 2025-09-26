@@ -22,9 +22,7 @@ public:
     
 
     UStaticMesh *CreateStaticMeshAsset(
-        const FString &AssetPath,
-        const TArray<FVector> &Vertices,
-        const TArray<int32> &Indices
+        MeshDataAssetTask &task
     );
 
     static bool AssetAlreadyExists(FString path, FString nameAsset);
@@ -32,14 +30,15 @@ public:
 private:
     static void Log(FString msg);
 
+    bool TaskCanBeExecuted(MeshDataAssetTask &task);
+
     FMeshDescription *GetLod(int32 lod, UStaticMesh *mesh);
     bool Build(TArray<const FMeshDescription *> lods, UStaticMesh *mesh);
 
 
     void Append(
         FMeshDescription *mesh,
-        const TArray<FVector>& vertices, 
-        const TArray<int32>& triangles
+        MeshDataAssetTask &task
     );
 
     void AppendAllVertecies(
@@ -60,6 +59,13 @@ private:
         TArray<FVertexInstanceID> &vertexIdBuffer,
         const TArray<int32> &triangles,
         FPolygonGroupID &materialId
+    );
+
+    void AppendUVBuffer(
+        FMeshDescription &mesh,
+        MeshDataAssetTask &task,
+        TArray<FVertexInstanceID> &vertexIdBuffer,
+        int32 uvChannel
     );
 
     static TArray<MeshDataAssetTask> tasks;

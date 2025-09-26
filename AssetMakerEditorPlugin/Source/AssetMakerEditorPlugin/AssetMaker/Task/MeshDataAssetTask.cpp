@@ -17,8 +17,10 @@ MeshDataAssetTask::MeshDataAssetTask(const MeshDataAssetTask &other){
 
 MeshDataAssetTask &MeshDataAssetTask::operator=(const MeshDataAssetTask &other){
     if(this != &other){
-        Update(other.vertexBufferSaved, other.triangleBufferSaved);
+        Update(other.vertexBufferSaved, other.triangleBufferSaved, other.uvBufferSaved);
         UpdatePathAndName(other.filePath, other.fileName);
+        uvX_0left = other.uvX_0left;
+        uvY_0Up = other.uvY_0Up;
     }
     return *this;
 }
@@ -42,6 +44,17 @@ bool MeshDataAssetTask::IsValidTask(){
 void MeshDataAssetTask::Update(const TArray<FVector> &vertexBuffer, const TArray<int32> &triangleBuffer){
     vertexBufferSaved = vertexBuffer;
     triangleBufferSaved = triangleBuffer;
+    uvBufferSaved.Empty();
+}
+
+void MeshDataAssetTask::Update(
+    const TArray<FVector> &vertexBuffer, 
+    const TArray<int32> &triangleBuffer,
+    const TArray<FVector2D> &uvBufferIn 
+){
+    vertexBufferSaved = vertexBuffer;
+    triangleBufferSaved = triangleBuffer;
+    uvBufferSaved = uvBufferIn;
 }
 
 void MeshDataAssetTask::UpdatePathAndName(const FString path, const FString name){
@@ -64,4 +77,24 @@ TArray<FVector> &MeshDataAssetTask::GetVertexBuffer(){
 
 TArray<int32> &MeshDataAssetTask::GetTriangleBuffer(){
     return triangleBufferSaved;
+}
+
+TArray<FVector2D> &MeshDataAssetTask::GetUV0(){
+    return uvBufferSaved;
+}
+
+void MeshDataAssetTask::MarkXUv_0Left(bool flag){
+    uvX_0left = flag;
+}
+void MeshDataAssetTask::MarkYUv_0Bottom(bool flag){
+    uvY_0Up = flag;
+}
+
+void MeshDataAssetTask::ModifyUvBasedOnFlags(FVector2D &uv){
+    if(uvX_0left){
+        uv.X = 1.0f - uv.X;
+    }
+    if(uvY_0Up){
+        uv.Y = 1.0 - uv.Y;
+    }
 }
