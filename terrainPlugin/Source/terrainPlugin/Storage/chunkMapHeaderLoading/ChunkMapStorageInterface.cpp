@@ -1,5 +1,5 @@
 #include "ChunkMapStorageInterface.h"
-#include "GameCore/DebugHelper.h"
+#include "DebugPlugin/DebugHelper.h"
 #include "terrainPlugin/meshgen/generation/TerrainCreator/ChunkSetup/TerrainChunkAttributes.h"
 
 

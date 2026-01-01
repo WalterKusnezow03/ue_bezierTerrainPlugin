@@ -33,6 +33,8 @@ void MPolygonRaster::Setup(TArray<TArray<int>> &quads){
     UpdateFreePositions();
 }
 
+
+
 void MPolygonRaster::SetupAsChild(TArray<std::pair<int, int>> &positions, std::pair<int, int> &offsetIn){
     
     //min pos needed here: transform polygon data to origin!
@@ -97,6 +99,8 @@ std::pair<int, int> MPolygonRaster::MinPos(TArray<std::pair<int, int>> &position
     }
     return minPos;
 }
+
+
 
 
 
@@ -213,7 +217,7 @@ void MPolygonRaster::TryFitAll(TArray<MPolygon> &polygons){
             const FBoundingBox2D &boundA = A.boundingBox();
             const FBoundingBox2D &boundB = B.boundingBox();
 
-            return boundA.size() < boundB.size();
+            return boundA.size().Size() < boundB.size().Size();
 
             //return A > B; // true = A kommt vor B
         });

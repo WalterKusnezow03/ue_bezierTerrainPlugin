@@ -11,14 +11,16 @@ UCLASS()
 class ASSETMAKEREDITORPLUGIN_API UEditorMeshDataToStaticMeshTool : public UObject{
     GENERATED_BODY()
 public:
+    
 
 #if WITH_EDITOR
 
-    /// @brief add before launch
-    static void AppendTask(const MeshDataAssetTask &task);
-
+    
     /// @brief executes all tasks, called by command setupped in AssetMakerEditorPlugin.h / .cpp
     static void Launch();
+    /// @brief add before launch
+    static void AppendTask(const MeshDataAssetTask &task);
+    
     
 
     UStaticMesh *CreateStaticMeshAsset(

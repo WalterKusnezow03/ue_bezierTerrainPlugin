@@ -10,8 +10,6 @@
 #include "GameCore/util/FVectorTouple.h"
 #include "chunk.h"
 #include "GameCore/util/TVector.h"
-#include "terrainPlugin/meshgen/generation/TerrainCreator/Road/RoadMaker.h"
-
 
 #include "terrainPlugin/meshgen/generation/TerrainCreator/ChunkSetup/TerrainChunkMap.h"
 #include "terrainPlugin/main/worldCache/ChunkParserMap.h"
@@ -46,7 +44,7 @@ public:
 	
 
 
-	//raycast
+	// --- raycast alternative ---
 	float getHeightFor(FVector &position);
 	float getHeightFor(FVector2D &pos);
 	void getHeightAndDistanceFromModVertex(
@@ -59,11 +57,19 @@ public:
 
 
 	//create actors
-	AcustomMeshActor *getNewMeshActor();
+	AcustomMeshActor *getNewMeshActor(UWorld *world);
 
-
+	void lockQuadsFromParalellArrayLines(
+		TArray<FVector> &line0,
+		TArray<FVector> &line1
+	);
 
 private:
+	//pre merge with top right topright chunks for fix gaps of one meter.
+	void PreMergeWithTopLeftRightChunks();
+	void PreMergeWithTopLeftRightChunks(int x, int y);
+
+	//copy to chunk parser
 	void applyTerrainDataIntoChunkParserAt(ChunkParserMap &mapToFillDataTo, int x, int y);
 
 
@@ -103,13 +109,24 @@ private:
 	void randomizeTerrainTypes();
 	void randomizeTerrainTypes(UWorld *world);
 	void applyTerrainTypeBetween(FVector &a, FVector &b, ETerrainType typeIn);
-	
+
+	float MinZ(TArray<FVector> &array);
+	float MaxZ(TArray<FVector> &array);
+
 public:	
 	chunk *chunkAt(int x, int y);
 	chunk *chunkAt(terrainHillSetup &setup);
 	TArray<chunk *> chunksAt(
 		TArray<FVector> &positionsWorld
 	);
+	chunk *chunkAtWorldPositon(FVector &worldPos);
+	std::pair<int, int> Index2DFromWorldPosition(
+		const FVector &worldPos
+	);
+
+	void createRoadMeshActor(UWorld *world);
+
+	
 
 private:
 	std::vector<ETerrainType> createRandomTerrainTypes(int count);
@@ -118,11 +135,10 @@ private:
 	void applySpecialTerrainTypesByHeight();
 
 
-	void createRoads(UWorld* world);
-	RoadMaker roadmaker;
-
-
-
+	
+	//RoadMaker roadmaker;
+	void createRoads(ChunkParserMap &mapToFillDataTo);
+	void ScaleUpXY(TArray<FVector> &positions, float scale);
 
 	//NEW
 	TerrainChunkMap setupMap;

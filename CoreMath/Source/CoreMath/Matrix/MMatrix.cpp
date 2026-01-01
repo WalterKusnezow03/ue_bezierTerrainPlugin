@@ -154,7 +154,7 @@ MMatrix MMatrix::operator*(MMatrix &other){
 /// @brief multiply with a vector 
 /// @param other 
 /// @return 
-FVector MMatrix::operator*(FVector &other){
+FVector MMatrix::operator*(const FVector &other){
     FVector resultVec;
 
     float row[] = {other.X, other.Y, other.Z, 1.0f};
@@ -793,6 +793,61 @@ void MMatrix::setRotation(FVector &other){
     MMatrix rotatorMat = createRotatorFrom(other);
     setRotation(rotatorMat);
 }
+
+void MMatrix::setRotation(const FQuat &q){
+    
+
+    const float x = q.X;
+    const float y = q.Y;
+    const float z = q.Z;
+    const float w = q.W;
+
+    const float xx = x * x;
+    const float yy = y * y;
+    const float zz = z * z;
+
+    const float xy = x * y;
+    const float xz = x * z;
+    const float yz = y * z;
+
+    const float wx = w * x;
+    const float wy = w * y;
+    const float wz = w * z;
+
+
+    set(0,0, 1.0f - 2.0f * (yy + zz));
+    set(1,0, 2.0f * (xy - wz));
+    set(2,0, 2.0f * (xz + wy));
+
+
+    set(0,1, 2.0f * (xy + wz));
+    set(1,1, 1.0f - 2.0f * (xx + zz));
+    set(2,1, 2.0f * (yz - wx));
+
+    set(0,2, 2.0f * (xz - wy));
+    set(1,2, 2.0f * (yz + wx));
+    set(2,2, 1.0f - 2.0f * (xx + yy));
+
+    /*
+    m00 = 1.0f - 2.0f * (yy + zz);
+    m01 = 2.0f * (xy - wz);
+    m02 = 2.0f * (xz + wy);
+
+    m10 = 2.0f * (xy + wz);
+    m11 = 1.0f - 2.0f * (xx + zz);
+    m12 = 2.0f * (yz - wx);
+
+    m20 = 2.0f * (xz - wy);
+    m21 = 2.0f * (yz + wx);
+    m22 = 1.0f - 2.0f * (xx + yy);
+    */
+
+}
+
+
+
+
+
 
 MMatrix MMatrix::createInverse(){
     // -- using jordan inverse by default --

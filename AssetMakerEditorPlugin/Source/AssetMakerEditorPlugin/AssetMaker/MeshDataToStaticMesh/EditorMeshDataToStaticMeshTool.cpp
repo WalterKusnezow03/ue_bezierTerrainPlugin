@@ -1,7 +1,9 @@
 #include "EditorMeshDataToStaticMeshTool.h"
 
+#if WITH_EDITOR
+
 #include "Engine/StaticMesh.h"
-#include "Factories/Factory.h"
+
 #include "StaticMeshAttributes.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Subsystems/AssetEditorSubsystem.h"
@@ -301,3 +303,5 @@ void UEditorMeshDataToStaticMeshTool::AppendUVBuffer(
     }
 
 }
+
+#endif

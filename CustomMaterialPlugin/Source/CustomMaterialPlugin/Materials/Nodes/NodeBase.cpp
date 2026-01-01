@@ -1,6 +1,6 @@
 #include "NodeBase.h"
 
-
+#if WITH_EDITOR
 void UNodeBase::PostInitProperties() 
 {
     Super::PostInitProperties();
@@ -101,3 +101,4 @@ FExpressionOutput* UNodeBase::GetOutput(int32 OutputIndex){
     }
     return nullptr;
 }
+#endif

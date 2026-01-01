@@ -18,8 +18,12 @@ public:
     MPolygonRaster(const MPolygonRaster &other);
     MPolygonRaster &operator=(const MPolygonRaster &other);
 
+    ///@brief keeps positions as they are, if space if unused, its still filled
+    ///with empty blockers
     void Setup(TArray<TArray<int>> &quads);
-    void SetupAsChild(TArray<std::pair<int, int>> &quads, std::pair<int,int> &index);
+
+
+    void SetupAsChild(TArray<std::pair<int, int>> &quads, std::pair<int, int> &index);
 
     void SetMinSizePolygon(int x, int y);
 

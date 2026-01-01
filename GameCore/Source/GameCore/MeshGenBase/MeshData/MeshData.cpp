@@ -3,9 +3,9 @@
 
 #include "GameCore/MeshGenBase/MeshData/MeshData.h"
 #include "CoreMath/Matrix/MMatrix.h"
-#include "GameCore/DebugHelper.h"
+#include "DebugPlugin/DebugHelper.h"
 #include "KismetProceduralMeshLibrary.h"
-#include "AssetPlugin/gameStart/assetEnums/materialEnum.h"
+#include "AssetEnumCollection/assetEnums/materialEnum.h"
 #include "GameCore/MeshGenBase/MathHelp/baryCentricInterpolator.h"
 
 #include "GameCore/world/worldLevelBase.h"
@@ -148,6 +148,32 @@ void MeshData::calculateNormals(){
     
 }
 
+void MeshData::flipNormals(){
+    for (int32 i = 0; i < normals.Num(); i++){
+        normals[i] *= -1.0f;
+    }
+}
+
+void MeshData::flipWindingOrder(){
+    for (int32 t = 2; t < triangles.Num(); t += 3){
+        /*
+        1->2
+        |
+        0
+
+        to 
+        1<-2
+        |
+        0
+        */
+        int32 copy = triangles[t - 2];
+        triangles[t - 2] = triangles[t - 1];
+        triangles[t - 1] = copy;
+    }
+}
+
+
+
 /// @brief sets the data for all vertecies, pass by r value reference
 /// @param vertecies veretecies to set, be carefull with overriding
 void MeshData::setVertecies(TArray<FVector> &&verteciesIn){
@@ -168,11 +194,13 @@ void MeshData::setTriangles(TArray<int32> &&trianglesIn){
 /// @param other 
 void MeshData::append(MeshData &other)
 {
-    TArray<FVector> &verteciesRef = other.getVerteciesRef();
-    TArray<int32> &trianglesRef = other.getTrianglesRef();
-    TArray<FVector> &normalsRef = other.getNormalsRef();
-    TArray<FVector2D> &uvref = other.getUV0Ref();
-    join(verteciesRef, trianglesRef, normalsRef, uvref);
+    join(
+        other.getVerteciesRef(),
+        other.getTrianglesRef(), 
+        other.getNormalsRef(), 
+        other.getUV0Ref(),
+        other.intersectFrames
+    );
 
     updateBoundsIfNeeded();
 }
@@ -181,7 +209,8 @@ void MeshData::join(
     TArray<FVector> &verteciesRef, 
     TArray<int32> &trianglesRef, 
     TArray<FVector> &normalsin,
-    TArray<FVector2D> &uvrefin
+    TArray<FVector2D> &uvrefin,
+    TArray<FTriangleIntersectFrame> &framesOther
 ){
     int triangleOffset = vertecies.Num(); //beim vertex count offset starten!
 
@@ -243,7 +272,15 @@ void MeshData::join(
             UV0[sizebuffer + i] = ref;
         }
     }
-    
+
+    //merge triangle intersect frames
+    int numPrev = intersectFrames.Num();
+    intersectFrames.Append(framesOther);
+    for (int i = numPrev; i < intersectFrames.Num(); i++)
+    {
+        FTriangleIntersectFrame &current = intersectFrames[i];
+        current.IncreaseIdentifierBy(triangleOffset);
+    }
 
     updateBoundsIfNeeded();
 }
@@ -699,6 +736,9 @@ std::vector<FVector> MeshData::create2DQuadVertecies(int xMax, int yMax){
  * is tested!
  * 
  */
+bool MeshData::IsDegenerateTriangle(int a, int b, int c){
+    return a == b || b == c || c == a;
+}
 
 void MeshData::appendEfficent(
     FVector &a, 
@@ -708,6 +748,11 @@ void MeshData::appendEfficent(
     int indexA = findClosestIndexTo(a);
     int indexB = findClosestIndexTo(b);
     int indexC = findClosestIndexTo(c);
+
+    if(IsDegenerateTriangle(indexA, indexB, indexC)){
+        //DebugHelper::logMessage("Detected Degenerate Triangle! ");
+        //return;
+    }
 
     int debugEfficentAdded = 3;
 
@@ -780,6 +825,16 @@ void MeshData::appendEfficent(MeshData &other){
     calculateNormals();
 }
 
+void MeshData::appendEfficentTriangleShapedBuffer(TArray<FVector> &verteciesIn){
+    for (int i = 2; i < verteciesIn.Num(); i+=3){
+        appendEfficent(
+            verteciesIn[i-2],
+            verteciesIn[i-1],
+            verteciesIn[i]
+        );
+    }
+}
+
 
 
 FVector MeshData::createNormal(int v0, int v1, int v2){
@@ -849,7 +904,22 @@ TArray<FColor> &MeshData::getVertexColorsRef(){
     return VertexColors;
 }
 
+const TArray<FVector> &MeshData::getVerteciesRefConst() const {
+    return vertecies;
+}
+const TArray<int32> &MeshData::getTrianglesRefConst() const{
+    return triangles;
+}
+const TArray<FVector> &MeshData::getNormalsRefConst() const{
+    return normals;
+}
+const TArray<FVector2D> &MeshData::getUV0RefConst() const{
+    return UV0;
+}
 
+const TArray<FProcMeshTangent> &MeshData::getTangentsRefConst() const {
+    return Tangents;
+}
 
 
 
@@ -952,6 +1022,122 @@ bool MeshData::canSplit(int v0, int v1, int v2, float mindistanceKept){
     return false;
 }
 
+
+
+FVector MeshData::splitEdge(FVector &v0, FVector &v1, FVector &v2, int egdeIndex){
+    egdeIndex = std::abs(egdeIndex) % 3; //safety
+    int endEdgeIndex = (egdeIndex + 1) % 3;
+    TArray<FVector> asArray = {v0, v1, v2};
+
+    FVector start = asArray[egdeIndex];
+    FVector dir = asArray[endEdgeIndex] - start; //AB = B - A
+
+    FVector newVertex = start + 0.5f * dir;
+    return newVertex;
+}
+
+void MeshData::Split(FVector &v0, FVector &v1, FVector &v2, TArray<FVector> &outBuffer){
+
+    int indexEdge = findLongestSideIndex(v0, v1, v2);//v0v1 v1v2 v2v0
+    FVector newVertex = splitEdge(v0, v1, v2, indexEdge);
+    if (indexEdge == 0)
+    {
+        /*
+         1-->2
+        x|  -
+         0-
+        */
+        //new triangles at 
+        //0,1,new
+        //new,1,2
+        outBuffer.Add(v0);
+        outBuffer.Add(newVertex);
+        outBuffer.Add(v2);
+
+        outBuffer.Add(newVertex);
+        outBuffer.Add(v1);
+        outBuffer.Add(v2);
+    }
+
+    if (indexEdge == 1)
+    {
+        /*
+        1-x->2
+        |  -
+        0-
+        */
+        //new triangles at 
+        //0,1,new
+        //0,new,2
+        outBuffer.Add(v0);
+        outBuffer.Add(v1);
+        outBuffer.Add(newVertex);
+
+        outBuffer.Add(v0);
+        outBuffer.Add(newVertex);
+        outBuffer.Add(v2);
+    }
+
+    if (indexEdge == 2)
+    {
+        /*
+        1-->2
+        |  -x
+        0-
+        */
+        //new triangles at 
+        //0,1,new
+        //new,1,2
+        outBuffer.Add(v0);
+        outBuffer.Add(v1);
+        outBuffer.Add(newVertex);
+
+        outBuffer.Add(v1);
+        outBuffer.Add(v2);
+        outBuffer.Add(newVertex);
+    }
+
+
+
+
+
+
+
+
+
+    /*FVector newVertex = start + 0.5f * dir;
+
+    FVector start;
+    FVector dir;
+    findLongestSide(v0, v1, v2, start, dir);
+    FVector newVertex = start + 0.5f * dir;
+    //FVector newVertex = v1 + 0.5f * (v2 - v1); // gx = A + r(B-A)*/
+    
+    
+}
+
+void MeshData::SplitTriangleShapedBufferOverride(
+    TArray<FVector> &inBuffer
+){
+    TArray<FVector> outBuffer;
+    SplitTriangleShapedBuffer(inBuffer, outBuffer);
+    inBuffer = outBuffer;
+}
+
+void MeshData::SplitTriangleShapedBuffer(
+    TArray<FVector> &inBuffer, //must be triangle shaped
+    TArray<FVector> &outBuffer
+){
+    for(int i = 2; i < inBuffer.Num(); i += 3){
+        Split(
+            inBuffer[i-2],
+            inBuffer[i-1],
+            inBuffer[i], 
+            outBuffer
+        );
+    }
+}
+
 void MeshData::addTriangle(int v0, int v1, int v2){
     if(isValidVertexIndex(v0,v1,v2)){
         triangles.Add(v0);
@@ -1017,6 +1203,35 @@ void MeshData::splitTriangleInHalf(int v0, int v1, int v2){
     }
 }
 
+int MeshData::findLongestSideIndex(
+    FVector &a, 
+    FVector &b, 
+    FVector &c
+){
+    FVector dirAB = b - a;
+    FVector dirBC = c - b;
+    FVector dirCA = a - c;
+
+    std::vector<FVector> sides = {
+        dirAB,
+        dirBC,
+        dirCA
+    };
+
+    int foundindex = 0;
+    float largestSide = -1.0f; // so the start is set anyway
+    for (int i = 0; i < sides.size(); i++){
+        FVector &current = sides[i];
+
+        float updateSize = current.Size();
+        if (updateSize > largestSide)
+        {
+            foundindex = i;
+            largestSide = updateSize;
+        }
+    }
+    return foundindex;
+}
 
 void MeshData::findLongestSide(
     FVector &a, 
@@ -1036,13 +1251,10 @@ void MeshData::findLongestSide(
     };
     std::vector<FVector> startPoints = {a, b, c};
 
-    float largestSide = -1.0f; //so the start is set anyway
-    for (int i = 0; i < sides.size(); i++){
-        FVector &current = sides[i];
-        if (current.Size() > largestSide){
-            startOut = startPoints[i];
-            dirOut = current;
-        }
+    int longestSideIndex = findLongestSideIndex(a, b, c);
+    if(longestSideIndex >= 0 && longestSideIndex < 3){
+        startOut = startPoints[longestSideIndex];
+        dirOut = sides[longestSideIndex];
     }
 }
 
@@ -1385,6 +1597,7 @@ void MeshData::removeTrianglesInvolvedWith(int vertexIndex, std::vector<int> &co
         bool v2ok = (v2 != vertexIndex);
 
         if(v0ok && v1ok && v2ok){
+            //dont share edges with the vertexIndex seached
             triangleBufferCopy.Add(v0);
             triangleBufferCopy.Add(v1);
             triangleBufferCopy.Add(v2);
@@ -1401,6 +1614,9 @@ void MeshData::removeTrianglesInvolvedWith(int vertexIndex, std::vector<int> &co
                 connectedvertecies.push_back(v2);
             }
             
+
+            //remove triangle if marked for removal
+            RemoveTriangleFrame(v0, v1, v2); //remove triangle frame from intersection tests
         }
     }
     triangles = triangleBufferCopy;
@@ -1513,6 +1729,10 @@ void MeshData::pushInwards(FVector &location, int radius, FVector scaleddirectio
                 DebugHelper::logMessage("MeshData Vertex Push in Index", currentIndex);
                 DebugHelper::logMessage("MeshData Vertex Push in", vertex);
             }
+
+
+            //refresh triangle frames!
+            RefreshAllTriangleFramesWith(currentIndex);
         }
     }
 
@@ -1912,4 +2132,262 @@ void MeshData::VerticalRangeOfBounds(float &a, float &b){
 
     a = std::min(bl.Z, tr.Z);
     b = std::max(bl.Z, tr.Z);
+}
+
+
+
+
+
+/// ------ intersect test section ------
+
+bool MeshData::RayIntersect(
+    const FVector &origin, 
+    const FVector &direction, 
+    FVector &outIntersectionPoint
+){
+    if(RayIntersectBounds(origin, direction)){
+        
+        ///// ---- TODO: PARALLEL THREADS HERE -----
+        
+        //go through all intersect triangle frames, if flagged ok, return true
+        for (int i = 0; i < intersectFrames.Num(); i++){
+            FTriangleIntersectFrame &current = intersectFrames[i];
+            if(current.DoesIntersect(origin, direction, outIntersectionPoint)){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool MeshData::RayIntersectBounds(const FVector &origin, const FVector &direction){
+    //check bound
+    return bounds.DoesIntersect(origin, direction);
+}
+
+
+void MeshData::RebuildAllIntersectFrames(){
+    intersectFrames.Empty();
+    for (int i = 2; i < triangles.Num(); i += 3){
+        AppendIntersectionFrame(
+            triangles[i - 2], // t0
+            triangles[i - 1], // t1
+            triangles[i]      // t2
+        );
+    }
+}
+
+void MeshData::AppendIntersectionFrame(int32 v0Index, int32 v1Index, int32 v2Index){
+
+    //changed:
+    //will not check if frame already added! - but could by saving index
+    //CAUTION: if triangles are removed, old frames must be removed again, and ids modified!
+
+    //dont add if already added this triangle.
+    if(AlreadyHasTriangleFrame(v0Index, v1Index, v2Index)){
+        return;
+    }
+
+    if(isValidVertexIndex(v0Index, v1Index, v2Index)){
+        FVector &v0 = vertecies[v0Index];
+        FVector &v1 = vertecies[v1Index];
+        FVector &v2 = vertecies[v2Index];
+        intersectFrames.SetNum(intersectFrames.Num() + 1);
+        FTriangleIntersectFrame &end = intersectFrames.Last();
+        end.Setup(v0, v1, v2);
+        end.SetIdentifier(v0Index, v1Index, v2Index);
+    }
+}
+
+void MeshData::RefreshTriangleFrame(int32 v0Index, int32 v1Index, int32 v2Index){
+    if(isValidVertexIndex(v0Index, v1Index, v2Index)){
+        for (int i = 0; i < intersectFrames.Num(); i++){
+            FTriangleIntersectFrame &current = intersectFrames[i];
+            if(current.IsSameIdentifier(v0Index, v1Index, v2Index)){
+                //setup again
+                current.Setup(
+                    vertecies[v0Index],
+                    vertecies[v1Index],
+                    vertecies[v2Index]
+                );
+                return;
+            }
+        }
+    }
+}
+
+
+
+
+void MeshData::RefreshAllTriangleFramesWith(int32 index){
+    //check identifier and refresh.
+    for (int i = 0; i < intersectFrames.Num(); i++){
+        if(i >= 0 && i < intersectFrames.Num()){
+            FTriangleIntersectFrame &current = intersectFrames[i];
+            if(current.HasIdentifier(index)){
+                int32 v0Index = 0;
+                int32 v1Index = 0;
+                int32 v2Index = 0;
+                current.CopyIdentifier(v0Index, v1Index, v2Index);
+                if(isValidVertexIndex(v0Index, v1Index, v2Index)){
+                    current.Setup(
+                        vertecies[v0Index],
+                        vertecies[v1Index],
+                        vertecies[v2Index]
+                    );
+                }
+            }
+        }
+    }
+}
+
+
+void MeshData::RemoveAllTriangleFramesWithIndex(int32 vIndex){
+
+    /// CAUTION
+    //unklar ob das so sicher ist
+    for (int i = 0; i < intersectFrames.Num(); i++){
+        if(i >= 0 && i < intersectFrames.Num()){
+            FTriangleIntersectFrame &current = intersectFrames[i];
+            if(current.HasIdentifier(vIndex)){
+                //swap popback
+                FTriangleIntersectFrame &last = intersectFrames.Last();
+                current = last;
+                intersectFrames.Pop();
+                i--; //go 1 step back
+            }
+        }
+    }
+}
+
+
+
+void MeshData::RemoveTriangleFrame(int32 v0Index, int32 v1Index, int32 v2Index){
+    for (int i = 0; i < intersectFrames.Num(); i++){
+        FTriangleIntersectFrame &current = intersectFrames[i];
+        if(current.IsSameIdentifier(v0Index, v1Index, v2Index)){
+            //swap popback
+            FTriangleIntersectFrame &last = intersectFrames.Last();
+            current = last;
+            intersectFrames.Pop();
+            return;
+        }
+    }
+}
+
+bool MeshData::AlreadyHasTriangleFrame(int32 v0Index, int32 v1Index, int32 v2Index){
+    for (int i = 0; i < intersectFrames.Num(); i++){
+        FTriangleIntersectFrame &current = intersectFrames[i];
+        if(current.IsSameIdentifier(v0Index, v1Index, v2Index)){
+            return true;
+        }
+    }
+    return false;
+}
+
+
+
+
+
+/** 
+
+--- Duplicate Mesh Recursive ---
+
+*/
+MeshData MeshData::CreateCopyRecuriveDetail(int recursion){
+    MeshData outData;
+    CreateCopyRecuriveDetailTo(outData, recursion);
+    return outData;
+}
+
+
+void MeshData::CreateCopyRecuriveDetailTo(MeshData &outData, int recursion){
+    recursion = std::abs(recursion);
+    if(recursion == 0){
+        return;
+    }
+
+    TArray<FVector> bufferMade;
+    for (int i = 2; i < triangles.Num(); i += 3){
+        int32 t0 = triangles[i - 2];
+        int32 t1 = triangles[i - 1];
+        int32 t2 = triangles[i];
+
+        FVector &v0 = vertecies[t0];
+        FVector &v1 = vertecies[t1];
+        FVector &v2 = vertecies[t2];
+
+        TArray<FVector> tempBuffer = {v0, v1, v2};
+        for(int j = 0; j < recursion; j++){
+            SplitTriangleShapedBufferOverride(tempBuffer);
+            if(j == recursion - 1){ //append to main buffer
+                outData.appendEfficentTriangleShapedBuffer(tempBuffer);
+            }
+        }
+    }
+    outData.calculateNormals();
+}
+
+
+void MeshData::CreateCopyRecuriveDetailToDistance(MeshData &outData, float distance){
+
+    distance = std::abs(distance);
+    if(distance <= 1.0f){
+        distance = 1.0f;
+    }
+    float dist2 = distance * distance;
+
+    TArray<FVector> bufferMade;
+    for (int i = 2; i < triangles.Num(); i += 3){
+        int32 t0 = triangles[i - 2];
+        int32 t1 = triangles[i - 1];
+        int32 t2 = triangles[i];
+
+        FVector &v0 = vertecies[t0];
+        FVector &v1 = vertecies[t1];
+        FVector &v2 = vertecies[t2];
+
+        TArray<FVector> tempBuffer = {v0, v1, v2};
+        bool finished = false;
+        int splitCountMax = 5; //10, 12, 40
+
+        //200 / 2^5
+
+        while (!finished)
+        {
+            SplitTriangleShapedBufferOverride(tempBuffer);
+            splitCountMax--;
+            if(splitCountMax <= 0){
+                finished = true;
+            }
+            if (tempBuffer.Num() > 2)
+            {
+
+                if(AverageDist2TriangleShapedBuffer(tempBuffer) <= dist2){
+                    outData.appendEfficentTriangleShapedBuffer(tempBuffer);
+                    finished = true;
+                }
+            }
+            else
+            {
+                finished = true;
+            }
+        }
+    }
+    outData.calculateNormals();
+}
+
+float MeshData::AverageDist2TriangleShapedBuffer(TArray<FVector> &buffer){
+    float distAccumulated = 0.0f;
+    for (int i = 2; i < buffer.Num(); i += 3){
+        FVector &v0 = buffer[i - 2];
+        FVector &v1 = buffer[i - 1];
+        FVector &v2 = buffer[i];
+        float tmpDist = FVector::DistSquared(v0, v1);
+        tmpDist += FVector::DistSquared(v1, v2);
+        tmpDist += FVector::DistSquared(v2, v0);
+        distAccumulated += (tmpDist / 3.0f);
+    }
+    float trianglCount = buffer.Num() / 3.0f;
+    return distAccumulated / trianglCount;
 }

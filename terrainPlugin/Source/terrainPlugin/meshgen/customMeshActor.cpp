@@ -7,14 +7,14 @@
 #include "PathFinder/pathFinding/PathFinder.h"
 #include "Components/BoxComponent.h"
 #include "KismetProceduralMeshLibrary.h"
-#include "terrainPlugin/meshgen/generation/bezierCurve.h"
+#include "terrainPlugin/meshgen/generation/bezier/bezierCurve.h"
 #include "terrainPlugin/meshgen/foliage/MatrixTree/ETreeType.h"
 #include "GameCore/util/FVectorUtil.h"
 #include "CoreMath/Matrix/MMatrix.h"
 #include "terrainPlugin/meshgen/generation/helper/TerrainChunkSetup.h"
 #include <set>
 #include "GameCore/EntityGC/trackedActors.h"
-#include "GameCore/DebugHelper.h"
+#include "DebugPlugin/DebugHelper.h"
 #include "GameCore/EntityGC/EntityManagerBase.h"
 #include "GameCore/MeshGenBase/materialHelper/MaterialEnumHelper.h"
 #include "GameCore/MeshGenBase/lodHelper/LodConstants.h"
@@ -201,6 +201,8 @@ void AcustomMeshActor::UpdateMeshDataAndPosition(ChunkParser &parser){
         }
     }
 
+    //created here, not in storage based mesh.
+    CreateGrassMesh();
     
     /*
     Created by actor manager already!
@@ -590,5 +592,57 @@ void AcustomMeshActor::UpdateFoliageInstanceComponent(){
             FColor::Black,
             10.0f
         );*/
+    }
+}
+
+
+
+
+
+// --- new grass ection, vertexshader based ---
+void AcustomMeshActor::CreateGrassMesh(){
+    if(true){
+        return;
+    }
+
+    MeshData &meshFound = findMeshDataReference(
+        materialEnum::grassMaterial,
+        ELod::lodNear,
+        true//raycastFlag
+    );
+    if(meshFound.hasAnyVertecies()){
+        materialEnum materialLayer = materialEnum::grassMaterialWithShader;
+        bool bRaycast = false;
+        MeshData &grassNoRaycastLayer = findMeshDataReference(
+            materialLayer,
+            ELod::lodNear,
+            bRaycast // no raycast
+        );
+
+        meshFound.CreateCopyRecuriveDetailTo(grassNoRaycastLayer, grassrecursion);
+        //float distRecursive = 10.0f;
+        //meshFound.CreateCopyRecuriveDetailToDistance(grassNoRaycastLayer, distRecursive);
+        ReloadMeshForMaterialByLodAndRaycastFlag(
+            ELod::lodNear,
+            materialLayer,
+            bRaycast
+        );
+
+        //400 -> 3000 on avg with recursion 3
+        DebugHelper::logMessage(
+            FString::Printf(
+                TEXT("AcustomMeshActor::madeGrass from %d to %d"),
+                meshFound.verteciesNum(),
+                grassNoRaycastLayer.verteciesNum()
+            )
+        );
+
+        //todo:
+        //new material in asset plugin - no save to storage
+        //new material with shader
+        //apply shader values
+        //prevent saving new material
+
+
     }
 }

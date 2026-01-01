@@ -25,8 +25,6 @@ class ASSETPLUGIN_API AssetLoader
 public:
 	AssetLoader();
 	~AssetLoader();
-
-	void loadAssets();
 	
 
 	///@brief Example path: TEXT("Blueprint'/Game/Prefabs/terrain/materials/texturedMaterial.texturedMaterial'")

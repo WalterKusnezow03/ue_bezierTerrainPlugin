@@ -106,7 +106,7 @@ MPolygonRaster MPolygonRasterizer::MakeRasterized(MPolygon &other){
     }
 
     MPolygonRaster outRaster;
-    outRaster.Setup(outputQuads);
+    outRaster.Setup(outputQuads); //align to pivot 0,0
     return outRaster;
 }
 

@@ -1,10 +1,11 @@
 #include "WKColorKeyRemover.h"
 
 
+#if WITH_EDITOR
 
 /// @brief override this method to add more inputs.
 void UWKColorKeyRemover::SetupInputsOnConstruct(){
-    UMaterial* OuterMaterial = GetTypedOuter<UMaterial>();
+    UMaterial* OuterMaterial = GetTypedOuter<UMaterial>(); //expression must be owned by material itself.
     if(OuterMaterial && !customExpression)
     {
         customExpression = NewObject<UMaterialExpressionCustom>(
@@ -59,3 +60,5 @@ int32 UWKColorKeyRemover::Compile(FMaterialCompiler *Compiler, int32 outputIndex
     }
     return INDEX_NONE;
 }
+
+#endif

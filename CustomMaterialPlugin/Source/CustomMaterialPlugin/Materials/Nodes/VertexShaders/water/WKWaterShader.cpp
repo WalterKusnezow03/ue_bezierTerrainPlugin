@@ -1,6 +1,6 @@
 #include "WKWaterShader.h"
 
-
+#if WITH_EDITOR
 void UWKWaterShader::SetupOutputsOnConstruct(){
     Super::SetupOutputsOnConstruct();
     FExpressionOutput vertexOutput;
@@ -20,7 +20,7 @@ FString UWKWaterShader::GetDescription() const {
 
 // ----- Shader -----
 
-#if WITH_EDITOR
+
 
 //convert to layer codes
 int32 UWKWaterShader::AmplitudeCode(FMaterialCompiler *Compiler){

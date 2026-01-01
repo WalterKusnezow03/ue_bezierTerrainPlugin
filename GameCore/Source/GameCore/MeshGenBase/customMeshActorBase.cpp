@@ -14,7 +14,11 @@
 #include "AssetPlugin/gameStart/assetManager.h"
 #include "GameCore/MeshGenBase/materialHelper/MaterialEnumHelper.h"
 
+#include "DebugPlugin/DebugHelper.h"
+
+#include "GameCore/MeshGenBase/ProceduralMeshComponentDerived/ProceduralMeshComponentCustom.h"
 #include "GameCore/MeshGenBase/lodHelper/LodConstants.h"
+
 
 // Sets default values
 AcustomMeshActorBase::AcustomMeshActorBase()
@@ -510,6 +514,21 @@ void AcustomMeshActorBase::ReloadMeshForMaterialByLod(ELod lod, materialEnum mat
 
 }
 
+void AcustomMeshActorBase::ReloadMeshForMaterialByLodAndRaycastFlag(
+    ELod lod,
+    materialEnum material,
+    bool raycastFlag
+){
+    if(meshLodContainers.find(lod) == meshLodContainers.end()){
+        meshLodContainers[lod] = ProceduralMeshComponentPair();
+    }
+    if(raycastFlag){
+        meshLodContainers[lod].updateMeshRaycast(material);
+    }else{
+        meshLodContainers[lod].updateMeshNoRaycast(material);
+    }
+}
+
 /**
  * LOD REFACTURE END
  */
@@ -885,4 +904,37 @@ void AcustomMeshActorBase::createTwoSidedQuad(
     meshData.calculateNormals();
     replaceMeshData(meshData, material);
     ReloadMeshAndApplyAllMaterials();
+}
+
+
+
+
+
+
+
+
+// collsion cache
+
+//load data
+bool AcustomMeshActorBase::SetupFromCollisionCache(
+    ELod lod, 
+    FProcMeshCollisionStorageInterface &cache
+){
+    if(meshLodContainers.find(lod) != meshLodContainers.end()){
+        ProceduralMeshComponentPair &pair = meshLodContainers[lod];
+        return pair.SetupFromCollisionCache(cache);
+    }
+    return false;
+}
+
+//save data 
+bool AcustomMeshActorBase::CopyCollisionCache(
+    ELod lod, 
+    FProcMeshCollisionStorageInterface &cache
+){
+    if(meshLodContainers.find(lod) != meshLodContainers.end()){
+        ProceduralMeshComponentPair &pair = meshLodContainers[lod];
+        return pair.CopyCollisionCache(cache);
+    }
+    return false;
 }

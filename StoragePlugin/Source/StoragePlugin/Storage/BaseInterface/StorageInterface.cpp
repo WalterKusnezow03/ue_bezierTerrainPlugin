@@ -5,7 +5,7 @@
 #include "StoragePlugin/Storage/VertexData/TerrainNormal.h"
 #include "StoragePlugin/Storage/VertexData/TerrainUv.h"
 #include "StoragePlugin/Storage/VertexData/TerrainVertexIndex.h"
-#include "GameCore/DebugHelper.h"
+#include "DebugPlugin/DebugHelper.h"
 
 
 //-------- SAVING --------

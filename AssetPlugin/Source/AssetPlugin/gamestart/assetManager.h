@@ -6,13 +6,6 @@
 #include "AssetPlugin/gamestart/TAssetManager/assetManagerGeneric.h"
 #include "AssetPlugin/gamestart/TAssetManager/AssetManagerTwoGeneric.h"
 
-#include "AssetPlugin/gamestart/assetEnums/entityEnum.h"
-#include "AssetPlugin/gamestart/assetEnums/materialEnum.h"
-#include "AssetPlugin/gamestart/assetEnums/weaponAttachmentEnum.h"
-#include "AssetPlugin/gamestart/assetEnums/weaponEnum.h"
-#include "AssetPlugin/gamestart/assetEnums/particleEnum.h"
-#include "AssetPlugin/gamestart/assetEnums/throwableEnum.h"
-#include "AssetPlugin/gamestart/assetEnums/textureEnum.h"
 
 #include "AssetPlugin/gamestart/ExternalEnumTracking/NamedEnumBase.h"
 #include "AssetPlugin/gamestart/ExternalEnumTracking/NamedEnum.h"
@@ -284,6 +277,7 @@ private:
 
 	
 
+	/*
 	// --- DEPRECATED ---
 
 	//all asset maps
@@ -295,7 +289,7 @@ private:
 	assetManagerGeneric<materialEnum, UMaterialInterface> materialAssets;
 	assetManagerGeneric<textureEnum, UTexture2D> textureAssets;
 
-	assetManagerTwoGeneric<weaponEnum, weaponAttachmentEnum, UClass> weaponAttachmentAssets;
+	assetManagerTwoGeneric<weaponEnum, weaponAttachmentEnum, UClass> weaponAttachmentAssets;*/
 	
 
 	UClass *debugCubePointer = nullptr;

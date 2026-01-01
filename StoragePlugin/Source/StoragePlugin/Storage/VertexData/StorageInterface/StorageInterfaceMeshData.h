@@ -25,7 +25,8 @@ public:
         TArray<FVector> &Normals,
         TArray<FVector2D> &UV0,
         TArray<int32> &Triangles,
-        FString path
+        FString path,
+        FString nameIn
     );
 
     //loads a single mesh data as passed before
@@ -34,7 +35,8 @@ public:
         TArray<FVector> &Normals,
         TArray<FVector2D> &UV0,
         TArray<int32> &Triangles,
-        FString path
+        FString path,
+        FString &outName
     );
 
     //specialized methods (path constructed internally)
@@ -45,7 +47,8 @@ public:
         TArray<int32> &Triangles,
         int chunkId,
         int layer,
-        int lod
+        int lod,
+        FString nameIn
     );
 
     void LoadMeshData(
@@ -55,7 +58,8 @@ public:
         TArray<int32> &Triangles,
         int chunkId,
         int layer,
-        int lod
+        int lod,
+        FString &outName
     );
 
 protected:
@@ -68,7 +72,8 @@ protected:
         TArray<FVector> &Vertecies,
         TArray<FVector> &Normals,
         TArray<FVector2D> &UV0,
-        TArray<int32> &Triangles
+        TArray<int32> &Triangles,
+        FString nameIn
     );
 
     
@@ -83,7 +88,8 @@ protected:
         TArray<FVector> &Normals,
         TArray<FVector2D> &UV0,
         TArray<int32> &Triangles,
-        bool &endReached
+        bool &endReached,
+        FString &outName
     );
 
 private:
@@ -95,7 +101,8 @@ private:
         int32 &vertexCount,
         int32 &normalCount,
         int32 &uvCount,
-        int32 &triangleCount
+        int32 &triangleCount,
+        int32 &charCount
     );
 
     //will write the info data and INCREASE THE POINTER TO START AFTER INFO DATA!
@@ -104,6 +111,7 @@ private:
         int32 normalCount,
         int32 uvCount,
         int32 triangleCount,
+        int32 charCount,
         uint8*& Ptr //immidiate byte offset for data Ptr, is increased!
     );
 
@@ -119,12 +127,13 @@ private:
     int getNormalsBytesSize(int count);
     int getUVBytesSize(int count);
     int getTrianglesBytesSize(int count);
+    int getCharsBytesSize(int count);
 
-    
     void PrintBuffers(
         TArray<FVector> &Vertecies,
         TArray<FVector> &Normals,
         TArray<FVector2D> &UV0,
-        TArray<int32> &Triangles
+        TArray<int32> &Triangles,
+        FString name
     );
 };

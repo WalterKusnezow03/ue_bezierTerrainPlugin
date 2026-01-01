@@ -9,11 +9,10 @@
 
 #include "AssetMakerEditorPlugin/AssetMaker/MeshDataToStaticMesh/EditorMeshDataToStaticMeshTool.h"
 #include "AssetMakerEditorPlugin/AssetMaker/Task/MeshDataAssetTask.h"
-#include "terrainPlugin/meshgen/foliage/grass/MatrixGrass.h"
+#include "terrainPlugin/meshgen/foliage/grass/editorOnly/MatrixGrass.h"
 
-#include "GameCore/DebugHelper.h"
+#include "DebugPlugin/DebugHelper.h"
 
-#if WITH_EDITOR
 void TerrainPluginAssetLoader::InitOnLaunchModule(){
     InitGrassAssets();
 }
@@ -51,6 +50,7 @@ void TerrainPluginAssetLoader::InitGrassAssets(){
 		"grassAssetDefault"               // Just the file name as displayed
 	);
 
+    #if WITH_EDITOR
 	if(assetManager *instance = assetManager::instance()){
 		UStaticMesh *asset = instance->Find<EFoliageGrass, UStaticMesh>(EFoliageGrass::grassAssetDefault);
 		if(!asset){
@@ -74,5 +74,5 @@ void TerrainPluginAssetLoader::InitGrassAssets(){
             }
         }
 	}
+    #endif
 }
-#endif

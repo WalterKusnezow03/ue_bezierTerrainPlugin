@@ -3,7 +3,7 @@
 
 #include "PlayerControllerBase.h"
 
-#include "GameCore/DebugHelper.h"
+#include "DebugPlugin/DebugHelper.h"
 #include "Animation/AnimSequence.h"
 #include "GameCore/team/teamEnum.h"
 
@@ -11,7 +11,7 @@
 #include "GameCore/interfaces/Interactinterface.h"
 #include "GameFramework/Character.h" // Falls noch nicht inkludiert
 #include "GameFramework/CharacterMovementComponent.h"
-#include "AssetPlugin/gamestart/assetEnums/weaponAttachmentEnum.h"
+#include "AssetEnumCollection/assetEnums/weaponAttachmentEnum.h"
 #include "Components/CapsuleComponent.h" // Include for UCapsuleComponent
 #include "Camera/CameraComponent.h" // Include for UCameraComponent
 

@@ -1,7 +1,7 @@
 
 #include "staircaseBoundData.h"
 #include "GameCore/MeshGenBase/MeshData/MeshData.h"
-#include "GameCore/DebugHelper.h"
+#include "DebugPlugin/DebugHelper.h"
 #include "GameCore/util/TTouple.h"
 
 

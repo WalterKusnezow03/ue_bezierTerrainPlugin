@@ -297,7 +297,7 @@ void MatrixTree::createSubTrees(MMatrix &offset, TreeProperties &prop, int recur
      * FURTHER TESTING NEEDED, bei subtree count 1 macht das keinen sinn, sieht doof aus.
      */
     int count = prop.subTreeCount();
-    DebugHelper::logMessage("subtree count ", count);
+    //DebugHelper::logMessage("subtree count ", count);
     for (int i = 0; i < count; i++)
     {
         IndexChain subtree = createSubTree(offset, prop);
@@ -423,7 +423,7 @@ void MatrixTree::generateLeafs(TreeProperties &properties){
 }
 
 void MatrixTree::generateLeaf(MMatrix &offset){
-    MMatrix rotation = randomRotator();
+    MMatrix rotation = randomRotator(-80,80);
 
     //debug
     //does indeed generate random rotations.

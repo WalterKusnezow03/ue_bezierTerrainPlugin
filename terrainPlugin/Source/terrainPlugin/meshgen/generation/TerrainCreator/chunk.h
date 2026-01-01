@@ -51,10 +51,21 @@ public:
 
     std::vector<std::vector<FVector>> &readMap();
 
+private:
     std::vector<std::vector<FVector>> &readAndMerge(
         chunk *top,
         chunk *right,
-        chunk *topRight);
+        chunk *topRight
+    );
+
+public:
+    void Merge(
+        chunk *top,
+        chunk *right,
+        chunk *topRight
+    );
+
+
     bool xIsValid(int a);
     bool yIsValid(int a);
 

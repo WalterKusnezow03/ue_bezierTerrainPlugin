@@ -6,8 +6,10 @@
 #include <set>
 #include "GameCore/MeshGenBase/MeshData/BoundingBox/BoundingBoxSimple.h"
 #include "KismetProceduralMeshLibrary.h"
-#include "AssetPlugin/gameStart/assetEnums/materialEnum.h"
+#include "AssetEnumCollection/assetEnums/materialEnum.h"
 #include "CoreMath/Matrix/MMatrix.h"
+
+#include "GameCore/MeshGenBase/MeshData/intersectCache/TriangleIntersectFrame.h"
 
 
 /**
@@ -62,6 +64,11 @@ public:
 		FVector &d
 	);
 
+	///@brief tells if the triangle has 0 area and creates broken collision || 
+	///useless drawcall overhead
+	bool IsDegenerateTriangle(int a, int b, int c);
+
+	//appendEfficentMehods will not handle uvs
 	void appendEfficent(
 		FVector &a,
 		FVector &b,
@@ -73,8 +80,12 @@ public:
 		FVector &c,
 		FVector &d
 	);
-	void appendEfficent(MeshData &other);
+	void appendEfficent(MeshData &other); //no uvs!
+	void appendEfficentTriangleShapedBuffer(TArray<FVector> &verteciesIn);
 
+	void MofidyEpsilon(float epsilon){
+		EPSILON = std::max(1.0f, std::abs(epsilon));
+	}
 
 	void appendDoublesided(
 		FVector &a,
@@ -130,6 +141,8 @@ public:
 	void setTriangles(TArray<int32> &&trianglesIn);
 
 	void calculateNormals();
+	void flipNormals();
+	void flipWindingOrder();
 
 	TArray<FVector> &getVerteciesRef();
 	TArray<int32> &getTrianglesRef();
@@ -137,6 +150,12 @@ public:
 	TArray<FVector2D> &getUV0Ref();
 	TArray<FProcMeshTangent> &getTangentsRef();
 	TArray<FColor> &getVertexColorsRef();
+
+	const TArray<FVector> &getVerteciesRefConst() const;
+	const TArray<int32> &getTrianglesRefConst() const;
+	const TArray<FVector> &getNormalsRefConst() const;
+	const TArray<FVector2D> &getUV0RefConst() const;
+	const TArray<FProcMeshTangent> &getTangentsRefConst() const;
 
 	void offsetAllvertecies(FVector &offset);
 	void transformAllVertecies(MMatrix &other);
@@ -160,12 +179,21 @@ public:
 		FVector &b,
 		FVector &c,
 		FVector &startOut,
-		FVector &dirOut);
+		FVector &dirOut
+	);
+	int findLongestSideIndex(
+		FVector &a, 
+		FVector &b, 
+		FVector &c
+	);
+	
 
 	void splitAndRemoveTrianglesAt(FVector &localHitPoint);
 	bool doesHit(FVector &localHitPoint);
 
 	FVector center();
+
+	//centers the mesh around com
 	void centerMesh();
 
 	void appendCube(
@@ -196,6 +224,10 @@ public:
 
 	void VerticalRangeOfBounds(float &a, float &b);
 
+	void CreateCopyRecuriveDetailTo(MeshData &outData, int recursion);
+	void CreateCopyRecuriveDetailToDistance(MeshData &outData, float distance);
+	MeshData CreateCopyRecuriveDetail(int recursion);
+
 protected:
 	float MIN_SPLITDISTANCE = 50.0f;
 
@@ -203,6 +235,15 @@ protected:
 	bool canSplit(FVector &a, FVector &b, FVector &c);
 	bool canSplit(FVector &a, FVector &b, FVector &c, float mindistanceKept);
 	bool canSplit(int v0, int v1, int v2, float mindistanceKept);
+
+	//splits edge along the edge index, returns the middle position inbetween
+	FVector splitEdge(FVector &v0, FVector &v1, FVector &v2, int egdeIndex);
+	void Split(FVector &v0, FVector &v1, FVector &v2, TArray<FVector> &outBuffer);
+	void SplitTriangleShapedBuffer(
+		TArray<FVector> &inBuffer, // must be triangle shaped
+		TArray<FVector> &outBuffer
+	);
+	void SplitTriangleShapedBufferOverride(TArray<FVector> &buffer);
 
 	float EPSILON = 5.0f;
 	bool isCloseSame(FVector &a, FVector &b);
@@ -231,7 +272,8 @@ protected:
 		TArray<FVector> &vertecies, 
 		TArray<int32> &triangles, 
 		TArray<FVector> &normalsin, 
-		TArray<FVector2D> &uvrefin
+		TArray<FVector2D> &uvrefin,
+		TArray<FTriangleIntersectFrame> &framesOther
 	);
 
 	bool isValidVertexIndex(int i);
@@ -302,11 +344,11 @@ protected:
 
 	bool isInsideBoundingbox(FVector &other);
 
+	float AverageDist2TriangleShapedBuffer(TArray<FVector> &buffer);
 
-
-/**
- * 2D section
- */
+	/**
+	 * 2D section
+	 */
 public:
 	void generate(int sizeX, int sizeY, int distanceXY);
 
@@ -332,4 +374,28 @@ public:
 
 
 
+/**
+ * Intersection tests
+ */
+public:
+	bool RayIntersect(
+		const FVector &origin,
+		const FVector &direction,
+		FVector &outIntersectionPoint
+	);
+
+protected:
+	bool RayIntersectBounds(const FVector &origin, const FVector &direction);
+	void AppendIntersectionFrame(int32 v0Index, int32 v1Index, int32 v2Index);
+
+	void RebuildAllIntersectFrames();
+	void RefreshAllTriangleFramesWith(int32 index);
+	void RefreshTriangleFrame(int32 v0Index, int32 v1Index, int32 v2Index);
+
+	void RemoveAllTriangleFramesWithIndex(int32 vIndex);
+	void RemoveTriangleFrame(int32 v0Index, int32 v1Index, int32 v2Index);
+	bool AlreadyHasTriangleFrame(int32 v0Index, int32 v1Index, int32 v2Index);
+
+private:
+	TArray<FTriangleIntersectFrame> intersectFrames;
 };

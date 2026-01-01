@@ -1,5 +1,5 @@
 #include "StorageInterfaceStringArray.h"
-#include "GameCore/DebugHelper.h"
+#include "DebugPlugin/DebugHelper.h"
 
 StorageInterfaceStringArray::StorageInterfaceStringArray(){
 

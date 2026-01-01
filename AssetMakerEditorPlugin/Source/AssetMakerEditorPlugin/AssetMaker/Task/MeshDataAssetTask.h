@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 
 ///class to track asset maker tasks (Path + mesh data.)
+///tracks mesh data for the EditorMeshDataToStaticMeshTool to process.
 ///will not make any path or buffer save. Expected to be correct.
 class ASSETMAKEREDITORPLUGIN_API MeshDataAssetTask {
 
@@ -46,6 +47,8 @@ public:
     void MarkXUv_0Left(bool flag);
     void MarkYUv_0Bottom(bool flag);
 
+    /// @brief will flip x and y coordinates according to flags before appending it to the created static mesh
+    /// @param uv 
     void ModifyUvBasedOnFlags(FVector2D &uv);
 
 private:

@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include <set>
 #include "KismetProceduralMeshLibrary.h"
-#include "AssetPlugin/gamestart/assetEnums/materialEnum.h"
+#include "AssetEnumCollection/assetEnums/materialEnum.h"
 #include "CoreMath/Matrix/MMatrix.h"
 #include "GameCore/MeshGenBase/MeshData/aeroDynamic/Util/ThreeKeyMap.h"
 #include "GameCore/MeshGenBase/MeshData/MeshData.h"

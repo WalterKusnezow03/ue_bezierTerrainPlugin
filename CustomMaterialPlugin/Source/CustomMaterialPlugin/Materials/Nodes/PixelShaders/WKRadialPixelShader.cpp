@@ -1,5 +1,6 @@
 #include "WKRadialPixelShader.h"
 
+#if WITH_EDITOR
 void UWKRadialPixelShader::SetupInputsOnConstruct(){
     colorInputIndex = 0;
     FExpressionInput colorInput;
@@ -32,3 +33,5 @@ int32 UWKRadialPixelShader::CompilePixelShader(FMaterialCompiler *Compiler){
 
     return Compiler->Mul(ColorIn, weightAccumulated);
 }
+
+#endif

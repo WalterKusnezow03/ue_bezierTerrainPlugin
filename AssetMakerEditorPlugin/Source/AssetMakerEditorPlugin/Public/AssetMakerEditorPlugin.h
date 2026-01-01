@@ -16,7 +16,9 @@ public:
 
     static void CommandLaunch()
     {
+		#if WITH_EDITOR
         UE_LOG(LogTemp, Warning, TEXT("FAssetMakerEditorPluginModule Launched!"));
 		UEditorMeshDataToStaticMeshTool::Launch();
+		#endif
 	}
 };

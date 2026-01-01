@@ -15,4 +15,11 @@ public:
     static materialEnum groundMaterialFor(ETerrainType terraintype);
 
     static FString toString(materialEnum typein);
+    static materialEnum toMaterialEnum(FString typein);
+
+    static TArray<std::pair<materialEnum, FString>> GetMaterialPairs();
+
+
+private:
+    static std::pair<materialEnum, FString> MakePair(materialEnum type, FString name);
 };

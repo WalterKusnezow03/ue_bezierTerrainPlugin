@@ -16,6 +16,8 @@
 #include "GameCore/interfaces/Damageinterface.h"
 #include "GameCore/team/teamEnum.h"
 
+#include "GameCore/MeshGenBase/ProceduralMeshComponentDerived/physicSerialize/FProcMeshCollisionStorageInterface.h"
+
 #include "customMeshActorBase.generated.h"
 
 UCLASS()
@@ -192,6 +194,11 @@ protected:
 	void switchToLod(ELod lod);
 	void initLodMeshesOnBeginPlay();
 	void ReloadMeshForMaterialByLod(ELod lod, materialEnum material);
+	void ReloadMeshForMaterialByLodAndRaycastFlag(
+		ELod lod,
+		materialEnum material,
+		bool raycastFlag
+	);
 
 	virtual void OnLodSwitch();
 
@@ -249,4 +256,8 @@ public:
 
 
 
+
+	//// ----- COLLISION COOKING CACHE ------
+	bool SetupFromCollisionCache(ELod lod, FProcMeshCollisionStorageInterface &cache);
+	bool CopyCollisionCache(ELod lod, FProcMeshCollisionStorageInterface &cache);
 };

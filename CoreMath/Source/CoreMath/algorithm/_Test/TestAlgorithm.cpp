@@ -5,7 +5,7 @@
 #include "CoreMath/Matrix/2D/MMatrix2D.h"
 #include "CoreMath/Debug/CoreMathDebugHelper.h"
 #include "CoreMath/algorithm/GrahamScan/GrahamScan2D.h"
-#include "CoreMath/algorithm/PolygonFit/GreedyFilledPolygon.h"
+
 
 
 void TestAlgorithm::LogMessage(FString s){
@@ -151,73 +151,6 @@ void TestAlgorithm::TestPolygonHit(){
     LogMessage("--- Mpolygon intersect tests End ---");
 }
 
-
-void TestAlgorithm::TestPolygonFit(){
-
-    GreedyFilledPolygon filled;
-    TArray<FVector2D> shapeA{
-        FVector2D(0, 0),
-        FVector2D(0, 200),
-        FVector2D(200, 200),
-        FVector2D(200, 0)
-    };
-    /*
-    TArray<FVector2D> shapeB = shapeA;
-    MMatrix2D R;
-    R.RadAdd(MMatrix2D::degToRadian(45));
-    for (int i = 0; i < shapeB.Num(); i++){
-        shapeB[i] = R * shapeB[i];
-    };
-
-    shapeA.Append(shapeB);
-    GrahamScan2D sorter;
-    sorter.ComputeConvexHull(shapeA);
-    */
-    filled.SetShape(shapeA);
-
-
-
-    TArray<MPolygon> polygons;
-    {
-        MPolygon _polygon;
-        TArray<FVector2D> shape{
-            FVector2D(0, 0),
-            FVector2D(0, 20),
-            FVector2D(10, 20),
-            FVector2D(20, 0)
-        };
-        _polygon.SetShape(shape);
-        polygons.Add(_polygon);
-    }
-    {
-        MPolygon _polygon;
-        TArray<FVector2D> shape{
-            FVector2D(0, 0),
-            FVector2D(0, 30),
-            FVector2D(30, 30),
-            FVector2D(30, 0)
-        };
-        _polygon.SetShape(shape);
-        polygons.Add(_polygon);
-    }
-    {
-        MPolygon _polygon;
-        TArray<FVector2D> shape{
-            FVector2D(0, 0),
-            FVector2D(0, 10),
-            FVector2D(10, 10),
-            FVector2D(10, 0)
-        };
-        _polygon.SetShape(shape);
-        polygons.Add(_polygon);
-    }
-
-    filled.Add(polygons);
-
-    LogMessage(
-        FString::Printf(TEXT("GreedyFilledPolygon Added(%d)"), filled.PolygonCount())
-    );
-}
 
 
 

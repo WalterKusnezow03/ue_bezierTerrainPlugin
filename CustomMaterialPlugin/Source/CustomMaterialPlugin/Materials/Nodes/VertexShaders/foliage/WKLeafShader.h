@@ -9,9 +9,7 @@ class CUSTOMMATERIALPLUGIN_API UWKLeafShader : public UWKVertexShaderBase
 {
     GENERATED_BODY()
 public:
-    virtual void SetupInputsOnConstruct() override;
-    virtual void SetupOutputsOnConstruct() override;
-
+    
     /*
     inputs: 
     LowerZValueBounds_float
@@ -32,6 +30,9 @@ public:
 
 
 #if WITH_EDITOR
+    virtual void SetupInputsOnConstruct() override;
+    virtual void SetupOutputsOnConstruct() override;
+
 
     virtual FString NodeName() const override;
 

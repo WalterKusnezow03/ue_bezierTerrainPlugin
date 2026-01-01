@@ -46,14 +46,6 @@ void MPolygon::SetShape(const TArray<FVector2D> &shapeIn, int minDistanceBetween
     CalculateArea();
 }
 
-void MPolygon::SetShapeTransformed(
-    const TArray<FVector2D> &shapeIn, 
-    int minDistanceBetweenPoints
-){
-    shapeTransformed = IncreaseDetail(shapeIn, minDistanceBetweenPoints);
-    UpdateBounds();
-    CalculateArea();
-}
 
 TArray<FVector2D> MPolygon::IncreaseDetail(const TArray<FVector2D> &shapeIn, int minDistanceBetweenPoints){
 
@@ -511,6 +503,11 @@ void MPolygon::AppendRightSideBounds(TArray<FVector2D> &appendTo){
 const FBoundingBox2D &MPolygon::boundingBox() const {
     return myBounds;
 }
+
+const FBoundingBox2D &MPolygon::LocalBoundingBox() const {
+    return localBounds;
+}
+
 
 FBoundingBox2D MPolygon::localBoundsTransformed(){
     FBoundingBox2D copy = localBounds;

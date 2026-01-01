@@ -3,17 +3,8 @@
 
 #include "AssetPlugin/gamestart/assetManager.h"
 #include "AssetPlugin/gamestart/TAssetManager/assetManagerGeneric.h"
-#include "AssetPlugin/gamestart/assetEnums/weaponAttachmentEnum.h"
+
 #include "CoreMinimal.h"
-
-
-template class assetManagerGeneric<entityEnum, UClass>;
-template class assetManagerGeneric<weaponEnum, UClass>;
-template class assetManagerGeneric<throwableEnum, UClass>;
-template class assetManagerGeneric<particleEnum, UClass>;
-template class assetManagerGeneric<materialEnum, UMaterial>;
-template class assetManagerGeneric<weaponAttachmentEnum, UClass>;
-template class assetManagerTwoGeneric<weaponEnum, weaponAttachmentEnum, UClass>;
 
 
 assetManager *assetManager::instancePointer = nullptr;
@@ -38,12 +29,14 @@ assetManager* assetManager::instance(){
 
 
 void assetManager::setupDefaultTracker(){
+    /*
     Track<entityEnum>();
     Track<weaponEnum>();
     Track<throwableEnum>();
     Track<particleEnum>();
     Track<materialEnum>();
     Track<textureEnum>();
+    */
 }
 
 void assetManager::Clear(){

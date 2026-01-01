@@ -20,13 +20,38 @@ void ChunkParserStorageInterface::Save(
     TArray<uint8> Bytes;
 
 
-    //append mesh data
-    TArray<MeshData *> meshDataArray = MeshDataOrderedForSavingAndLoading(chunkData);
-    //append actor data
-    WriteChunkInfoData(Bytes, chunkData, meshDataArray.Num());
+    //TODO:REFACTURE FOR STRING!
+    TArray<FMeshDataIdentifier> meshDataArray = MeshDataOrderedForSavingAndLoading(chunkData);
 
-   
+
+    //append mesh data
+    //TArray<MeshData *> meshDataArray = MeshDataOrderedForSavingAndLoading(chunkData);
+    
+    //num layers of all (lods x raycast / no raycast x materials)
+    int32 numLayersAllLodAndRaycastNoRaycast = meshDataArray.Num();
+    WriteChunkInfoData(Bytes, chunkData, numLayersAllLodAndRaycastNoRaycast);
+
     for (int i = 0; i < meshDataArray.Num(); i++){
+        
+        FMeshDataIdentifier &currentIdentifier = meshDataArray[i];
+
+        MeshData *currentPointer = currentIdentifier.meshDataPointer;
+        if (currentPointer)
+        {
+            MeshData &meshDataCurrent = *currentPointer;
+            //append meshdata from super method
+            AppendIntoByteBuffer(
+                Bytes, // buffer size is increased after append!
+                meshDataCurrent.getVerteciesRef(),
+                meshDataCurrent.getNormalsRef(),
+                meshDataCurrent.getUV0Ref(),
+                meshDataCurrent.getTrianglesRef(),
+                currentIdentifier.name //saving mesh data with names to allow non existing partial buffers
+            );
+        }
+    }
+   
+    /*for (int i = 0; i < meshDataArray.Num(); i++){
         
         MeshData *currentPointer = meshDataArray[i];
         if(currentPointer){
@@ -40,7 +65,7 @@ void ChunkParserStorageInterface::Save(
                 meshDataCurrent.getTrianglesRef()
             );
         }
-    }
+    }*/
 
     // SAVE FILE Super::Super method.
     FString path = makePath(worldLevelName, chunkData.getChunkId());
@@ -204,6 +229,46 @@ bool ChunkParserStorageInterface::Load(
     LoadChunkInfoData(Ptr, chunkData, numLayersFound);
 
     //load mesh data
+    ChunkParser chunkDataTmp;
+    TArray<FMeshDataIdentifier> meshDataArray = MeshDataOrderedForSavingAndLoading(chunkDataTmp);
+    
+    for (int i = 0; i < meshDataArray.Num(); i++){
+        bool bEndReached = false;
+        if(i < numLayersFound){
+            FMeshDataIdentifier &identifier = meshDataArray[i];
+
+            //verification is needed
+            MeshData *currentPointer = identifier.meshDataPointer;
+            if(currentPointer){
+                FString name;
+                MeshData &meshDataCurrent = *currentPointer;
+                LoadIntoMeshBuffers(
+                    Bytes, // buffer size is increased after append!
+                    Ptr,   // is increased after append, must be at correct offset starting with header bytes!
+                    meshDataCurrent.getVerteciesRef(),
+                    meshDataCurrent.getNormalsRef(),
+                    meshDataCurrent.getUV0Ref(),
+                    meshDataCurrent.getTrianglesRef(),
+                    bEndReached,
+                    name //saving mesh data with names to allow non existing partial buffers
+                );
+                meshDataCurrent.updateBoundsIfNeeded(); //very important here to update bounds from loaded data
+                identifier.UpdateMaterialFromName(name);
+
+                //direct copy to chunk data
+                MeshData &refOverride = chunkData.findMeshDataReference(identifier);
+                refOverride = meshDataCurrent;
+            }
+            if(bEndReached){
+                break;
+            }
+        }else{
+            break;
+        }
+    }
+
+
+    /*
     TArray<MeshData *> meshDataArray = MeshDataOrderedForSavingAndLoading(chunkData);
     for (int i = 0; i < meshDataArray.Num(); i++){
         bool bEndReached = false;
@@ -228,7 +293,7 @@ bool ChunkParserStorageInterface::Load(
         }else{
             break;
         }
-    }
+    }*/
 
     return true;
 }
@@ -245,7 +310,7 @@ FString ChunkParserStorageInterface::makePath(
 
 
 
-
+/*
 TArray<MeshData *> ChunkParserStorageInterface::MeshDataOrderedForSavingAndLoading(
     ChunkParser &chunkData
 ){
@@ -270,6 +335,46 @@ TArray<MeshData *> ChunkParserStorageInterface::MeshDataOrderedForSavingAndLoadi
                 materialEnum materialCurrent = materials[j];
                 MeshData &ref = chunkData.findMeshDataReference(materialCurrent, lodCurrent, bRaycastFlag);
                 outArray.Add(&ref);
+            }
+        }
+    }
+
+    return outArray;
+}*/
+
+
+
+TArray<FMeshDataIdentifier> ChunkParserStorageInterface::MeshDataOrderedForSavingAndLoading(
+    ChunkParser &chunkData
+){
+    TArray<FMeshDataIdentifier> outArray;
+    //die schachtelungs reihenfolge von
+    //(bool, lod, material) MUSS beim lesen genau so sein!
+    //leere daten werden als leer eingespeichert.
+    //Die lod, raycast flag und material reihen folge wird implizit gespeichert.
+    //Ganz einfaches system.
+    std::vector<bool> raycastFlags = {true, false};
+    std::vector<ELod> lods = LodConstants::lodVector();
+    std::vector<materialEnum> materials = MaterialEnumHelper::materialVector(); //issue here when no mesh data added ?
+
+    outArray.SetNum(raycastFlags.size() * lods.size() * materials.size());
+
+    int k = 0;
+    for (int b = 0; b < raycastFlags.size(); b++)
+    {
+        bool bRaycastFlag = raycastFlags[b];
+        for (int i = 0; i < lods.size(); i++)
+        {
+            ELod lodCurrent = lods[i];
+            for (int j = 0; j < materials.size(); j++)
+            {
+                materialEnum materialCurrent = materials[j];
+                MeshData &ref = chunkData.findMeshDataReference(materialCurrent, lodCurrent, bRaycastFlag);
+
+                
+                FMeshDataIdentifier &identifier = outArray[k];
+                identifier.Setup(materialCurrent, &ref, lodCurrent, bRaycastFlag);
+                k++;
             }
         }
     }

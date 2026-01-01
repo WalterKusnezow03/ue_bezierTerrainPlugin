@@ -62,3 +62,76 @@ void MeshDataMap::appendMeshDataNoRaycast(
     MeshData &found = meshDataReferenceNoRaycast(type);
     found.append(meshdata);
 }
+
+
+
+
+
+//ray intersect checker
+bool MeshDataMap::RayIntersectFirstHit(
+    const FVector &origin,
+    const FVector &direction,
+    FVector &outIntersectionPoint
+){
+    for (auto& pair : raycastMeshData){
+        MeshData &data = pair.second;
+        if(data.RayIntersect(origin, direction, outIntersectionPoint)){
+            return true;
+        }
+    }
+    return false;
+}
+
+
+bool MeshDataMap::RayIntersectClosestHit(
+    const FVector &origin,
+    const FVector &direction,
+    FVector &outIntersectionPoint
+){
+    TArray<FVector> Hitpoints;
+    for (auto& pair : raycastMeshData)
+    {
+        MeshData &data = pair.second;
+        FVector hitTracked;
+        if (data.RayIntersect(origin, direction, hitTracked))
+        {
+            Hitpoints.Add(hitTracked);
+        }
+    }
+
+    //o(n)
+    if(Hitpoints.Num() > 0){
+        float distSquaredClosest = FVector::DistSquared(origin, Hitpoints[0]);
+        int index = 0;
+        for (int i = 1; i < Hitpoints.Num(); i++){
+            FVector &current = Hitpoints[i];
+            if (float f = FVector::DistSquared(Hitpoints[i], origin); f < distSquaredClosest){
+                distSquaredClosest = f;
+                index = i;
+            }
+        }
+        
+        //index valid in any case (safety check)
+        if(index >= 0 && index < Hitpoints.Num()){
+            outIntersectionPoint = Hitpoints[index];
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+bool MeshDataMap::RayIntersect(
+    const FVector &origin,
+    const FVector &direction
+){
+    FVector none;
+    for (auto& pair : raycastMeshData){
+        MeshData &data = pair.second;
+        if(data.RayIntersect(origin, direction, none)){
+            return true;
+        }
+    }
+    return false;
+}

@@ -10,6 +10,8 @@ UCLASS()
 class TERRAINPLUGIN_API UMovingFoliageInstancerComponent : public UActorComponent
 {
     GENERATED_BODY()
+private:
+    bool bIsdisbaled = true;
 
 public:
 

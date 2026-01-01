@@ -1,5 +1,7 @@
 #include "WKPixelShaderBase.h"
 
+
+#if WITH_EDITOR
 // --- output ---
 void UWKPixelShaderBase::SetupOutputsOnConstruct(){
     Super::SetupOutputsOnConstruct();
@@ -76,3 +78,5 @@ int32 UWKPixelShaderBase::Compile(FMaterialCompiler *Compiler, int32 OutputIndex
 int32 UWKPixelShaderBase::CompilePixelShader(FMaterialCompiler *Compiler){
     return INDEX_NONE;
 }
+
+#endif

@@ -20,9 +20,10 @@ class CUSTOMMATERIALPLUGIN_API UWKVertexShaderBase : public UNodeBase
 
 public:
 
-#if WITH_EDITOR
 
+#if WITH_EDITOR
     virtual void SetupInternalExpressionsOnConstruct() override;
+
 
     virtual FString NodeName() const override {
         return TEXT("WKVertexShaderBase");
@@ -90,16 +91,6 @@ public:
 
     //operators
     int32 Less(FMaterialCompiler *Compiler, int32 A, int32 B);
-
-
-    //ceil shortcut
-    int32 Ceil(FMaterialCompiler *Compiler, FExpressionInput *input);
-
 #endif
-
-private:
-    //internal Expression Abusing
-    UPROPERTY()
-    UMaterialExpressionCeil *ceilExpression = nullptr;
 
 };

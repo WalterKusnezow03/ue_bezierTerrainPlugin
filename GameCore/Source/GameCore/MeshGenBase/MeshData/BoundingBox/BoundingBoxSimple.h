@@ -27,12 +27,13 @@ public:
 
     FString ToString();
 
+    bool DoesIntersect(const FVector &origin, const FVector &directionScaled);
+
+    static void Test();
+
 private:
     FVector bottomLeftNear;
     FVector topRightLeft;
 
-
-    
-
-
+    bool InRange(float t, float lower, float higher);
 };

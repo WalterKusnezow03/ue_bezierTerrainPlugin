@@ -13,10 +13,10 @@ class CUSTOMMATERIALPLUGIN_API UWKPixelShaderBase : public UWKVertexShaderBase
     GENERATED_BODY()
 
 public:
-
+#if WITH_EDITOR
     virtual void SetupOutputsOnConstruct() override;
 
-#if WITH_EDITOR
+
 
     virtual FString NodeName() const override {
         return TEXT("WKPixelShaderBase");

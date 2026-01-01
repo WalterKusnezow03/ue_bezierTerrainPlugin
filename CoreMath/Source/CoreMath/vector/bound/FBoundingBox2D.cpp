@@ -36,6 +36,12 @@ void FBoundingBox2D::Update(const TArray<FVector2D> &buffer){
     }
 }
 
+void FBoundingBox2D::Update(const std::vector<FVector2D> &buffer){
+    for (int i = 0; i < buffer.size(); i++){
+        Update(buffer[i]);
+    }
+}
+
 void FBoundingBox2D::Update(const FVector2D &v0, const FVector2D &v1, const FVector2D &v2){
     Update(v0);
     Update(v1);

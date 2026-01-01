@@ -3,7 +3,7 @@
 
 #include "FVectorShape.h"
 #include "GameCore/MeshGenBase/MeshData/MeshData.h"
-#include "terrainPlugin/meshgen/generation/bezierCurve.h"
+#include "terrainPlugin/meshgen/generation/bezier/bezierCurve.h"
 #include "GrahamScan.h"
 #include "GameCore/util/TVector.h"
 

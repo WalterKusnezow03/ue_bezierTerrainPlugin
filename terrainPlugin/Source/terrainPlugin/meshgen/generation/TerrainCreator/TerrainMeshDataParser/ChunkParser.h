@@ -2,7 +2,7 @@
 #include "CoreMinimal.h"
 
 #include "GameCore/util/FVectorTouple.h"
-#include "AssetPlugin/gamestart/assetEnums/materialEnum.h"
+#include "AssetEnumCollection/assetEnums/materialEnum.h"
 #include "GameCore/MeshGenBase/MeshData/MeshData.h"
 #include "GameCore/MeshGenBase/foliage/ETerrainType.h"
 #include "terrainPlugin/meshgen/generation/helper/TerrainChunkSetup.h"
@@ -13,9 +13,13 @@
 
 #include "GameCore/MeshGenBase/lodHelper/LodConstants.h"
 
+#include "terrainPlugin/Storage/ChunkMeshDataLoading/MeshDataIdentifier.h"
+#include "GameCore/MeshGenBase/ProceduralMeshComponentDerived/physicSerialize/FProcMeshCollisionStorageInterface.h"
+
 #include <map>
 
 class ChunkParserStorageInterface;
+class AcustomMeshActor;
 
 /// CONTAINER FOR MESH DATA LATER USED BY ACUSTOMMESHACTOR -
 /// IS WRITABLE TO STORAGE
@@ -76,13 +80,20 @@ public:
     void SetWaterActorNeededFlag(bool flag, FVector &location);
     void SetOutpostFlagNeeded(bool flag);
 
-private:
-
     //used by meshdata saving, dont use manually if not needed
+    //only public for RoadMakerFromGrid!
     MeshData &findMeshDataReference(
         materialEnum type,
         ELod lodLevel,
         bool raycastOnLayer
+    );
+
+private:
+
+    
+
+    MeshData &findMeshDataReference(
+        FMeshDataIdentifier &identifier
     );
 
 
@@ -134,4 +145,16 @@ private:
     void addRandomNodesToNavmesh(TArray<FVectorTouple> &touples);
 
     void createBuildingIfNeeded(TerrainChunkSetup &package);
+
+
+
+    //// ---- COOKED COLLISION CACHE: too slow. ----
+public:
+    FProcMeshCollisionStorageInterface &GetCookedCollisionDataCache(ELod lod);
+    void SaveCollisionDataFrom(AcustomMeshActor *actor);
+    void SetupFromCollisionCache(AcustomMeshActor *actor);
+
+private:
+    std::map<ELod, FProcMeshCollisionStorageInterface> collsionDataCacheMap;
+
 };

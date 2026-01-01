@@ -8,7 +8,7 @@
 #include "Camera/CameraComponent.h" // Include for UCameraComponent
 #include "GameCore/team/teamEnum.h"
 #include "GameCore/interfaces/Damageinterface.h"
-#include "GameCore/util/timer.h"
+#include "CoreMath/animation/timer/timer.h"
 #include "GameCore/Input/InputContainer.h"
 #include "GameCore/interfaces/Steeringinterface.h"
 

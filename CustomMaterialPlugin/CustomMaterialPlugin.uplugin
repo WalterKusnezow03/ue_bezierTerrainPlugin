@@ -17,7 +17,7 @@
 	"Modules": [
 		{
 			"Name": "CustomMaterialPlugin",
-			"Type": "Runtime",
+			"Type": "Editor",
 			"LoadingPhase": "Default"
 		}
 	]

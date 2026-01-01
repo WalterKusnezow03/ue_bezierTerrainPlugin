@@ -3,7 +3,8 @@
 #include "CoreMinimal.h"
 #include "terrainPlugin/meshgen/generation/TerrainCreator/TerrainMeshDataParser/ChunkParser.h"
 #include "StoragePlugin/Storage/VertexData/StorageInterface/StorageInterfaceMeshData.h"
-#include "AssetPlugin/gamestart/assetEnums/materialEnum.h"
+#include "AssetEnumCollection/assetEnums/materialEnum.h"
+#include "terrainPlugin/Storage/ChunkMeshDataLoading/MeshDataIdentifier.h"
 
 
 /// @brief will load and save ChunkParser files for custom mesh actor, by passing
@@ -25,7 +26,12 @@ private:
     /// keeps the order consistent so no errors can happen. Empty MeshData are saved empty. 
     /// the mesh data lod and material are saved implicitly by order of this meshdata array.
     /// if the order doesnt change. Nothing changes and it keeps working.
-    TArray<MeshData *> MeshDataOrderedForSavingAndLoading(
+    /*TArray<MeshData *> MeshDataOrderedForSavingAndLoading(
+        ChunkParser &chunkData
+    );*/
+    
+    
+    TArray<FMeshDataIdentifier> MeshDataOrderedForSavingAndLoading(
         ChunkParser &chunkData
     );
 

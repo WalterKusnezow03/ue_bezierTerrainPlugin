@@ -10,13 +10,13 @@ class CUSTOMMATERIALPLUGIN_API UWKRadialPixelShader : public UWKPixelShaderBase
     GENERATED_BODY()
 public:
     int32 colorInputIndex = 0;
-    virtual void SetupInputsOnConstruct() override;
+    
 
     UPROPERTY(EditAnywhere, Category=UWKRadialPixelShader)
     float mixScalar = 0.5f;
 
 #if WITH_EDITOR
-
+    virtual void SetupInputsOnConstruct() override;
     virtual FString NodeName() const override {
         return TEXT("WKRadialPixelShader");
     }

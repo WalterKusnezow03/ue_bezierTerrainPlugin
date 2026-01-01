@@ -21,7 +21,7 @@ public:
     ///@brief recommended to start at 0,0, rotated around this point, use this 
     /// to force a detail on the polygon!
     void SetShape(const TArray<FVector2D> &shapeIn, int minDistanceBetweenPoints);
-    void SetShapeTransformed(const TArray<FVector2D> &shapeIn, int minDistanceBetweenPoints);
+    
 
     TArray<FVector2D> facingParentCenter(FVector2D &centerParent);
 
@@ -80,6 +80,7 @@ public:
 
     ///@brief returns bounding box of transformed vertecies
     const FBoundingBox2D &boundingBox() const;
+    const FBoundingBox2D &LocalBoundingBox() const;
 
     ///@brief returns local bounds transformed, logicl of tl, br kept.
     FBoundingBox2D localBoundsTransformed();

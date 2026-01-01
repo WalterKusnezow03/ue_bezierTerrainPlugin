@@ -159,7 +159,7 @@ void TerrainChunkMap::applyHillData(terrainHillSetup &hillData){
 
 
 void TerrainChunkMap::createRandomOutpostFlags(){
-    int max = chunks / 5;
+    int max = chunks * 0.1f; //10 percent
     for (int i = 0; i < max; i++){
         createRandomOutpostFlagAndSmoothArea();
     }

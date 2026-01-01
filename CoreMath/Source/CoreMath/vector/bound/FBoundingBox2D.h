@@ -22,6 +22,7 @@ struct COREMATH_API FBoundingBox2D {
     // basic update
     FBoundingBox2D(const TArray<FVector2D> &buffer);
     void Update(const TArray<FVector2D> &buffer);
+    void Update(const std::vector<FVector2D> &buffer);
     void Update(const FVector2D &pos);
     void Update(const FVector2D &v0, const FVector2D &v1, const FVector2D &v2);
 

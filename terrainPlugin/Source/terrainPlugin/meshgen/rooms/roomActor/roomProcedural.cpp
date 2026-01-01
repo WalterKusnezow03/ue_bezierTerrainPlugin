@@ -3,7 +3,7 @@
 
 #include "roomProcedural.h"
 #include "GameCore/util/TTouple.h"
-#include "GameCore/DebugHelper.h"
+#include "DebugPlugin/DebugHelper.h"
 #include "GameCore/util/FVectorUtil.h"
 #include "CoreMath/Matrix/MMatrix.h"
 #include "AssetPlugin/gamestart/assetManager.h"

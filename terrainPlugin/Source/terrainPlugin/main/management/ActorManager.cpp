@@ -2,9 +2,11 @@
 #include "terrainPlugin/Storage/chunkMapHeaderLoading/ChunkMapStorageInterface.h"
 #include "GameCore/EntityGC/EntityManagerBase.h"
 #include "GameCore/PlayerInfo/PlayerInfo.h"
-#include "GameCore/DebugHelper.h"
+#include "DebugPlugin/DebugHelper.h"
 #include "GameCore/MeshGenBase/lodHelper/LodConstants.h"
 #include "GameCore/world/worldLevelBase.h"
+#include "terrainPlugin/meshgen/generation/TerrainCreator/terrainConstants.h"
+
 
 ActorManager::ActorManager(){
     worldContext = nullptr;
@@ -78,6 +80,10 @@ void ActorManager::generateTerrain(){
     //setup chunk parser map
     chunkMeshDataParserMap.createArray(chunksForGame);
     terraincreator.createTerrainAndSetupChunkParserMap(chunkHeaderMap, chunkMeshDataParserMap);
+
+    //simplified call here
+    //create roads here (simplified for now)
+    terraincreator.createRoadMeshActor(worldContext);
 
     //debug wise gen all at once
     //later with updates.

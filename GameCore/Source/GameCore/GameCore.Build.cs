@@ -28,7 +28,9 @@ public class GameCore : ModuleRules
 				"Core",
 				"AssetPlugin",
 				"CoreMath",
-				"ProceduralMeshComponent"
+				"ProceduralMeshComponent",
+				"DebugPlugin",
+				"AssetEnumCollection",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -41,7 +43,8 @@ public class GameCore : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"ProceduralMeshComponent"
+				"ProceduralMeshComponent",
+				"UMG"
 			}
 		);
 				

@@ -17,23 +17,7 @@ class CUSTOMMATERIALPLUGIN_API UNodeBase : public UMaterialExpression
 
 protected:
 
-    //setup intput array
-    // CPP
-    virtual void PostInitProperties() override;
-
-    /// @brief override this method to add more inputs.
-    virtual void SetupInputsOnConstruct(){
-        //empty for derivation override
-    }
-
-    virtual void SetupOutputsOnConstruct(){
-        //empty for derivation override
-    }
-
-    virtual void SetupInternalExpressionsOnConstruct(){
-        //empty for derivation override (using internal expressions of unreal to hide inside)
-    }
-
+    
 
 
     UPROPERTY()
@@ -53,6 +37,24 @@ public:
 
 
 #if WITH_EDITOR
+
+    //setup intput array
+    // CPP
+    virtual void PostInitProperties() override;
+
+    /// @brief override this method to add more inputs.
+    virtual void SetupInputsOnConstruct(){
+        //empty for derivation override
+    }
+
+    virtual void SetupOutputsOnConstruct(){
+        //empty for derivation override
+    }
+
+    virtual void SetupInternalExpressionsOnConstruct(){
+        //empty for derivation override (using internal expressions of unreal to hide inside)
+    }
+
 
     // --- override this function to compile your expression ---
     //virtual int32 Compile(FMaterialCompiler *Compiler, int32 OutputIndex) override;

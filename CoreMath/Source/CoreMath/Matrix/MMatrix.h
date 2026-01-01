@@ -29,7 +29,7 @@ public:
 	void operator+=(MMatrix &other);
 	void operator*=(MMatrix & other);
 
-	FVector operator*(FVector &other);
+	FVector operator*(const FVector &other);
 	MMatrix operator*(MMatrix &other);
 
 	FVector2D operator*(FVector2D &other);
@@ -98,6 +98,8 @@ public:
 	void setRotation(FRotator &other);
 	void setRotation(MMatrix &other);
 	void setRotation(FVector &other);
+
+	void setRotation(const FQuat &quat);
 
 	void setRotation(std::vector<float> &values);
 

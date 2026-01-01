@@ -1,7 +1,10 @@
 #include "MovingFoliageInstancerComponent.h"
-#include "GameCore/DebugHelper.h"
+#include "DebugPlugin/DebugHelper.h"
 
 void UMovingFoliageInstancerComponent::Init(int countChilds, UStaticMesh *someMesh, AActor *parent){
+    if(bIsdisbaled){
+        return;
+    }
 
     if(!instancer && someMesh && parent){
         //UInstancedStaticMeshComponent isA UStaticMeshComponent
@@ -40,6 +43,10 @@ void UMovingFoliageInstancerComponent::Update(
     const TArray<FVector> &normals,
     ELod lodLevelcurrent
 ){
+    if(bIsdisbaled){
+        return;
+    }
+
     if(instancer){
         if(lodLevelcurrent != ELod::lodNear){
             SetHiddenInGame(true);
@@ -90,6 +97,10 @@ void UMovingFoliageInstancerComponent::UpdateTransformArray(
     const TArray<FVector> &positions,
     const TArray<FVector> &normals
 ){
+    if(bIsdisbaled){
+        return;
+    }
+
     int limit = std::min(positions.Num(), transformChilds.Num());
     for (int i = 0; i < limit; i++)
     {

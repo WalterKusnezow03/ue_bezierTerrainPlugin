@@ -70,6 +70,27 @@ TerrainChunkSetup chunk::makeSetupPackage(){
     return package;
 }
 
+
+void chunk::freePositionsForFoliageLocal( //in world space
+    TArray<FVectorTouple> &outpositions
+){
+    for(int i = 0; i < innerMapFreePositions.size(); i++){ //x
+        for(int j = 0; j < innerMapFreePositions[i].size(); j++){ //y
+            if(indexFreeForFoliage(i,j)){
+                if(xIsValid(i) && yIsValid(j)){
+                    //FVectorTouple(FVector aIn, FVector bIn);
+                    FVectorTouple touple(
+                        innerMap[i][j], //position
+                        normalFor(i,j) //normal
+                    );
+                    outpositions.Add(touple);
+                }
+            }
+        }
+    }
+}
+
+
 TerrainChunkSetup chunk::makeSetupPackage(
     chunk *top,
     chunk *right,
@@ -106,6 +127,15 @@ void chunk::markBuildingCreateTrueAndBlockTrees(){
 /// @return map by reference, do not modify
 std::vector<std::vector<FVector>> &chunk::readMap(){
     return innerMap;
+}
+
+
+void chunk::Merge(
+    chunk *top,
+    chunk *right,
+    chunk *topRight
+){
+    readAndMerge(top, right, topRight);
 }
 
 /// @brief returns a deep copy of this chunks map connecting too 
@@ -183,7 +213,9 @@ std::vector<std::vector<FVector>>& chunk::readAndMerge(
 
 //New
 bool chunk::NextWorldVertexAt(FVector &a, FVector &out){
-    if(isInBounds(a)){
+
+    // --- testing needed ---
+    if(true || isInBounds(a)){
         
         int xa = 0;
         int ya = 0;
@@ -607,11 +639,11 @@ void chunk::blockAreaForFoliage(
     generateBoundingIndicesFromWorldSpace(a, b, minX, minY, maxX, maxY);
 
 
-    if (false)
+    if (true)
     {
         FString message = FString::Printf(
             TEXT(
-                "terrain blocked area: (%d, %d) (%d, %d)"
+                "chunk::terrain blocked area: (%d, %d) (%d, %d)"
             ),
             minX, minY, maxX, maxY
         );
@@ -660,8 +692,13 @@ void chunk::convertPositionToInnerIndexClamped(
     int xIndex = inpos.X / terrainConstants::ONEMETER;
     int yIndex = inpos.Y / terrainConstants::ONEMETER;
 
-    xIndex = std::min(xIndex, terrainConstants::CHUNKSIZE);
-    yIndex = std::min(yIndex, terrainConstants::CHUNKSIZE);
+    xIndex = std::min(xIndex, int(innerMap.size() - 1));
+    yIndex = std::min(yIndex, int(innerMap[0].size() - 1));
+    
+    
+    
+    //xIndex = std::min(xIndex, terrainConstants::CHUNKSIZE);
+    //yIndex = std::min(yIndex, terrainConstants::CHUNKSIZE);
     xIndex = std::max(xIndex, 0);
     yIndex = std::max(yIndex, 0);
     
@@ -698,24 +735,6 @@ bool chunk::indexFreeForFoliage(int i, int j){
     return false;
 }
 
-void chunk::freePositionsForFoliageLocal( //in world space
-    TArray<FVectorTouple> &outpositions
-){
-    for(int i = 0; i < innerMapFreePositions.size(); i++){ //x
-        for(int j = 0; j < innerMapFreePositions[i].size(); j++){ //y
-            if(indexFreeForFoliage(i,j)){
-                if(xIsValid(i) && yIsValid(j)){
-                    //FVectorTouple(FVector aIn, FVector bIn);
-                    FVectorTouple touple(
-                        innerMap[i][j], //position
-                        normalFor(i,j) //normal
-                    );
-                    outpositions.Add(touple);
-                }
-            }
-        }
-    }
-}
 
 
 

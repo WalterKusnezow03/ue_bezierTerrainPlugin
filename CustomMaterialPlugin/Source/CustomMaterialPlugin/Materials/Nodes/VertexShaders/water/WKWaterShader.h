@@ -15,14 +15,13 @@ class CUSTOMMATERIALPLUGIN_API UWKWaterShader : public UWKVertexShaderBase
     GENERATED_BODY()
 
 protected:
-    virtual void SetupOutputsOnConstruct() override;
-
+    
     int32 vertexOutputLayer = 0;
     int32 normalOutputLayer = 1;
 
 
 public:
-    virtual FString GetDescription() const override;
+   
 
     /// ---- Changable attributes of the water ----
  
@@ -36,7 +35,10 @@ public:
     float DistanceBetweenWaves = 500.0f; //every 1 meter
 
 #if WITH_EDITOR
+    virtual void SetupOutputsOnConstruct() override;
 
+
+    virtual FString GetDescription() const override;
     //convert to layer codes
     int32 AmplitudeCode(FMaterialCompiler *Compiler);
 

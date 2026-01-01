@@ -12,8 +12,6 @@ private:
     static void TestInnerHullFinder();
     static void TestPolygonHit();
 
-    static void TestPolygonFit();
-
     static void TestRasterizer();
     static void TestRasterizerFitting();
 

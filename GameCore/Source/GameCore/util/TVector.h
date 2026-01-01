@@ -22,9 +22,24 @@ public:
 
     }
 
-    TVector(TVector<T> &other){
-        *this = other; //assign to other, overload the "=" operator
+    TVector(const TVector<T> &other){
+        if(this != &other){
+            *this = other;
+        }
     }
+
+    TVector<T> &operator=(const TVector<T> &other){
+        this->sizeIndex = other.sizeIndex;
+
+        //only copy to the wanted index
+        for (int i = 0; i < sizeIndex; i++){
+            this->vec.push_back(other.vec[i]); //manuell jedes element kopieren, aber nur bis zur fake grösse
+        }
+    
+        return *this;
+    }
+
+
 
     int size() const{
         return sizeIndex;
@@ -181,37 +196,40 @@ public:
     }
 
 
-    T &operator[](int index){
+    T &operator[](int index) {
         if(index >= 0 && index < size() && index < vec.size()){
             return vec.at(index);
         }
         throw std::out_of_range("Index out of range");
     }
 
-    TVector<T> &operator=(TVector<T> &other){
-        //dont do self assigment
-        if(this == &other){ //compare both ADRESSES
-            return *this;
-        }
     
-        this->sizeIndex = other.sizeIndex;
-        this->vec.reserve(sizeIndex);
-    
-        //only copy to the wanted index
-        for (int i = 0; i < other.size(); i++){
-            this->vec.push_back(other[i]); //manuell jedes element kopieren, aber nur bis zur fake grösse
-        }
-    
-        return *this;
-    }
 
     std::vector<T> copy(){
+        /*
+        //would not call copy constructor.
+        std::vector<T> output(size()); //reserve
+        std::memcpy(output.data(), vec.data(), size() * sizeof(T));
+        return output;
+        */
         std::vector<T> output;
         for (int i = 0; i < size(); i++){
             output.push_back(vec[i]);
         }
         return output;
     }
+
+    TArray<T> copyAsTArray(){
+        TArray<T> output;
+        output.SetNumUninitialized(size());
+        for (int i = 0; i < size(); i++)
+        {
+            output[i] = vec[i];
+        }
+        return output;
+    }
+
+
 
 private:
     std::vector<T> vec;

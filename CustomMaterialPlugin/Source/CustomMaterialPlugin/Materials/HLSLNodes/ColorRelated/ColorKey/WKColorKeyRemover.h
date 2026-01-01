@@ -19,12 +19,12 @@ public:
     UPROPERTY(Instanced)
     UMaterialExpressionCustom* customExpression = nullptr;
 
-
+#if WITH_EDITOR
     virtual void SetupInputsOnConstruct() override;
     virtual void SetupOutputsOnConstruct() override;
     virtual void SetupInternalExpressionsOnConstruct() override;
 
-#if WITH_EDITOR
+
     virtual FString NodeName() const override{
         return TEXT("UWKColorKeyRemover");
     }

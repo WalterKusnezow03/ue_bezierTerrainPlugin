@@ -38,7 +38,8 @@ public class StoragePlugin : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"GameCore"
+				"GameCore",
+				"DebugPlugin"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

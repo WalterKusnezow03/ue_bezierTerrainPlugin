@@ -1,7 +1,7 @@
 
 
 #include "TerrainChunkSetup.h"
-#include "GameCore/DebugHelper.h"
+#include "DebugPlugin/DebugHelper.h"
 #include "GameCore/world/worldLevelBase.h"
 
 

@@ -1,6 +1,7 @@
 #include "ProceduralMeshComponentPair.h"
 #include "GameCore/MeshGenBase/materialHelper/MaterialEnumHelper.h"
-
+#include "GameCore/MeshGenBase/ProceduralMeshComponentDerived/ProceduralMeshComponentCustom.h"
+#include "DebugPlugin/DebugHelper.h"
 
 ProceduralMeshComponentPair::ProceduralMeshComponentPair(){
 
@@ -15,11 +16,13 @@ void ProceduralMeshComponentPair::init(
     AActor *actorOwner,
     USceneComponent *RootComponent
 ){
+    //old:UProceduralMeshComponent
+    //new: UProceduralMeshComponentCustom
     if(RootComponent && actorOwner){
         FString nameMesh = name + FString::Printf(TEXT("raycastMesh_%d"), index);
         raycastMesh = NewObject<UProceduralMeshComponent>(actorOwner, *nameMesh);
         if(raycastMesh){
-            raycastMesh->SetupAttachment(RootComponent);
+            raycastMesh->SetupAttachment(RootComponent); 
             raycastMesh->RegisterComponent(); //it is not visible otherwise
         }
         
@@ -128,7 +131,8 @@ void ProceduralMeshComponentPair::updateMeshRaycast(materialEnum type){
         updateMesh(
             *raycastMesh,
             meshDataReferenceRaycast(type),
-            layer
+            layer,
+            true
         );
 
         if(bLogMessage){
@@ -148,7 +152,8 @@ void ProceduralMeshComponentPair::updateMeshNoRaycast(materialEnum type){
         updateMesh(
             *noraycastMesh,
             meshDataReferenceNoRaycast(type),
-            layer
+            layer,
+            false
         );
 
         if(bLogMessage){
@@ -164,6 +169,7 @@ void ProceduralMeshComponentPair::updateMeshNoRaycast(materialEnum type){
 
 
 
+
 /// @brief replaces the mesh layer for an mesh component
 /// caution: mesh section is recreated because modifying the triangle buffer is not allowed
 /// when will to update an mesh!
@@ -174,9 +180,18 @@ void ProceduralMeshComponentPair::updateMeshNoRaycast(materialEnum type){
 void ProceduralMeshComponentPair::updateMesh(
     UProceduralMeshComponent &meshcomponent,
     MeshData &otherMesh, //MUST BE SAVED IN A VALUE CLASS SCOPE SOMEWHERE!
-    int layer
+    int layer,
+    bool bIsRaycastMesh
 ){
     if(otherMesh.getVerteciesRef().Num() == 0){
+        return;
+    }
+
+    //try cast ---> EXPERIMENTAL
+    UProceduralMeshComponentCustom *casted = Cast<UProceduralMeshComponentCustom>(&meshcomponent);
+    if (casted)
+    {
+        casted->UpdateMesh(layer, otherMesh, true);
         return;
     }
 
@@ -193,6 +208,14 @@ void ProceduralMeshComponentPair::updateMesh(
         Tangents, 
         true
     );*/
+
+    
+    bool bCreateCollision = false;
+    if (bIsRaycastMesh)
+    {
+        bCreateCollision = !WasSetupFromCache; //only setup collsion if not created already from cache
+    }
+
     //meshcomponent.ClearMeshSection(layer);
     meshcomponent.CreateMeshSection(
         layer, 
@@ -202,7 +225,7 @@ void ProceduralMeshComponentPair::updateMesh(
         otherMesh.getUV0Ref(),//UV0, 
         otherMesh.getVertexColorsRef(),//VertexColors, 
         otherMesh.getTangentsRef(),//Tangents, 
-        true
+        bCreateCollision //true
     );
 
 }
@@ -257,6 +280,15 @@ void ProceduralMeshComponentPair::refreshMesh(
     if(other.verteciesNum() <= 0){
         return;
     }
+
+    //new.
+    UProceduralMeshComponentCustom *casted = Cast<UProceduralMeshComponentCustom>(&meshComponent);
+    if (casted)
+    {
+        casted->UpdateMesh(layer, other, true);
+        return;
+    }
+
 
     meshComponent.UpdateMeshSection(
         layer, 
@@ -482,3 +514,29 @@ void ProceduralMeshComponentPair::overrideMeshDataFromBaseAndUpdateMesh(
     }
 }
 
+
+
+
+
+
+
+
+//collision cache
+bool ProceduralMeshComponentPair::CopyCollisionCache(FProcMeshCollisionStorageInterface &cache){
+    if(raycastMesh){
+        if(cache.SerializeCollision(raycastMesh)){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ProceduralMeshComponentPair::SetupFromCollisionCache(FProcMeshCollisionStorageInterface &cache){
+    if(raycastMesh){
+        if(cache.ApplyData(raycastMesh)){
+            WasSetupFromCache = true;
+            return true;
+        }
+    }
+    return false;
+}

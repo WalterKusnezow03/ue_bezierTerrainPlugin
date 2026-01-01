@@ -1,8 +1,9 @@
 #include "WKVertexShaderBase.h"
 
+#if WITH_EDITOR
 void UWKVertexShaderBase::SetupInternalExpressionsOnConstruct(){
     Super::SetupInternalExpressionsOnConstruct();
-    ceilExpression = NewObject<UMaterialExpressionCeil>(this);
+    
 
     
 }
@@ -187,26 +188,4 @@ int32 UWKVertexShaderBase::Less(FMaterialCompiler *Compiler, int32 A, int32 B){
 }
 
 
-
-int32 UWKVertexShaderBase::Ceil(FMaterialCompiler *Compiler, FExpressionInput *inputOverride){
-    if(ceilExpression && inputOverride){
-
-        //UMaterialExpression *	Expression	
-        //Material expression that this input is connected to, or NULL if not connected.
-
-        //tmp swap out parent which should not exsist anyway.
-        UMaterialExpression *ExpressionParentPrev = ceilExpression->Input.Expression;
-        UMaterialExpression *tmpOverride = inputOverride->Expression;
-        if(tmpOverride){
-            ceilExpression->Input.Expression = tmpOverride;
-            int32 result = ceilExpression->Compile(Compiler, 0);
-            ceilExpression->Input.Expression = ExpressionParentPrev;
-            return result;
-        }
-
-
-        
-    }
-
-    return INDEX_NONE;
-}
+#endif

@@ -4,7 +4,7 @@
 #include <cmath>
 #include "GameCore/util/FVectorUtil.h"
 #include "Algo/Sort.h"  // Include the necessary header
-#include "terrainPlugin/meshgen/generation/bezierCurve.h"
+#include "terrainPlugin/meshgen/generation/bezier/bezierCurve.h"
 #include "GameCore/util/TVector.h"
 #include "HAL/PlatformTime.h"
 #include <algorithm>
@@ -326,6 +326,16 @@ int terrainCreator::cmToChunkIndex(int a){
     return aToChunk;
 }
 
+std::pair<int,int> terrainCreator::Index2DFromWorldPosition(
+    const FVector &worldPos
+){
+    std::pair<int,int> pair(
+        cmToChunkIndex(worldPos.X),
+        cmToChunkIndex(worldPos.Y)
+    );
+    return pair;
+}
+
 /// @brief checks if the index is within the map bounds
 /// @param a index
 /// @return true false map bounds kept
@@ -383,7 +393,7 @@ void terrainCreator::plotAllChunks(UWorld * world){
 /// @return return z for the x y position
 float terrainCreator::getHeightFor(FVector &position){
 
-    
+    DebugHelper::logMessage("terrainCreator::getHeightFor ---- NEW TEST ----");
     //create pane at world vertecies and perform hittest with FMath.
     TArray<FVector> positionIndices = {
         FVector(position.X, position.Y, 0.0f),
@@ -401,6 +411,8 @@ float terrainCreator::getHeightFor(FVector &position){
         if(current && i < positionIndices.Num()){
             if(current->NextWorldVertexAt(positionIndices[i], newPos)){
                 worldVertecies.Add(newPos); //closest vertex added
+
+                DebugHelper::logMessage("terrainCreator::getHeightFor Potential ", newPos);
             }
         }
     }
@@ -418,9 +430,14 @@ float terrainCreator::getHeightFor(FVector &position){
     */
 
     //is tested works very well
-    if(worldVertecies.Num() == 3){
-        FVector start = position + FVector(0, 0, 10000);
-        FVector end = position - FVector(0, 0, 10000);
+    if(worldVertecies.Num() >= 3){
+        float minZ = MinZ(worldVertecies);
+        float maxZ = MaxZ(worldVertecies);
+        FVector lower(position.X, position.Y, minZ - 100.0f);
+        FVector higher(position.X, position.Y, maxZ + 100.0f);
+
+        //FVector start = position + FVector(0, 0, 10000);
+        //FVector end = position - FVector(0, 0, 10000);
         FPlane plane(
             worldVertecies[0],
             worldVertecies[1],
@@ -428,17 +445,45 @@ float terrainCreator::getHeightFor(FVector &position){
         );
         //DebugHelper::showScreenMessage("plane test", FColor::Orange);
         FVector hit;
-        if (FMath::SegmentPlaneIntersection(start, end, plane, hit))
+        if (FMath::SegmentPlaneIntersection(higher, lower, plane, hit))
         {
             //DebugHelper::showScreenMessage("plane test hit", FColor::Orange);
             //DebugHelper::showLineBetween(worldPointer, hit, hit + FVector(0, 0, 100), FColor::Red, 0.5f);
             return hit.Z;
+        }else{
+            return (minZ + maxZ) / 2.0f; //fallback.
         }
+    }else{
+        DebugHelper::logMessage("terrainCreator::getHeight, not enough chunks found!", worldVertecies.Num());
     }
+
+    DebugHelper::logMessage("terrainCreator::getHeightFor resultFailed ", position);
     return 0.0f;
 
 }
 
+
+float terrainCreator::MinZ(TArray<FVector> &array){
+    double min = 0.0f;
+    if(array.Num() > 0){
+        min = array[0].Z;
+        for (int i = 0; i < array.Num(); i++){
+            min = std::min(min, array[i].Z);
+        }
+    }
+    return min;
+}
+
+float terrainCreator::MaxZ(TArray<FVector> &array){
+    double max = 0.0f;
+    if(array.Num() > 0){
+        max = array[0].Z;
+        for (int i = 0; i < array.Num(); i++){
+            max = std::max(max, array[i].Z);
+        }
+    }
+    return max;
+}
 
 
 /// @brief returns the count of the inner chunks in total
@@ -473,10 +518,13 @@ void terrainCreator::createTerrainAndSetupChunkParserMap(
     randomizeTerrainTypes();
     applySpecialTerrainTypesByHeight();
 
-    //manual flat areas are missing here. - must be added in terrain chunk map
+    //road creation
+    PreMergeWithTopLeftRightChunks(); //must happen to close gaps
+    createRoads(mapToFillDataTo);
 
     //fill
     applyTerrainDataIntoChunkParserMapCache(mapToFillDataTo);
+
 }
 
 void terrainCreator::applyTerrainDataIntoChunkParserMapCache(
@@ -499,23 +547,13 @@ void terrainCreator::applyTerrainDataIntoChunkParserAt(ChunkParserMap &mapToFill
     ){
         currentChunk->setWasCreatedTrue();
 
-        int xLimit = map.size();
-        int yLimit = map.size();
-
         //get chunk parser reference,
         //expects reference to be valid, and terrain generated
         //just as TerrainChunkMap given data, aswell as
         //ChunkParser Map generated in same size!
         ChunkParser &currentChunkParser = mapToFillDataTo.findByIndex(x, y);
-
-
-        //apply data
-        //readAndMerge (connect to next in map)
-        chunk *top = chunkAt(x, y + 1);
-        chunk *right = chunkAt(x + 1, y);
-        chunk *topright = chunkAt(x + 1, y + 1);
-
-        TerrainChunkSetup package = currentChunk->makeSetupPackage(top, right, topright);
+        TerrainChunkSetup package = currentChunk->makeSetupPackage();
+        //makeSetupPackage(top, right, topright);
 
         // apply position and data
         FVector newPos = currentChunk->positionPivotBottomLeft();
@@ -536,6 +574,31 @@ void terrainCreator::applyTerrainDataIntoChunkParserAt(ChunkParserMap &mapToFill
 
 
 
+void terrainCreator::PreMergeWithTopLeftRightChunks(){
+    for (int i = 0; i < map.size(); i++){
+        for (int j = 0; j < map[i].size(); j++){
+            PreMergeWithTopLeftRightChunks(i, j);
+        }
+    }
+}
+
+void terrainCreator::PreMergeWithTopLeftRightChunks(int x, int y){
+    chunk *currentChunk = chunkAt(x,y);
+    if(currentChunk){
+        //currentChunk->setWasCreatedTrue();
+
+        int xLimit = map.size();
+        int yLimit = map.size();
+
+        
+        //apply data
+        //readAndMerge (connect to next chunks in map, to fix gap of one index for meshdata)
+        chunk *top = chunkAt(x, y + 1);
+        chunk *right = chunkAt(x + 1, y);
+        chunk *topright = chunkAt(x + 1, y + 1);
+        currentChunk->Merge(top, right, topright);
+    }
+}
 
 
 
@@ -684,6 +747,15 @@ chunk *terrainCreator::chunkAt(int x, int y){
     return nullptr;
 }
 
+chunk *terrainCreator::chunkAtWorldPositon(FVector &worldPos){
+    return chunkAt(
+        cmToChunkIndex(worldPos.X),
+        cmToChunkIndex(worldPos.Y)
+    );
+}
+
+
+
 TArray<chunk *> terrainCreator::chunksAt(
     TArray<FVector> &positionsWorld
 ){
@@ -691,12 +763,9 @@ TArray<chunk *> terrainCreator::chunksAt(
     for (int i = 0; i < positionsWorld.Num(); i++)
     {
         FVector &current = positionsWorld[i];
-        chunk *ptr = chunkAt(
-            cmToChunkIndex(current.X),
-            cmToChunkIndex(current.Y)
-        );
-        if(ptr != nullptr){
-            outputArray.Add(ptr);
+        if (chunk *found = chunkAtWorldPositon(current))
+        {
+            outputArray.Add(found);
         }
     }
     return outputArray;
@@ -714,9 +783,8 @@ void terrainCreator::applySpecialTerrainTypesByHeight(){
     }
 }
 
-void terrainCreator::createRoads(UWorld* world){
-    //roadmaker.createRoads(this, world, map.size());
-}
+
+
 
 
 float terrainCreator::getHeightFor(FVector2D &pos){
@@ -725,16 +793,19 @@ float terrainCreator::getHeightFor(FVector2D &pos){
     
 }
 
-AcustomMeshActor *terrainCreator::getNewMeshActor(){
-    AcustomMeshActor *meshActor = nullptr;
-    EntityManagerBase *entityManagerPointer = EntityManagerBase::instanceBase();
-    if(entityManagerPointer){
-        meshActor = entityManagerPointer->requestByEnum<AcustomMeshActor>(
-            ETrackedActors::EMeshActor,
-            worldPointer
-        );
+AcustomMeshActor *terrainCreator::getNewMeshActor(UWorld *world){
+    if(world){
+        AcustomMeshActor *meshActor = nullptr;
+        EntityManagerBase *entityManagerPointer = EntityManagerBase::instanceBase();
+        if(entityManagerPointer){
+            meshActor = entityManagerPointer->requestByEnum<AcustomMeshActor>(
+                ETrackedActors::EMeshActor,
+                world
+            );
+        }
+        return meshActor;
     }
-    return meshActor;
+    return nullptr;
 }
 
 
@@ -742,3 +813,129 @@ AcustomMeshActor *terrainCreator::getNewMeshActor(){
 
 
 
+/// ----- Road gen -------
+
+#include "terrainPlugin/meshgen/generation/TerrainCreator/Road/RoadGrid/RoadMakerFromGrid.h"
+void terrainCreator::createRoads(ChunkParserMap &mapToFillDataTo){
+    
+    int size = map.size() * terrainConstants::CHUNKSIZE * terrainConstants::ONEMETER;
+    FVector2D size2D(size, size);
+    float stepBetweenIntersecionts = terrainConstants::CHUNKSIZE * terrainConstants::ONEMETER * 2;
+
+
+
+    RoadMakerFromGrid roadMaker;
+    roadMaker.CreateGrid(size2D, stepBetweenIntersecionts);
+    roadMaker.WarpCirlceRandom();
+
+    float roadWidth = 300.0f;
+    roadMaker.Build(
+        this, 
+        terrainConstants::ONEMETER, //einheitsvalue bspline
+        roadWidth,
+        mapToFillDataTo
+    );
+
+    //roadmaker.createRoads(this, map.size());
+}
+
+void terrainCreator::createRoadMeshActor(UWorld *world){
+    //roadmaker.MakeMeshActorFromRoadData(world);
+}
+
+
+/*
+void terrainCreator::AssignRoadMeshDataToChunk(
+    FVector &centerPositionRoadQuad,
+    
+){
+
+}*/
+
+
+
+
+
+
+/// --- lock quads for road external (block trees) ---
+void terrainCreator::lockQuadsFromParalellArrayLines(
+    TArray<FVector> &line0,
+    TArray<FVector> &line1
+){
+    /*DebugHelper::logMessage(
+        FString::Printf(
+            TEXT("terrainCreator::lockQuads Chunks A %d %d"),
+            line0.Num(),
+            line1.Num()
+        )
+    );*/
+    /*
+    array aufbau
+    
+    1   2-1  2
+
+    0   3-0  3... paralelle lines, bilden quads durch adjazente indices
+    
+    heisst: 0 und 2 bzw 1 und 3 bilden bounding box
+    */
+    int limit = std::min(line0.Num(), line1.Num());
+    for(int i = 1; i < limit; i++){
+        FVector &v2 = line1[i];
+        FVector &v0 = line0[i-1];
+
+        if(true){
+            /**
+             * CAUTION: foliage block is still partially. Bugged.
+             */
+
+            FVector &v1 = line1[i-1];
+            FVector &v3 = line0[i];
+            TArray<FVector> positions = {v0, v1, v2, v3};
+            TArray<chunk *> chunksCollected = chunksAt(positions);
+            ScaleUpXY(positions, 1.1f); //testing needed
+
+            //DebugHelper::logMessage("terrainCreator::lockQuads Chunks B", chunksCollected.Num());
+
+            for (int j = 0; j < chunksCollected.Num(); j++){
+                chunk *currentChunk = chunksCollected[j];
+                if(currentChunk != nullptr){
+                    currentChunk->blockAreaForFoliage(v0, v1, v2, v3);
+                }
+            }
+        
+            
+        }
+        
+    }
+
+
+
+}
+
+
+void terrainCreator::ScaleUpXY(TArray<FVector> &positions, float scale){
+    int num = positions.Num();
+    if(num > 1){
+        FVector center;
+        for (int i = 0; i < positions.Num(); i++){
+            center += positions[i];
+        }
+        center /= num;
+        MMatrix T;
+        T.setTranslation(center);
+        MMatrix S;
+        S.scale(scale, scale, 1.0f);
+        //M = T * S * T^-1<-- lese richtung
+
+        FVector center1 = -1.0f * center;
+        MMatrix T1;
+        T1.setTranslation(center1);
+
+        MMatrix ST1 = S * T1;
+        MMatrix M = T * ST1;
+
+        for (int i = 0; i < positions.Num(); i++){
+            positions[i] = M * positions[i];
+        }
+    }
+}
